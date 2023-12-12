@@ -240,71 +240,27 @@ static bit_t is_finder_pattern(qrmatrix_t *qr, int_fast8_t x, int_fast8_t y) {
 	return 0;
 }
 
-static const uint8_t alignment_pattern_addr[MAX_QR_VERSION][8] = {
-	// version 1
-	{0,0,0,0,0,0,0,0},
-	{2,6,18,0,0,0,0,0},
-	{2,6,22,0,0,0,0,0},
-	{2,6,26,0,0,0,0,0},
-	
-	{2,6,30,0,0,0,0,0},
-	{2,6,34,0,0,0,0,0},
-	{3,6,22,38,0,0,0,0},
-	{3,6,24,42,0,0,0,0},
-	{3,6,26,46,0,0,0,0},
-	
-	// version 10
-	{3,6,28,50,0,0,0,0},
-	{3,6,30,54,0,0,0,0},
-	{3,6,32,58,0,0,0,0},
-	{3,6,34,62,0,0,0,0},
-	{4,6,26,46,66,0,0,0},
-	
-	{4,6,26,48,70,0,0,0},
-	{4,6,26,50,74,0,0,0},
-	{4,6,30,54,78,0,0,0},
-	{4,6,30,56,82,0,0,0},
-	{4,6,30,58,86,0,0,0},
-	
-	// version 20
-	{4,6,34,62,90,0,0,0},
-	{5,6,28,50,72,94,0,0},
-	{5,6,26,50,74,98,0,0},
-	{5,6,30,54,78,102,0,0},
-	{5,6,28,54,80,106,0,0},
-	
-	{5,6,32,58,84,110,0,0},
-	{5,6,30,58,86,114,0,0},
-	{5,6,34,62,90,118,0,0},
-	{6,6,26,50,74,98,122,0},
-	{6,6,30,54,78,102,126,0},
-	
-	// version 30
-	{6,6,26,52,78,104,130,0},
-	{6,6,30,56,82,108,134,0},
-	{6,6,34,60,86,112,138,0},
-	{6,6,30,58,86,114,142,0},
-	{6,6,34,62,90,118,146,0},
-	
-	{7,6,30,54,78,102,126,150},
-	{7,6,24,50,76,102,128,154},
-	{7,6,28,54,80,106,132,158},
-	{7,6,32,58,84,110,136,162},
-	{7,6,26,54,82,110,138,166},
-	
-	// version 40
-	{7,6,30,58,86,114,142,170}
-};
+static uint_fast8_t alignment_addr(uint_fast8_t version, uint_fast8_t idx)
+{
+	if (version <= 1) return 0;
+	uint_fast8_t N = version / 7 + 2;
+	uint_fast8_t r = ((((version + 1) * 8 / (N - 1)) + 3) / 4) * 2 * (N - idx - 1); 
+	uint_fast8_t v4 = version * 4;
+
+	if (idx >= N) return 0;
+
+	return v4 < r ? 6 : v4 - r + 10;
+}
 
 static bit_t is_alignment_pattern(qrmatrix_t *qr, int_fast8_t x, int_fast8_t y)
 {
-	const uint8_t *addr = alignment_pattern_addr[qr->version - 1];
-	int N = addr[0];
+	uint_fast8_t N = qr->version > 1 ? qr->version / 7 + 2 : 0;
 
-	uint8_t xidx = 0, yidx = 0;
-	for (int i = 1; i <= N; i++) {
-		if (addr[i] - 2 <= x && x <= addr[i] + 2) xidx = i;
-		if (addr[i] - 2 <= y && y <= addr[i] + 2) yidx = i;
+	uint_fast8_t xidx = 0, yidx = 0;
+	for (uint_fast8_t i = 0; i < N; i++) {
+		uint_fast8_t addr = alignment_addr(qr->version, i);
+		if (addr - 2 <= x && x <= addr + 2) xidx = i + 1;
+		if (addr - 2 <= y && y <= addr + 2) yidx = i + 1;
 	}
 
 	if (xidx == 1 && yidx == 1) return 0;
@@ -317,21 +273,21 @@ static bit_t is_alignment_pattern(qrmatrix_t *qr, int_fast8_t x, int_fast8_t y)
 #define ALIGNMENT_PATTERN_SIZE (5 * 5)
 static bitpos_t alignment_pattern_iter(bitstream_t *bs, bitpos_t i, void *opaque) {
 	qrmatrix_t *qr = (qrmatrix_t *)opaque;
-	const uint8_t *addr = alignment_pattern_addr[qr->version - 1];
 
-	int N = addr[0] - 1;
-	int n = i / (5 * 5);
+	uint_fast8_t N = qr->version > 1 ? qr->version / 7 + 2 - 1: 0;
+	uint_fast8_t n = i / (5 * 5);
 
 	if (ALIGNMENT_PATTERN_SIZE * 7 * 7 <= i) return bitpos_end;
 
-	int x = n % 7;
-	int y = n / 7;
+	uint_fast8_t x = n % 7;
+	uint_fast8_t y = n / 7;
+
 	if (x == 0 && y == 0) return bitpos_trunc;
 	if (x == N && y == 0) return bitpos_trunc;
 	if (x == 0 && y == N) return bitpos_trunc;
 
-	uint8_t cy = addr[1 + y];
-	uint8_t cx = addr[1 + x];
+	uint_fast8_t cy = alignment_addr(qr->version, y);
+	uint_fast8_t cx = alignment_addr(qr->version, x);
 	if (cx == 0 || cy == 0) return bitpos_trunc;
 
 	return QR_XYV_TO_BITPOS(qr,
