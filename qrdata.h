@@ -21,3 +21,5 @@ int qrdata_push_8bit(qrdata_t *data, const char *src, size_t len);
 int qrdata_push_8bit_string(qrdata_t *data, const char *src);
 int qrdata_push_string(qrdata_t *data, const char *src);
 int qrdata_finalize(qrdata_t *data);
+
+size_t qrdata_parse(qrdata_t *data, void *buffer, size_t len);

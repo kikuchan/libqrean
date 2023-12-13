@@ -21,11 +21,8 @@ void bitstream_init(bitstream_t *bs, void *src, bitpos_t len, bitstream_iterator
 
 #ifndef NO_CALLBACK
 	bs->get_bit_at = NULL;
-	bs->set_bit_at = NULL;
+	bs->put_bit_at = NULL;
 #endif
-}
-
-void bitstream_deinit(bitstream_t *bs) {
 }
 
 bitstream_t create_bitstream(const void *src, bitpos_t len, bitstream_iterator_t iter, void *opaque) {
@@ -34,17 +31,13 @@ bitstream_t create_bitstream(const void *src, bitpos_t len, bitstream_iterator_t
 	return bs;
 }
 
-void bitstream_destroy(bitstream_t *bs) {
-	bitstream_deinit(bs);
-}
-
 bitpos_t bitstream_length(bitstream_t *bs) {
 	return bs->size;
 }
 
 void bitstream_fill(bitstream_t *bs, bit_t v) {
 	for (bitpos_t i = 0; i < bs->size; i++) {
-		bitstream_set_bit(bs, v);
+		bitstream_put_bit(bs, v);
 	}
 }
 
@@ -60,13 +53,13 @@ void bitstream_rewind(bitstream_t *bs) {
 
 static bitpos_t get_iter_pos(bitstream_t *bs) {
 	bitpos_t pos = bs->iter ? bs->iter(bs, bs->pos, bs->opaque) : bs->pos;
-	if (pos == bs->size) return bitpos_end;
+	if (pos == bs->size) return BITPOS_END;
 	return pos;
 }
 
 bit_t bitstream_is_end(bitstream_t *bs) {
 	bitpos_t pos = get_iter_pos(bs);
-	if (pos == bitpos_end) return 1;
+	if (pos == BITPOS_END) return 1;
 	return 0;
 }
 
@@ -82,13 +75,13 @@ static bit_t bitstream_get_bit_at(bitstream_t *bs, bitpos_t pos) {
 	return bs->bits[pos / 8] & (0x80 >> (pos % 8)) ? 1 : 0;
 }
 
-static int bitstream_set_bit_at(bitstream_t *bs, bitpos_t pos, bit_t bit)
+static int bitstream_put_bit_at(bitstream_t *bs, bitpos_t pos, bit_t bit)
 {
 	if (pos >= bs->size) return 0;
 
 #ifndef NO_CALLBACK
-	if (bs->set_bit_at) {
-		bs->set_bit_at(bs, pos, bs->opaque_set, bit);
+	if (bs->put_bit_at) {
+		bs->put_bit_at(bs, pos, bs->opaque_put, bit);
 	} else
 #endif
 	{
@@ -107,12 +100,12 @@ bit_t bitstream_get_bit(bitstream_t *bs) {
 	bitpos_t pos;
 	do {
 		pos = get_iter_pos(bs);
-		if (pos == bitpos_end) return 0;
+		if (pos == BITPOS_END) return 0;
 		bs->pos++;
-	} while (pos == bitpos_trunc);
-	if (pos == bitpos_blank) return 0;
+	} while (pos == BITPOS_TRUNC);
+	if (pos == BITPOS_BLANK) return 0;
 
-	return bitstream_get_bit_at(bs, pos & 0x7FFF) ^ ((pos >> 15) ? 1 : 0);
+	return bitstream_get_bit_at(bs, pos & 0x7FFFFFFF) ^ ((pos & 0x80000000) ? 1 : 0);
 }
 
 uint_fast32_t bitstream_get_bits(bitstream_t *bs, uint_fast8_t num_bits)
@@ -127,25 +120,25 @@ uint_fast32_t bitstream_get_bits(bitstream_t *bs, uint_fast8_t num_bits)
 	return val;
 }
 
-int bitstream_set_bit(bitstream_t *bs, bit_t bit)
+int bitstream_put_bit(bitstream_t *bs, bit_t bit)
 {
 	bitpos_t pos;
 
 	do {
 		pos = get_iter_pos(bs);
-		if (pos == bitpos_end) return 0; // EOF
+		if (pos == BITPOS_END) return 0; // EOF
 		bs->pos++;
-	} while (pos == bitpos_trunc);
+	} while (pos == BITPOS_TRUNC);
 
-	if (pos == bitpos_blank) return 1;
-	return bitstream_set_bit_at(bs, (pos & 0x7FFF), ((bit ? 1 : 0) ^ ((pos >> 15) ? 1 : 0)));
+	if (pos == BITPOS_BLANK) return 1;
+	return bitstream_put_bit_at(bs, (pos & 0x7FFFFFFF), ((bit ? 1 : 0) ^ ((pos & 0x80000000) ? 1 : 0)));
 }
 
-int bitstream_set_bits(bitstream_t *bs, uint_fast32_t value, uint_fast8_t num_bits) {
+int bitstream_put_bits(bitstream_t *bs, uint_fast32_t value, uint_fast8_t num_bits) {
 	assert(0 <= num_bits && num_bits <= 32);
 
 	for (uint_fast8_t i = 0; i < num_bits; i++) {
-		if (!bitstream_set_bit(bs, (value & (1 << (num_bits - 1 - i))) ? 1 : 0)) {
+		if (!bitstream_put_bit(bs, (value & (1 << (num_bits - 1 - i))) ? 1 : 0)) {
 			return 0;
 		}
 	}
@@ -156,7 +149,7 @@ bitpos_t bitstream_copy(bitstream_t *dst, bitstream_t *src, bitpos_t size, bitpo
 	bitpos_t i;
 	for (i = 0; !size || !n || i < size * n; i++) {
 		if (bitstream_is_end(src) || bitstream_is_end(dst)) break;
-		if (!bitstream_set_bit(dst, bitstream_get_bit(src))) break;
+		if (!bitstream_put_bit(dst, bitstream_get_bit(src))) break;
 	}
 	return i;
 }
@@ -183,15 +176,15 @@ bitpos_t bitstream_loop_iter(bitstream_t *bs, bitpos_t i, void *opaque) {
 	return i % bs->size;
 }
 
-void bitstream_on_set(bitstream_t *bs, bitstream_set_callback_t cb, void *opaque)
+void bitstream_on_put_bit(bitstream_t *bs, bitstream_put_bit_callback_t cb, void *opaque)
 {
 #ifndef NO_CALLBACK
-	bs->set_bit_at = cb;
-	bs->opaque_set = opaque;
+	bs->put_bit_at = cb;
+	bs->opaque_put = opaque;
 #endif
 }
 
-void bitstream_on_get(bitstream_t *bs, bitstream_get_callback_t cb, void *opaque)
+void bitstream_on_get_bit(bitstream_t *bs, bitstream_get_bit_callback_t cb, void *opaque)
 {
 #ifndef NO_CALLBACK
 	bs->get_bit_at = cb;

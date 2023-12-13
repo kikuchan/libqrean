@@ -10,18 +10,19 @@ OBJS += reedsolomon.o
 
 #CC=avr-gcc -mmcu=atmega32u4
 #CC=clang
-CC=c++
+#CC=c++
 
 SIZE = size
 
 CFLAGS += -DDEBUG
 #CFLAGS += -std=c2x
-CFLAGS += -Wall -Werror
+CFLAGS += -Wall # -Werror
 
 #CFLAGS += -D USE_MALLOC_BUFFER
 #CFLAGS += -D NO_MALLOC
 #CFLAGS += -D NO_PRINTF
 #CFLAGS += -D NO_CALLBACK
+#CFLAGS += -D NO_QRMATRIX_BUFFER
 
 all: size
 

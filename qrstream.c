@@ -208,6 +208,7 @@ qrstream_t create_qrstream_for_string(qr_version_t version, qr_errorlevel_t leve
 		for (int i = QR_VERSION_1; i <= QR_VERSION_40; i++) {
 			qrstream_t qrs = create_qrstream((qr_version_t)i, level);
 			if (qrstream_try_for_string(&qrs, src)) return qrs;
+			qrstream_destroy(&qrs);
 		}
 	}
 
@@ -223,7 +224,7 @@ static bitpos_t qrstream_data_words_iter(bitstream_t *bs, bitpos_t i, void *opaq
 	bitpos_t n = i / 8;
 	bitpos_t u = i % 8;
 
-	if (n >= qrs->data_words) return bitpos_end;
+	if (n >= qrs->data_words) return BITPOS_END;
 
 	// data words
 	if (n < qrs->data_words_in_small_block * qrs->small_blocks) {
@@ -249,7 +250,7 @@ static bitpos_t qrstream_error_words_iter(bitstream_t *bs, bitpos_t i, void *opa
 	bitpos_t n = i / 8;
 	bitpos_t u = i % 8;
 
-	if (n >= qrs->error_words) return bitpos_end;
+	if (n >= qrs->error_words) return BITPOS_END;
 
 	// error words
 	const bitpos_t x = n % qrs->error_words_in_block;
@@ -302,10 +303,10 @@ int qrstream_fix_errors(qrstream_t *qrs) {
 		bitstream_seek(&bs_error, pos_error);
 		bitstream_seek(&bs_data, pos_data);
 		for (bitpos_t i = 0; i < data_words; i++) {
-			bitstream_set_bits(&bs_data, GF2_POLY_COEFF(R, codelen - i - 1), 8);
+			bitstream_put_bits(&bs_data, GF2_POLY_COEFF(R, codelen - i - 1), 8);
 		}
 		for (bitpos_t i = 0; i < error_words; i++) {
-			bitstream_set_bits(&bs_error, GF2_POLY_COEFF(R, error_words - i - 1), 8);
+			bitstream_put_bits(&bs_error, GF2_POLY_COEFF(R, error_words - i - 1), 8);
 		}
 	}
 
@@ -347,7 +348,7 @@ void qrstream_set_error_words(qrstream_t *qrs) {
 
 		// write parity
 		for (bitpos_t i = 0; i < error_words; i++) {
-			bitstream_set_bits(&bs_error, GF2_POLY_COEFF(parity, error_words - i - 1), 8);
+			bitstream_put_bits(&bs_error, GF2_POLY_COEFF(parity, error_words - i - 1), 8);
 		}
 	}
 }
