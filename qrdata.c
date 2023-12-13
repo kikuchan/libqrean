@@ -1,6 +1,6 @@
-#include <string.h>
 #include "qrdata.h"
 #include "bitstream.h"
+#include <string.h>
 
 qrdata_t create_qrdata_for(qrstream_t *qrs) {
 	qrdata_t data = {
@@ -10,8 +10,7 @@ qrdata_t create_qrdata_for(qrstream_t *qrs) {
 	return data;
 }
 
-int qrdata_push_8bit(qrdata_t *data, const char *src, size_t len)
-{
+int qrdata_push_8bit(qrdata_t *data, const char *src, size_t len) {
 	bitstream_put_bits(&data->bs, QR_DATA_MODE_8BIT, 4);
 	if (data->qrs->version < 10) {
 		bitstream_put_bits(&data->bs, len, 8);
@@ -24,13 +23,11 @@ int qrdata_push_8bit(qrdata_t *data, const char *src, size_t len)
 	return 0;
 }
 
-int qrdata_push_8bit_string(qrdata_t *data, const char *src)
-{
+int qrdata_push_8bit_string(qrdata_t *data, const char *src) {
 	return qrdata_push_8bit(data, src, strlen(src));
 }
 
-int qrdata_finalize(qrdata_t *data)
-{
+int qrdata_finalize(qrdata_t *data) {
 	if (!bitstream_put_bits(&data->bs, QR_DATA_MODE_END, 4)) return 0;
 
 	bitstream_put_bits(&data->bs, 0, bitstream_tell(&data->bs) % 8);
@@ -47,14 +44,12 @@ int qrdata_finalize(qrdata_t *data)
 	return 1;
 }
 
-int qrdata_push_string(qrdata_t *data, const char *src)
-{
+int qrdata_push_string(qrdata_t *data, const char *src) {
 	// TODO:
 	return qrdata_push_8bit_string(data, src);
 }
 
-size_t qrdata_parse(qrdata_t *data, void *buffer, size_t size)
-{
+size_t qrdata_parse(qrdata_t *data, void *buffer, size_t size) {
 	bitstream_t *r = &data->bs;
 	bitstream_t bs = create_bitstream(buffer, size * 8, NULL, NULL);
 	bitstream_t *w = &bs;
@@ -67,13 +62,13 @@ size_t qrdata_parse(qrdata_t *data, void *buffer, size_t size)
 			goto end;
 
 		case QR_DATA_MODE_8BIT:
-			len = bitstream_get_bits(r, data->qrs->version > 10 ? 16 : 8); 
+			len = bitstream_get_bits(r, data->qrs->version > 10 ? 16 : 8);
 			while (len-- > 0) {
 				bitstream_put_bits(w, bitstream_get_bits(r, 8), 8);
 			}
 			break;
 
-		// TODO
+			// TODO
 		}
 	}
 

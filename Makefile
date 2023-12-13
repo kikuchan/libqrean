@@ -43,3 +43,6 @@ clean:
 
 run: main
 	./main
+
+format:
+	clang-format -i *.[ch]

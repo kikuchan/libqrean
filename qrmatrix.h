@@ -1,14 +1,18 @@
 #include <stdint.h>
 
-#include "types.h"
 #include "bitstream.h"
 #include "qrstream.h"
+#include "types.h"
 
-#define MAX_QR_VERSION (40)
-#define SYMBOL_SIZE_FOR(version) (17 + (version) * 4)
+#define MAX_QR_VERSION           (40)
+#define SYMBOL_SIZE_FOR(version) (17 + (version)*4)
 
 typedef struct _qrmatrix_t qrmatrix_t;
-typedef struct { uint8_t x; uint8_t y; uint8_t v; } qrpos_t;
+typedef struct {
+	uint8_t x;
+	uint8_t y;
+	uint8_t v;
+} qrpos_t;
 
 typedef qrpos_t (*qrmatrix_iterator_t)(qrmatrix_t *qr, bitpos_t i, void *opaque);
 
@@ -25,7 +29,7 @@ struct _qrmatrix_t {
 #ifdef USE_MALLOC_BUFFER
 	uint8_t *buffer;
 #else
-	uint8_t buffer[(SYMBOL_SIZE_FOR(MAX_QR_VERSION)*SYMBOL_SIZE_FOR(MAX_QR_VERSION) + 7) / 8];
+	uint8_t buffer[(SYMBOL_SIZE_FOR(MAX_QR_VERSION) * SYMBOL_SIZE_FOR(MAX_QR_VERSION) + 7) / 8];
 #endif
 
 	qrmatrix_iterator_t iter;
@@ -49,14 +53,12 @@ qrmatrix_t *new_qrmatrix_for_string(qr_version_t version, qr_errorlevel_t level,
 
 void qrmatrix_free(qrmatrix_t *qr);
 
-
 void qrmatrix_put_pixel(qrmatrix_t *qr, int_fast8_t x, int_fast8_t y, bit_t v);
 bit_t qrmatrix_get_pixel(qrmatrix_t *qr, int_fast8_t x, int_fast8_t y);
 
 int qrmatrix_fix_errors(qrmatrix_t *qr);
 
 void qrmatrix_dump(qrmatrix_t *qr, int padding);
-
 
 bitstream_t qrmatrix_create_bitstream(qrmatrix_t *qr, bitstream_iterator_t iter);
 bitstream_t qrmatrix_create_bitstream_for_composed_data(qrmatrix_t *qr);
@@ -83,4 +85,3 @@ size_t qrmatrix_get_string(qrmatrix_t *qr, char *buffer, size_t len);
 void qrmatrix_on_put_pixel(qrmatrix_t *qr, bit_t (*put_pixel)(qrmatrix_t *qr, bitpos_t x, bitpos_t y, bitpos_t pos, bit_t v));
 void qrmatrix_on_get_pixel(qrmatrix_t *qr, bit_t (*get_pixel)(qrmatrix_t *qr, bitpos_t x, bitpos_t y, bitpos_t pos));
 #endif
-

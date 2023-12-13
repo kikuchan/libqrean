@@ -1,8 +1,8 @@
-#include <stdio.h>
+#include <assert.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
 
 #include "bitstream.h"
 #include "hexdump.h"
@@ -75,8 +75,7 @@ static bit_t bitstream_get_bit_at(bitstream_t *bs, bitpos_t pos) {
 	return bs->bits[pos / 8] & (0x80 >> (pos % 8)) ? 1 : 0;
 }
 
-static int bitstream_put_bit_at(bitstream_t *bs, bitpos_t pos, bit_t bit)
-{
+static int bitstream_put_bit_at(bitstream_t *bs, bitpos_t pos, bit_t bit) {
 	if (pos >= bs->size) return 0;
 
 #ifndef NO_CALLBACK
@@ -86,7 +85,7 @@ static int bitstream_put_bit_at(bitstream_t *bs, bitpos_t pos, bit_t bit)
 #endif
 	{
 		if (bit) {
-			bs->bits[pos / 8] |=  (0x80 >> (pos % 8));
+			bs->bits[pos / 8] |= (0x80 >> (pos % 8));
 		} else {
 			bs->bits[pos / 8] &= ~(0x80 >> (pos % 8));
 		}
@@ -94,7 +93,6 @@ static int bitstream_put_bit_at(bitstream_t *bs, bitpos_t pos, bit_t bit)
 
 	return 1;
 }
-
 
 bit_t bitstream_get_bit(bitstream_t *bs) {
 	bitpos_t pos;
@@ -108,8 +106,7 @@ bit_t bitstream_get_bit(bitstream_t *bs) {
 	return bitstream_get_bit_at(bs, pos & 0x7FFFFFFF) ^ ((pos & 0x80000000) ? 1 : 0);
 }
 
-uint_fast32_t bitstream_get_bits(bitstream_t *bs, uint_fast8_t num_bits)
-{
+uint_fast32_t bitstream_get_bits(bitstream_t *bs, uint_fast8_t num_bits) {
 	uint_fast32_t val = 0;
 
 	assert(1 <= num_bits && num_bits <= 32);
@@ -120,8 +117,7 @@ uint_fast32_t bitstream_get_bits(bitstream_t *bs, uint_fast8_t num_bits)
 	return val;
 }
 
-int bitstream_put_bit(bitstream_t *bs, bit_t bit)
-{
+int bitstream_put_bit(bitstream_t *bs, bit_t bit) {
 	bitpos_t pos;
 
 	do {
@@ -171,21 +167,18 @@ void bitstream_dump(bitstream_t *bs) {
 }
 #endif
 
-
 bitpos_t bitstream_loop_iter(bitstream_t *bs, bitpos_t i, void *opaque) {
 	return i % bs->size;
 }
 
-void bitstream_on_put_bit(bitstream_t *bs, bitstream_put_bit_callback_t cb, void *opaque)
-{
+void bitstream_on_put_bit(bitstream_t *bs, bitstream_put_bit_callback_t cb, void *opaque) {
 #ifndef NO_CALLBACK
 	bs->put_bit_at = cb;
 	bs->opaque_put = opaque;
 #endif
 }
 
-void bitstream_on_get_bit(bitstream_t *bs, bitstream_get_bit_callback_t cb, void *opaque)
-{
+void bitstream_on_get_bit(bitstream_t *bs, bitstream_get_bit_callback_t cb, void *opaque) {
 #ifndef NO_CALLBACK
 	bs->get_bit_at = cb;
 	bs->opaque_get = opaque;

@@ -1,8 +1,8 @@
 #ifndef __QR_QRSTREAM_H__
 #define __QR_QRSTREAM_H__
 
-#include "types.h"
 #include "bitstream.h"
+#include "types.h"
 
 #define RSBLOCK_BUFFER_SIZE (3706)
 
@@ -46,11 +46,10 @@ qrstream_t create_qrstream_for_string(qr_version_t version, qr_errorlevel_t leve
 void qrstream_destroy(qrstream_t *qrs);
 
 #ifndef NO_MALLOC
-qrstream_t* new_qrstream(qr_version_t version, qr_errorlevel_t level);
+qrstream_t *new_qrstream(qr_version_t version, qr_errorlevel_t level);
 qrstream_t *new_qrstream_for_string(qr_version_t version, qr_errorlevel_t level, const char *src);
 void qrstream_free(qrstream_t *qrs);
 #endif
-
 
 bitstream_t qrstream_get_bitstream(qrstream_t *qrs);
 bitstream_t qrstream_get_bitstream_for_data(qrstream_t *qrs);

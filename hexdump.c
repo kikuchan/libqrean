@@ -4,8 +4,7 @@
 #define HEXDUMP_PRINTF(...) printf(__VA_ARGS__)
 #endif
 
-int hexdump(const void *buf_, size_t len, unsigned long start_addr)
-{
+int hexdump(const void *buf_, size_t len, unsigned long start_addr) {
 	const int fold_size = 16;
 	const int flag_print_chars = 1;
 	const unsigned char *buf = (const unsigned char *)buf_;
@@ -33,7 +32,7 @@ int hexdump(const void *buf_, size_t len, unsigned long start_addr)
 			HEXDUMP_PRINTF(" |");
 			for (j = 0; j < fold_size; j++) {
 				unsigned long idx = i * fold_size + j - offset;
-				//if (j % 8 == 0) HEXDUMP_PRINTF(" ");
+				// if (j % 8 == 0) HEXDUMP_PRINTF(" ");
 				if (idx < len) {
 					HEXDUMP_PRINTF("%c", buf[idx] >= 0x20 && buf[idx] < 0x7fUL ? buf[idx] : '.');
 				} else {

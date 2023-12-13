@@ -14,7 +14,7 @@ typedef enum {
 } qr_data_mode_t;
 
 qrdata_t create_qrdata_for(qrstream_t *qrs);
-qrdata_t* new_qrdata_for(qrstream_t *qrs);
+qrdata_t *new_qrdata_for(qrstream_t *qrs);
 void qrdata_free(qrdata_t *data);
 
 int qrdata_push_8bit(qrdata_t *data, const char *src, size_t len);

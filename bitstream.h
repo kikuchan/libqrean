@@ -1,5 +1,5 @@
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #ifndef __QR_BITSTREAM_H__
 #define __QR_BITSTREAM_H__
