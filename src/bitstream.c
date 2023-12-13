@@ -96,6 +96,7 @@ static int bitstream_put_bit_at(bitstream_t *bs, bitpos_t pos, bit_t bit) {
 
 bit_t bitstream_get_bit(bitstream_t *bs) {
 	bitpos_t pos;
+
 	do {
 		pos = get_iter_pos(bs);
 		if (pos == BITPOS_END) return 0;
@@ -103,7 +104,7 @@ bit_t bitstream_get_bit(bitstream_t *bs) {
 	} while (pos == BITPOS_TRUNC);
 	if (pos == BITPOS_BLANK) return 0;
 
-	return bitstream_get_bit_at(bs, pos & 0x7FFFFFFF) ^ ((pos & 0x80000000) ? 1 : 0);
+	return bitstream_get_bit_at(bs, pos & BITPOS_MASK) ^ ((pos & BITPOS_TOGGLE) ? 1 : 0);
 }
 
 uint_fast32_t bitstream_get_bits(bitstream_t *bs, uint_fast8_t num_bits) {
@@ -117,20 +118,20 @@ uint_fast32_t bitstream_get_bits(bitstream_t *bs, uint_fast8_t num_bits) {
 	return val;
 }
 
-int bitstream_put_bit(bitstream_t *bs, bit_t bit) {
+bit_t bitstream_put_bit(bitstream_t *bs, bit_t bit) {
 	bitpos_t pos;
 
 	do {
 		pos = get_iter_pos(bs);
-		if (pos == BITPOS_END) return 0; // EOF
+		if (pos == BITPOS_END) return 0;
 		bs->pos++;
 	} while (pos == BITPOS_TRUNC);
-
 	if (pos == BITPOS_BLANK) return 1;
-	return bitstream_put_bit_at(bs, (pos & 0x7FFFFFFF), ((bit ? 1 : 0) ^ ((pos & 0x80000000) ? 1 : 0)));
+
+	return bitstream_put_bit_at(bs, (pos & BITPOS_MASK), ((bit ? 1 : 0) ^ ((pos & BITPOS_TOGGLE) ? 1 : 0)));
 }
 
-int bitstream_put_bits(bitstream_t *bs, uint_fast32_t value, uint_fast8_t num_bits) {
+bit_t bitstream_put_bits(bitstream_t *bs, uint_fast32_t value, uint_fast8_t num_bits) {
 	assert(0 <= num_bits && num_bits <= 32);
 
 	for (uint_fast8_t i = 0; i < num_bits; i++) {
@@ -139,6 +140,14 @@ int bitstream_put_bits(bitstream_t *bs, uint_fast32_t value, uint_fast8_t num_bi
 		}
 	}
 	return 1;
+}
+
+bitpos_t bitstream_put_string(bitstream_t *bs, const char *str) {
+	bitpos_t i = 0;
+	while (str[i] && !bitstream_is_end(bs)) {
+		bitstream_put_bits(bs, str[i++], 8);
+	}
+	return i;
 }
 
 bitpos_t bitstream_copy(bitstream_t *dst, bitstream_t *src, bitpos_t size, bitpos_t n) {
@@ -184,3 +193,4 @@ void bitstream_on_get_bit(bitstream_t *bs, bitstream_get_bit_callback_t cb, void
 	bs->opaque_get = opaque;
 #endif
 }
+

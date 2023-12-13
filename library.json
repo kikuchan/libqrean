@@ -1,7 +1,7 @@
 {
   "name": "libqrean",
   "version": "0.0.1-alpha.0",
-  "description": "A portable QR and Barcode encoder and decoder",
+  "description": "A portable QR and Barcode manipulation library with a small footprint",
   "keywords": "qr, qrcode, barcode, c, arduino, ean, jan, nw7, code39, code93, itf",
   "repository": {
     "type": "git",

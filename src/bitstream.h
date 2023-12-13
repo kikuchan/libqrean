@@ -49,8 +49,9 @@ void bitstream_dump(bitstream_t *bs);
 bit_t bitstream_get_bit(bitstream_t *bs);
 uint_fast32_t bitstream_get_bits(bitstream_t *bs, uint_fast8_t num_bits);
 
-int bitstream_put_bit(bitstream_t *bs, bit_t bit);
-int bitstream_put_bits(bitstream_t *bs, uint_fast32_t value, uint_fast8_t num_bits);
+bit_t bitstream_put_bit(bitstream_t *bs, bit_t bit);
+bit_t bitstream_put_bits(bitstream_t *bs, uint_fast32_t value, uint_fast8_t num_bits);
+bitpos_t bitstream_put_string(bitstream_t *bs, const char *str);
 
 void bitstream_seek(bitstream_t *bs, bitpos_t pos);
 void bitstream_rewind(bitstream_t *bs);

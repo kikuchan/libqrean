@@ -3,7 +3,7 @@ QR and Barcode library `libqrean`
 
 # What's this?
 
-A portable QR encoder / decoder and Barcode encoder with a small footprint.
+A portable QR and Barcode manipulation library with a small footprint.
 
 # Examples
 ```c
