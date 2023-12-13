@@ -50,6 +50,7 @@ typedef enum {
 } qr_version_t;
 
 typedef enum {
+	QR_ERRORLEVEL_INVALID = -1,
 	QR_ERRORLEVEL_L,
 	QR_ERRORLEVEL_M,
 	QR_ERRORLEVEL_Q,
@@ -57,6 +58,7 @@ typedef enum {
 } qr_errorlevel_t;
 
 typedef enum {
+	QR_MASKPATTERN_INVALID = -1,
 	QR_MASKPATTERN_0,
 	QR_MASKPATTERN_1,
 	QR_MASKPATTERN_2,

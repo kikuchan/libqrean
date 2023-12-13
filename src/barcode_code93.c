@@ -75,18 +75,18 @@ void barcode_code93_deinit(barcode_t *code) {
 	barcode_buffer_deinit(code);
 }
 
-bitpos_t barcode_code93_put_string(barcode_t *code, const char *src) {
+bitpos_t barcode_code93_write_string(barcode_t *code, const char *src) {
 	int len = strlen(src);
 
 	bitstream_t bs = barcode_create_bitstream(code, NULL);
 
-	bitstream_put_bits(&bs, 0, 10);         // Quiet zone
-	bitstream_put_bits(&bs, symbol[47], 9); // Start Symbol
+	bitstream_write_bits(&bs, 0, 10);         // Quiet zone
+	bitstream_write_bits(&bs, symbol[47], 9); // Start Symbol
 
 	int w = (len - 1);
 	int C = 0, K = 0;
 	for (const char *p = src; *p; p++) {
-		char *q = strchr(symbol_lookup, *p);
+		const char *q = strchr(symbol_lookup, *p);
 		if (!q) continue;
 
 		int n = q - symbol_lookup;
@@ -96,17 +96,17 @@ bitpos_t barcode_code93_put_string(barcode_t *code, const char *src) {
 
 		w--;
 
-		bitstream_put_bits(&bs, symbol[n], 9);
+		bitstream_write_bits(&bs, symbol[n], 9);
 	}
 
-	bitstream_put_bits(&bs, symbol[C], 9); // 1st check character
+	bitstream_write_bits(&bs, symbol[C], 9); // 1st check character
 	K = (K + C) % 47;
 
-	bitstream_put_bits(&bs, symbol[K], 9); // 2nd check character
+	bitstream_write_bits(&bs, symbol[K], 9); // 2nd check character
 
-	bitstream_put_bits(&bs, symbol[47], 9); // Stop Symbol
-	bitstream_put_bits(&bs, 1, 1);          // Termination bar
-	bitstream_put_bits(&bs, 0, 10);         // Quiet zone
+	bitstream_write_bits(&bs, symbol[47], 9); // Stop Symbol
+	bitstream_write_bits(&bs, 1, 1);          // Termination bar
+	bitstream_write_bits(&bs, 0, 10);         // Quiet zone
 
 	barcode_set_size(code, bitstream_tell(&bs));
 	return code->size;

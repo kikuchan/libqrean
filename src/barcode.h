@@ -39,9 +39,9 @@ barcode_t *new_barcode(barcode_type_t type);
 barcode_t create_barcode_with_string(barcode_type_t type, const char *src);
 barcode_t *new_barcode_with_string(barcode_type_t type, const char *src);
 
-bitpos_t barcode_put_string(barcode_t *code, const char *src);
+bitpos_t barcode_write_string(barcode_t *code, const char *src);
 
-void barcode_dump(barcode_t *code, int height);
+void barcode_dump(barcode_t *code, uint8_t height);
 
 // ----
 
@@ -65,9 +65,9 @@ void barcode_nw7_deinit(barcode_t *code);
 void barcode_itf_deinit(barcode_t *code);
 // void barcode_code128_deinit(barcode_t *code);
 
-bitpos_t barcode_ean13_put_string(barcode_t *code, const char *src);
-bitpos_t barcode_code39_put_string(barcode_t *code, const char *src);
-bitpos_t barcode_code93_put_string(barcode_t *code, const char *src);
-bitpos_t barcode_nw7_put_string(barcode_t *code, const char *src);
-bitpos_t barcode_itf_put_string(barcode_t *code, const char *src);
-// bitpos_t barcode_code128_put_string(barcode_t *code, const char *src);
+bitpos_t barcode_ean13_write_string(barcode_t *code, const char *src);
+bitpos_t barcode_code39_write_string(barcode_t *code, const char *src);
+bitpos_t barcode_code93_write_string(barcode_t *code, const char *src);
+bitpos_t barcode_nw7_write_string(barcode_t *code, const char *src);
+bitpos_t barcode_itf_write_string(barcode_t *code, const char *src);
+// bitpos_t barcode_code128_write_string(barcode_t *code, const char *src);

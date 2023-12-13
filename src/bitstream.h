@@ -15,8 +15,8 @@ typedef uint_fast32_t bitpos_t;
 
 typedef struct _bitstream_t bitstream_t;
 typedef bitpos_t (*bitstream_iterator_t)(bitstream_t *bs, bitpos_t pos, void *opaque);
-typedef void (*bitstream_put_bit_callback_t)(bitstream_t *bs, bitpos_t pos, void *opaque, bit_t v);
-typedef bit_t (*bitstream_get_bit_callback_t)(bitstream_t *bs, bitpos_t pos, void *opaque);
+typedef void (*bitstream_write_bit_callback_t)(bitstream_t *bs, bitpos_t pos, void *opaque, bit_t v);
+typedef bit_t (*bitstream_read_bit_callback_t)(bitstream_t *bs, bitpos_t pos, void *opaque);
 
 struct _bitstream_t {
 	bitpos_t size;
@@ -28,11 +28,11 @@ struct _bitstream_t {
 	void *opaque;
 
 #ifndef NO_CALLBACK
-	bitstream_put_bit_callback_t put_bit_at;
-	void *opaque_put;
+	bitstream_write_bit_callback_t write_bit_at;
+	void *opaque_write;
 
-	bitstream_get_bit_callback_t get_bit_at;
-	void *opaque_get;
+	bitstream_read_bit_callback_t read_bit_at;
+	void *opaque_read;
 #endif
 };
 
@@ -46,12 +46,12 @@ bitpos_t bitstream_length(bitstream_t *bs);
 
 void bitstream_dump(bitstream_t *bs);
 
-bit_t bitstream_get_bit(bitstream_t *bs);
-uint_fast32_t bitstream_get_bits(bitstream_t *bs, uint_fast8_t num_bits);
+bit_t bitstream_read_bit(bitstream_t *bs);
+uint_fast32_t bitstream_read_bits(bitstream_t *bs, uint_fast8_t num_bits);
 
-bit_t bitstream_put_bit(bitstream_t *bs, bit_t bit);
-bit_t bitstream_put_bits(bitstream_t *bs, uint_fast32_t value, uint_fast8_t num_bits);
-bitpos_t bitstream_put_string(bitstream_t *bs, const char *str);
+bit_t bitstream_write_bit(bitstream_t *bs, bit_t bit);
+bit_t bitstream_write_bits(bitstream_t *bs, uint_fast32_t value, uint_fast8_t num_bits);
+bitpos_t bitstream_write_string(bitstream_t *bs, const char *str);
 
 void bitstream_seek(bitstream_t *bs, bitpos_t pos);
 void bitstream_rewind(bitstream_t *bs);
@@ -65,7 +65,7 @@ bitpos_t bitstream_copy(bitstream_t *dst, bitstream_t *src, bitpos_t size, bitpo
 
 bit_t bitstream_is_end(bitstream_t *bs);
 
-void bitstream_on_put_bit(bitstream_t *bs, bitstream_put_bit_callback_t cb, void *opaque);
-void bitstream_on_get_bit(bitstream_t *bs, bitstream_get_bit_callback_t cb, void *opaque);
+void bitstream_on_write_bit(bitstream_t *bs, bitstream_write_bit_callback_t cb, void *opaque);
+void bitstream_on_read_bit(bitstream_t *bs, bitstream_read_bit_callback_t cb, void *opaque);
 
 #endif /* __QR_BITSTREAM_H__ */

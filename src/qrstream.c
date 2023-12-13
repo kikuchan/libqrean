@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -118,6 +119,8 @@ static bitpos_t qrstream_available_bits(uint_fast8_t version) {
 }
 
 void qrstream_init(qrstream_t *qrs, qr_version_t version, qr_errorlevel_t level) {
+	assert(QR_VERSION_1 <= version && version <= QR_VERSION_40);
+
 	qrs->version = version;
 	qrs->level = level;
 
@@ -265,8 +268,8 @@ void qrstream_set_error_words(qrstream_t *qrs) {
 	CREATE_GF2_POLY(g, qrs->error_words_in_block);
 	rs_init_generator_polynomial(g);
 
-	bitstream_t bs_data = qrstream_get_bitstream_for_data(qrs);
-	bitstream_t bs_error = qrstream_get_bitstream_for_error(qrs);
+	bitstream_t bs_data = qrstream_read_bitstream_for_data(qrs);
+	bitstream_t bs_error = qrstream_read_bitstream_for_error(qrs);
 
 	for (bitpos_t rsblock_num = 0; rsblock_num < qrs->total_blocks; rsblock_num++) {
 		bitpos_t error_words = qrs->error_words_in_block;
@@ -275,7 +278,7 @@ void qrstream_set_error_words(qrstream_t *qrs) {
 		// I
 		CREATE_GF2_POLY(I, data_words + error_words - 1);
 		for (bitpos_t i = 0; i < data_words; i++) {
-			uint8_t data = bitstream_get_bits(&bs_data, 8);
+			uint8_t data = bitstream_read_bits(&bs_data, 8);
 			GF2_POLY_COEFF(I, error_words + data_words - i - 1) = data;
 		}
 
@@ -285,14 +288,14 @@ void qrstream_set_error_words(qrstream_t *qrs) {
 
 		// write parity
 		for (bitpos_t i = 0; i < error_words; i++) {
-			bitstream_put_bits(&bs_error, GF2_POLY_COEFF(parity, error_words - i - 1), 8);
+			bitstream_write_bits(&bs_error, GF2_POLY_COEFF(parity, error_words - i - 1), 8);
 		}
 	}
 }
 
 int qrstream_fix_errors(qrstream_t *qrs) {
-	bitstream_t bs_data = qrstream_get_bitstream_for_data(qrs);
-	bitstream_t bs_error = qrstream_get_bitstream_for_error(qrs);
+	bitstream_t bs_data = qrstream_read_bitstream_for_data(qrs);
+	bitstream_t bs_error = qrstream_read_bitstream_for_error(qrs);
 
 	int num_errors_total = 0;
 	for (uint16_t rsblock_num = 0; rsblock_num < qrs->total_blocks; rsblock_num++) {
@@ -308,10 +311,10 @@ int qrstream_fix_errors(qrstream_t *qrs) {
 		// fill data
 		CREATE_GF2_POLY(R, codelen - 1);
 		for (bitpos_t i = 0; i < data_words; i++) {
-			GF2_POLY_COEFF(R, codelen - i - 1) = bitstream_get_bits(&bs_data, 8);
+			GF2_POLY_COEFF(R, codelen - i - 1) = bitstream_read_bits(&bs_data, 8);
 		}
 		for (bitpos_t i = 0; i < error_words; i++) {
-			GF2_POLY_COEFF(R, error_words - i - 1) = bitstream_get_bits(&bs_error, 8);
+			GF2_POLY_COEFF(R, error_words - i - 1) = bitstream_read_bits(&bs_error, 8);
 		}
 
 		// fix error
@@ -333,22 +336,22 @@ int qrstream_fix_errors(qrstream_t *qrs) {
 		bitstream_seek(&bs_error, pos_error);
 		bitstream_seek(&bs_data, pos_data);
 		for (bitpos_t i = 0; i < data_words; i++) {
-			bitstream_put_bits(&bs_data, GF2_POLY_COEFF(R, codelen - i - 1), 8);
+			bitstream_write_bits(&bs_data, GF2_POLY_COEFF(R, codelen - i - 1), 8);
 		}
 		for (bitpos_t i = 0; i < error_words; i++) {
-			bitstream_put_bits(&bs_error, GF2_POLY_COEFF(R, error_words - i - 1), 8);
+			bitstream_write_bits(&bs_error, GF2_POLY_COEFF(R, error_words - i - 1), 8);
 		}
 	}
 
 	return num_errors_total;
 }
 
-bitstream_t qrstream_get_bitstream(qrstream_t *qrs) {
+bitstream_t qrstream_read_bitstream(qrstream_t *qrs) {
 	return create_bitstream(qrs->buffer, qrs->total_bits, NULL, NULL);
 }
-bitstream_t qrstream_get_bitstream_for_data(qrstream_t *qrs) {
+bitstream_t qrstream_read_bitstream_for_data(qrstream_t *qrs) {
 	return create_bitstream(qrs->buffer, qrs->total_bits, qrstream_data_words_iter, qrs);
 }
-bitstream_t qrstream_get_bitstream_for_error(qrstream_t *qrs) {
+bitstream_t qrstream_read_bitstream_for_error(qrstream_t *qrs) {
 	return create_bitstream(qrs->buffer, qrs->total_bits, qrstream_error_words_iter, qrs);
 }

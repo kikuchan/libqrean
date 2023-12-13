@@ -3,6 +3,7 @@
 #include "types.h"
 
 typedef struct {
+	qr_version_t version;
 	uint32_t value;
 } versioninfo_t;
 

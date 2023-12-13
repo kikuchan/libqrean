@@ -39,7 +39,7 @@ void barcode_ean13_deinit(barcode_t *code) {
 	barcode_buffer_deinit(code);
 }
 
-bitpos_t barcode_ean13_put_string(barcode_t *code, const char *src) {
+bitpos_t barcode_ean13_write_string(barcode_t *code, const char *src) {
 	int tfd = 0;
 	int len = strlen(src);
 	int checkdigit;
@@ -85,9 +85,9 @@ bitpos_t barcode_ean13_put_string(barcode_t *code, const char *src) {
 	bitstream_t bs = barcode_create_bitstream(code, NULL);
 
 	// start marker
-	bitstream_put_bits(&bs, 0, 9);
-	bitstream_put_bits(&bs, 0, 9);
-	bitstream_put_bits(&bs, 0b101, 3);
+	bitstream_write_bits(&bs, 0, 9);
+	bitstream_write_bits(&bs, 0, 9);
+	bitstream_write_bits(&bs, 0b101, 3);
 
 	const char *ptr = src;
 	// the first digit
@@ -102,24 +102,24 @@ bitpos_t barcode_ean13_put_string(barcode_t *code, const char *src) {
 	for (i = 0; i < datasize_half; i++) {
 		int n = (*ptr++) - '0';
 		if (!(parity[tfd] & (0b100000 >> i))) {
-			bitstream_put_bits(&bs, symbol[n], 7); // L-code
+			bitstream_write_bits(&bs, symbol[n], 7); // L-code
 		} else {
-			bitstream_put_bits(&bs, ~bit_reverse8(symbol[n]) >> 1, 7); // G-code
+			bitstream_write_bits(&bs, ~bit_reverse8(symbol[n]) >> 1, 7); // G-code
 		}
 	}
 
 	// separator
-	bitstream_put_bits(&bs, 0b01010, 5);
+	bitstream_write_bits(&bs, 0b01010, 5);
 
 	// R-code
 	for (i = 0; i < datasize_half; i++) {
 		int n = *ptr ? (*ptr++ - '0') : checkdigit;
-		bitstream_put_bits(&bs, ~symbol[n], 7);
+		bitstream_write_bits(&bs, ~symbol[n], 7);
 	}
 
 	// end marker
-	bitstream_put_bits(&bs, 0b101, 3);
-	bitstream_put_bits(&bs, 0, 9);
+	bitstream_write_bits(&bs, 0b101, 3);
+	bitstream_write_bits(&bs, 0, 9);
 
 	barcode_set_size(code, bitstream_tell(&bs));
 	return code->size;

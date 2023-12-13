@@ -64,23 +64,23 @@ void barcode_code39_deinit(barcode_t *code) {
 	barcode_buffer_deinit(code);
 }
 
-bitpos_t barcode_code39_put_string(barcode_t *code, const char *src) {
+bitpos_t barcode_code39_write_string(barcode_t *code, const char *src) {
 	bitstream_t bs = barcode_create_bitstream(code, NULL);
 
-	bitstream_put_bits(&bs, 0, 10);
-	bitstream_put_bits(&bs, symbol[43], 15); // Start Symbol
-	bitstream_put_bits(&bs, 0, 1);
+	bitstream_write_bits(&bs, 0, 10);
+	bitstream_write_bits(&bs, symbol[43], 15); // Start Symbol
+	bitstream_write_bits(&bs, 0, 1);
 
 	for (const char *p = src; *p; p++) {
-		char *q = strchr(symbol_lookup, *p);
+		const char *q = strchr(symbol_lookup, *p);
 		if (!q) continue;
 
-		bitstream_put_bits(&bs, symbol[q - symbol_lookup], 15);
-		bitstream_put_bits(&bs, 0, 1);
+		bitstream_write_bits(&bs, symbol[q - symbol_lookup], 15);
+		bitstream_write_bits(&bs, 0, 1);
 	}
 
-	bitstream_put_bits(&bs, symbol[43], 15); // Stop Symbol
-	bitstream_put_bits(&bs, 0, 10);
+	bitstream_write_bits(&bs, symbol[43], 15); // Stop Symbol
+	bitstream_write_bits(&bs, 0, 10);
 
 	barcode_set_size(code, bitstream_tell(&bs));
 	return code->size;

@@ -51,24 +51,24 @@ void barcode_deinit(barcode_t *code) {
 	}
 }
 
-bitpos_t barcode_put_string(barcode_t *code, const char *src) {
+bitpos_t barcode_write_string(barcode_t *code, const char *src) {
 	switch (code->type) {
 	case BARCODE_TYPE_UPCA:
 	case BARCODE_TYPE_EAN13:
 	case BARCODE_TYPE_EAN8:
-		return barcode_ean13_put_string(code, src);
+		return barcode_ean13_write_string(code, src);
 
 	case BARCODE_TYPE_CODE39:
-		return barcode_code39_put_string(code, src);
+		return barcode_code39_write_string(code, src);
 
 	case BARCODE_TYPE_CODE93:
-		return barcode_code93_put_string(code, src);
+		return barcode_code93_write_string(code, src);
 
 	case BARCODE_TYPE_NW7:
-		return barcode_nw7_put_string(code, src);
+		return barcode_nw7_write_string(code, src);
 
 	case BARCODE_TYPE_ITF:
-		return barcode_itf_put_string(code, src);
+		return barcode_itf_write_string(code, src);
 	}
 	return 0;
 }
@@ -122,14 +122,14 @@ void barcode_free(barcode_t *code) {
 barcode_t create_barcode_with_string(barcode_type_t type, const char *src) {
 	barcode_t code = {};
 	barcode_init(&code, type);
-	barcode_put_string(&code, src);
+	barcode_write_string(&code, src);
 	return code;
 }
 
 barcode_t *new_barcode_with_string(barcode_type_t type, const char *src) {
 #ifndef NO_MALLOC
 	barcode_t *code = new_barcode(type);
-	if (code) barcode_put_string(code, src);
+	if (code) barcode_write_string(code, src);
 	return code;
 #else
 	return NULL;
@@ -142,20 +142,20 @@ void barcode_set_size(barcode_t *code, bitpos_t size) {
 
 bitstream_t barcode_create_bitstream(barcode_t *code, bitstream_iterator_t iter) {
 	bitstream_t bs = create_bitstream(code->buffer, code->size, iter, code);
-	// bitstream_on_put_bit(&bs, barcode_put_bit_at, qr);
-	// bitstream_on_get_bit(&bs, barcode_get_bit_at, qr);
+	// bitstream_on_write_bit(&bs, barcode_write_bit_at, qr);
+	// bitstream_on_read_bit(&bs, barcode_read_bit_at, qr);
 	return bs;
 }
 
-void barcode_dump(barcode_t *code, int height) {
+void barcode_dump(barcode_t *code, uint8_t height) {
 #ifndef NO_PRINTF
 	const char *white = "\033[47m \033[m";
 	const char *black = " ";
 	bitstream_t bs = barcode_create_bitstream(code, bitstream_loop_iter);
 
-	for (int y = 0; y < height; y++) {
-		for (int x = 0; x < code->size; x++) {
-			printf("%s", bitstream_get_bit(&bs) ? black : white);
+	for (uint8_t y = 0; y < height; y++) {
+		for (uint8_t x = 0; x < code->size; x++) {
+			printf("%s", bitstream_read_bit(&bs) ? black : white);
 		}
 		printf("\n");
 	}

@@ -8,6 +8,7 @@ static const uint32_t bch[40] = {0x07c94, 0x085bc, 0x09a99, 0x0a4d3, 0x0bbf6, 0x
 
 versioninfo_t create_versioninfo(qr_version_t version) {
 	versioninfo_t vi;
+	vi.version = version;
 	vi.value = version >= 7 ? bch[version - 7] : 0xffffffff;
 	return vi;
 }

@@ -43,7 +43,7 @@ void barcode_nw7_deinit(barcode_t *code) {
 	barcode_buffer_deinit(code);
 }
 
-bitpos_t barcode_nw7_put_string(barcode_t *code, const char *src) {
+bitpos_t barcode_nw7_write_string(barcode_t *code, const char *src) {
 	char tmp[strlen(src) + 1];
 	char *p = tmp;
 	int start_code, stop_code;
@@ -66,21 +66,21 @@ bitpos_t barcode_nw7_put_string(barcode_t *code, const char *src) {
 
 	bitstream_t bs = barcode_create_bitstream(code, NULL);
 
-	bitstream_put_bits(&bs, 0, 10);
-	bitstream_put_bits(&bs, symbol[start_code].v, symbol[start_code].w); // start symbol
-	bitstream_put_bits(&bs, 0, 1);
+	bitstream_write_bits(&bs, 0, 10);
+	bitstream_write_bits(&bs, symbol[start_code].v, symbol[start_code].w); // start symbol
+	bitstream_write_bits(&bs, 0, 1);
 
 	for (; *p; p++) {
-		char *q = strchr(symbol_lookup, *p);
+		const char *q = strchr(symbol_lookup, *p);
 		if (!q) continue;
 
 		int n = q - symbol_lookup;
-		bitstream_put_bits(&bs, symbol[n].v, symbol[n].w);
-		bitstream_put_bits(&bs, 0, 1);
+		bitstream_write_bits(&bs, symbol[n].v, symbol[n].w);
+		bitstream_write_bits(&bs, 0, 1);
 	}
 
-	bitstream_put_bits(&bs, symbol[stop_code].v, symbol[stop_code].w); // stop symbol
-	bitstream_put_bits(&bs, 0, 10);
+	bitstream_write_bits(&bs, symbol[stop_code].v, symbol[stop_code].w); // stop symbol
+	bitstream_write_bits(&bs, 0, 10);
 
 	barcode_set_size(code, bitstream_tell(&bs));
 	return code->size;

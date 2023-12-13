@@ -12,5 +12,26 @@ static const uint16_t bch[] = {
 formatinfo_t create_formatinfo(qr_errorlevel_t level, qr_maskpattern_t mask) {
 	formatinfo_t fi;
 	fi.value = bch[(level * 8) | mask];
+	fi.mask = mask;
+	fi.level = level;
+	return fi;
+}
+
+formatinfo_t parse_formatinfo(uint16_t value) {
+	for (int i = 0; i < 8 * 4; i++) {
+		if (bch[i] == value) {
+			formatinfo_t fi;
+			// XXX:
+			fi.mask = (qr_maskpattern_t)(i % 8);
+			fi.level = (qr_errorlevel_t)(i / 8);
+			fi.value = bch[(fi.level * 8) | fi.mask];
+			return fi;
+		}
+	}
+
+	formatinfo_t fi;
+	fi.mask = QR_MASKPATTERN_INVALID;
+	fi.level = QR_ERRORLEVEL_INVALID;
+	fi.value = value;
 	return fi;
 }
