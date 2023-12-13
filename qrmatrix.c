@@ -67,8 +67,8 @@ void qrmatrix_destroy(qrmatrix_t *qr) {
 	qrmatrix_deinit(qr);
 }
 
-#ifndef NO_MALLOC
 qrmatrix_t *new_qrmatrix(qr_version_t version, qr_errorlevel_t level, qr_maskpattern_t mask) {
+#ifndef NO_MALLOC
 	qrmatrix_t *qr = (qrmatrix_t *)malloc(sizeof(qrmatrix_t));
 	if (!qr) return NULL;
 	if (!qrmatrix_init(qr, version, level, mask)) {
@@ -76,13 +76,17 @@ qrmatrix_t *new_qrmatrix(qr_version_t version, qr_errorlevel_t level, qr_maskpat
 		return NULL;
 	}
 	return qr;
+#else
+	return NULL;
+#endif
 }
 
 void qrmatrix_free(qrmatrix_t *qr) {
+#ifndef NO_MALLOC
 	qrmatrix_deinit(qr);
 	free(qr);
-}
 #endif
+}
 
 void qrmatrix_put_bit_at(bitstream_t *bs, bitpos_t pos, void *opaque, bit_t v) {
 	qrmatrix_t *qr = (qrmatrix_t *)opaque;

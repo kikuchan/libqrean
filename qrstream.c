@@ -166,17 +166,21 @@ void qrstream_destroy(qrstream_t *qrs) {
 	qrstream_deinit(qrs);
 }
 
-#ifndef NO_MALLOC
 qrstream_t *new_qrstream(qr_version_t version, qr_errorlevel_t level) {
+#ifndef NO_MALLOC
 	qrstream_t *qrs = (qrstream_t *)malloc(sizeof(qrstream_t));
 	qrstream_init(qrs, version, level);
 	return qrs;
+#else
+	return NULL;
+#endif
 }
 
 void qrstream_free(qrstream_t *qrs) {
+#ifndef NO_MALLOC
 	free(qrs);
-}
 #endif
+}
 
 static int qrstream_try_for_string(qrstream_t *qrs, const char *src) {
 	qrdata_t data = create_qrdata_for(qrs);
@@ -187,8 +191,8 @@ static int qrstream_try_for_string(qrstream_t *qrs, const char *src) {
 	return 0;
 }
 
-#ifndef NO_MALLOC
 qrstream_t *new_qrstream_for_string(qr_version_t version, qr_errorlevel_t level, const char *src) {
+#ifndef NO_MALLOC
 	if (version == QR_VERSION_AUTO) {
 		for (int i = QR_VERSION_1; i <= QR_VERSION_40; i++) {
 			qrstream_t *qrs = new_qrstream((qr_version_t)i, level);
@@ -200,8 +204,10 @@ qrstream_t *new_qrstream_for_string(qr_version_t version, qr_errorlevel_t level,
 	qrstream_t *qrs = new_qrstream(version, level);
 	qrstream_try_for_string(qrs, src);
 	return qrs;
-}
+#else
+	return NULL;
 #endif
+}
 
 qrstream_t create_qrstream_for_string(qr_version_t version, qr_errorlevel_t level, const char *src) {
 	if (version == QR_VERSION_AUTO) {

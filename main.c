@@ -5,6 +5,8 @@
 #include "qrmatrix.h"
 #include "qrstream.h"
 
+#include "barcode.h"
+
 // return 1 to skip drawing
 bit_t put_pixel(qrmatrix_t *qr, bitpos_t x, bitpos_t y, bitpos_t idx, bit_t v) {
 	/*
@@ -30,6 +32,12 @@ int main() {
 	qrmatrix_put_string(&qr, "Hello, world");
 
 	qrmatrix_dump(&qr, 1);
+
+	barcode_t code = create_barcode(BARCODE_TYPE_EAN13);
+	if (barcode_put_string(&code, "123456789012")) {
+		barcode_dump(&code, 10);
+	}
+
 #if 0
 	qrmatrix_put_pixel(&qr, qr.symbol_size - 1, qr.symbol_size - 1, 0);
 

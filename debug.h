@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 #ifdef DEBUG
-#define BANNER            "[libqr] "
+#define BANNER            "[libqrean] "
 #define debug_printf(...) fprintf(stderr, __VA_ARGS__)
 #else
 #define debug_printf(...)
