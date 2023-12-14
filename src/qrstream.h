@@ -2,7 +2,7 @@
 #define __QR_QRSTREAM_H__
 
 #include "bitstream.h"
-#include "types.h"
+#include "qrtypes.h"
 
 #define RSBLOCK_BUFFER_SIZE (3706)
 

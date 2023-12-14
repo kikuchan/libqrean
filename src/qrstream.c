@@ -188,7 +188,8 @@ void qrstream_free(qrstream_t *qrs) {
 
 static int qrstream_try_for_string(qrstream_t *qrs, const char *src) {
 	qrdata_t data = create_qrdata_for(qrs);
-	qrdata_push_string(&data, src);
+	size_t len = strlen(src);
+	if (qrdata_write_string(&data, src, len) < len) return 0;
 	if (qrdata_finalize(&data)) {
 		return 1;
 	}

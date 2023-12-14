@@ -2,7 +2,7 @@
 
 #include "bitstream.h"
 #include "qrstream.h"
-#include "types.h"
+#include "qrtypes.h"
 #include "qrformat.h"
 #include "qrversion.h"
 

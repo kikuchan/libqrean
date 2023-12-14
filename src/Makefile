@@ -35,23 +35,17 @@ CFLAGS += -Wall # -Werror
 
 all: size
 
-main: $(OBJS) Makefile main.o
-	$(CC) $(CFLAGS) -o main $(OBJS) main.o
-
 libqrean.a: ${OBJS}
 	${AR} rcs libqrean.a $(OBJS)
 
-size: main libqrean.a
-	$(SIZE) main libqrean.a
+size: libqrean.a
+	$(SIZE) libqrean.a
 
 .c.o:
 	$(CC) $(CFLAGS) -c $<
 
 clean:
-	rm -f *.o main libqrean.a
-
-run: main
-	./main
+	rm -f *.o libqrean.a
 
 format:
 	clang-format -i *.[ch]

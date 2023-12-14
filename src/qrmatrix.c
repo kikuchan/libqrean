@@ -463,9 +463,13 @@ bitpos_t qrmatrix_write_all(qrmatrix_t *qr, qrstream_t *qrs) {
 	return qrmatrix_write_data(qr, qrs);
 }
 
-bitpos_t qrmatrix_write_string(qrmatrix_t *qr, const char *src) {
-	qrstream_t qrs = create_qrstream_for_string(qr->version, qr->level, src);
-	bitpos_t ret = qrmatrix_write_all(qr, &qrs);
+bitpos_t qrmatrix_write_string(qrmatrix_t *qrm, const char *src) {
+	qrstream_t qrs = create_qrstream_for_string(qrm->version, qrm->level, src);
+	qrmatrix_set_version(qrm, qrs.version);
+
+	qrmatrix_set_maskpattern(qrm, QR_MASKPATTERN_0); // TODO:
+	bitpos_t ret = qrmatrix_write_all(qrm, &qrs);
+
 	qrstream_destroy(&qrs);
 
 	return ret;
@@ -491,9 +495,8 @@ qrmatrix_t create_qrmatrix_for_string(qr_version_t version, qr_errorlevel_t leve
 
 	qrstream_t qrs = create_qrstream_for_string(version, level, src);
 	qrmatrix_set_version(&qrm, qrs.version);
-	qrmatrix_set_errorlevel(&qrm, qrs.level);
-	qrmatrix_set_maskpattern(&qrm, QR_MASKPATTERN_0); // TODO:
 
+	qrmatrix_set_maskpattern(&qrm, QR_MASKPATTERN_0); // TODO:
 	qrmatrix_write_all(&qrm, &qrs);
 
 	qrstream_destroy(&qrs);

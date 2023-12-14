@@ -1,6 +1,6 @@
 #ifndef __QR_VERSIONINFO_H__
 #define __QR_VERSIONINFO_H__
-#include "types.h"
+#include "qrtypes.h"
 
 typedef struct {
 	qr_version_t version;

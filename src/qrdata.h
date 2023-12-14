@@ -17,12 +17,10 @@ qrdata_t create_qrdata_for(qrstream_t *qrs);
 qrdata_t *new_qrdata_for(qrstream_t *qrs);
 void qrdata_free(qrdata_t *data);
 
-size_t qrdata_push_8bit(qrdata_t *data, const char *src, size_t len);
-size_t qrdata_push_8bit_string(qrdata_t *data, const char *src);
-size_t qrdata_push_string(qrdata_t *data, const char *src);
-size_t qrdata_push_numeric(qrdata_t *data, const char *src);
-size_t qrdata_push_alnum(qrdata_t *data, const char *src);
-
+size_t qrdata_write_8bit_string(qrdata_t *data, const char *src, size_t len);
+size_t qrdata_write_numeric_string(qrdata_t *data, const char *src, size_t len);
+size_t qrdata_write_alnum_string(qrdata_t *data, const char *src, size_t len);
+size_t qrdata_write_string(qrdata_t *data, const char *src, size_t len);
 bit_t qrdata_finalize(qrdata_t *data);
 
 size_t qrdata_parse(qrdata_t *data, void *buffer, size_t size);

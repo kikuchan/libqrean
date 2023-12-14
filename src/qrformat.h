@@ -1,7 +1,7 @@
 #ifndef __QR_FORMATINFO_H__
 #define __QR_FORMATINFO_H__
 
-#include "types.h"
+#include "qrtypes.h"
 
 typedef struct {
 	uint16_t value;
