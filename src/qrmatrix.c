@@ -480,6 +480,9 @@ qrmatrix_t *new_qrmatrix_for_string(qr_version_t version, qr_errorlevel_t level,
 	qrmatrix_t *qrm = new_qrmatrix();
 
 	qrstream_t *qrs = new_qrstream_for_string(version, level, src);
+	qrmatrix_set_version(qrm, qrs->version);
+
+	qrmatrix_set_maskpattern(qrm, QR_MASKPATTERN_0); // TODO:
 	qrmatrix_write_all(qrm, qrs);
 
 	qrstream_free(qrs);

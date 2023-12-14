@@ -22,7 +22,7 @@ OBJS += barcode_nw7.o
 SIZE = size
 
 CFLAGS += -g
-CFLAGS += -DDEBUG
+#CFLAGS += -DDEBUG
 #CFLAGS += -std=c2x
 CFLAGS += -Wall # -Werror
 
