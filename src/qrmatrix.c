@@ -74,8 +74,6 @@ void qrmatrix_free(qrmatrix_t *qr) {
 }
 
 void qrmatrix_set_version(qrmatrix_t *qr, qr_version_t version) {
-	assert(QR_VERSION_1 <= version && version <= QR_VERSION_40);
-
 	qr->version = version;
 	qr->symbol_size = SYMBOL_SIZE_FOR(version);
 }
@@ -88,7 +86,12 @@ void qrmatrix_set_errorlevel(qrmatrix_t *qr, qr_errorlevel_t level) {
 	qr->level = level;
 }
 
-void qrmatrix_write_bit_at(bitstream_t *bs, bitpos_t pos, void *opaque, bit_t v) {
+void qrmatrix_fill(qrmatrix_t *qr, bit_t v) {
+	bitstream_t bs = qrmatrix_create_bitstream(qr, NULL);
+	bitstream_fill(&bs, v);
+}
+
+static void qrmatrix_write_bit_at(bitstream_t *bs, bitpos_t pos, void *opaque, bit_t v) {
 	qrmatrix_t *qr = (qrmatrix_t *)opaque;
 #ifndef NO_CALLBACK
 	if (qr->write_pixel) {
@@ -528,15 +531,13 @@ static qr_maskpattern_t select_maskpattern(qrmatrix_t *qrm, qrstream_t *qrs) {
 	unsigned int min_score = UINT_MAX;
 	uint8_t mask = qrm->mask;
 
-	if (mask == QR_MASKPATTERN_AUTO) {
-		for (uint_fast8_t m = QR_MASKPATTERN_0; m <= QR_MASKPATTERN_7; m++) {
-			qrmatrix_set_maskpattern(qrm, m);
-			qrmatrix_write_all(qrm, qrs);
-			unsigned int score = qrmatrix_score(qrm);
-			if (min_score > score) {
-				min_score = score;
-				mask = m;
-			}
+	for (uint_fast8_t m = QR_MASKPATTERN_0; m <= QR_MASKPATTERN_7; m++) {
+		qrmatrix_set_maskpattern(qrm, m);
+		qrmatrix_write_all(qrm, qrs);
+		unsigned int score = qrmatrix_score(qrm);
+		if (min_score > score) {
+			min_score = score;
+			mask = m;
 		}
 	}
 
@@ -553,27 +554,51 @@ bitpos_t qrmatrix_write_all(qrmatrix_t *qrm, qrstream_t *qrs) {
 	return qrmatrix_write_data(qrm, qrs);
 }
 
-bitpos_t qrmatrix_write_string(qrmatrix_t *qrm, const char *src) {
-	qrstream_t qrs = create_qrstream_for_string(qrm->version, qrm->level, src);
+static bitpos_t qrmatrix_try_write_string_with_writer(qrmatrix_t *qrm, qr_version_t version, const char *src, size_t len, qrdata_writer_t writer)
+{
+	qrstream_t qrs = {};
+	qrstream_init(&qrs, version, qrm->level);
 
-	bitpos_t ret = qrmatrix_write_all(qrm, &qrs);
+	qrdata_t data = create_qrdata_for(qrstream_get_bitstream_for_data(&qrs), version);
+	if (writer(&data, src, len) == len && qrdata_finalize(&data)) {
+		qrstream_set_error_words(&qrs);
 
-	qrstream_destroy(&qrs);
+		qrmatrix_set_version(qrm, version);
+		bitpos_t ret = qrmatrix_write_all(qrm, &qrs);
+		qrstream_deinit(&qrs);
+		return ret;
+	}
+	return 0;
+}
 
-	return ret;
+static size_t qrmatrix_write_string_with_writer(qrmatrix_t *qrm, const char *src, size_t len, qrdata_writer_t writer) {
+	if (qrm->version == QR_VERSION_AUTO) {
+		for (int i = QR_VERSION_1; i < QR_VERSION_40; i++) {
+			bitpos_t ret = qrmatrix_try_write_string_with_writer(qrm, i, src, len, writer);
+			if (ret > 0) return ret / 8;
+		}
+		return 0;
+	}
+	return qrmatrix_try_write_string_with_writer(qrm, qrm->version, src, len, writer) / 8;
+}
+
+size_t qrmatrix_write_string_numeric(qrmatrix_t *qrm, const char *src, size_t len) {
+	return qrmatrix_write_string_with_writer(qrm, src, len, qrdata_write_numeric_string);
+}
+size_t qrmatrix_write_string_alnum(qrmatrix_t *qrm, const char *src, size_t len) {
+	return qrmatrix_write_string_with_writer(qrm, src, len, qrdata_write_alnum_string);
+}
+size_t qrmatrix_write_string_8bit(qrmatrix_t *qrm, const char *src, size_t len) {
+	return qrmatrix_write_string_with_writer(qrm, src, len, qrdata_write_8bit_string);
+}
+size_t qrmatrix_write_string(qrmatrix_t *qrm, const char *src, size_t len) {
+	return qrmatrix_write_string_with_writer(qrm, src, len, qrdata_write_string);
 }
 
 #ifndef NO_MALLOC
 qrmatrix_t *new_qrmatrix_for_string(qr_version_t version, qr_errorlevel_t level, qr_maskpattern_t mask, const char *src) {
-	// TODO: auto select mask pattern
 	qrmatrix_t *qrm = new_qrmatrix();
-
-	qrstream_t *qrs = new_qrstream_for_string(version, level, src);
-
-	qrmatrix_write_all(qrm, qrs);
-
-	qrstream_free(qrs);
-
+	qrmatrix_write_string(qrm, src, strlen(src));
 	return qrm;
 }
 #endif
@@ -581,13 +606,7 @@ qrmatrix_t *new_qrmatrix_for_string(qr_version_t version, qr_errorlevel_t level,
 qrmatrix_t create_qrmatrix_for_string(qr_version_t version, qr_errorlevel_t level, qr_maskpattern_t mask, const char *src) {
 	// TODO: auto select mask pattern
 	qrmatrix_t qrm = create_qrmatrix();
-
-	qrstream_t qrs = create_qrstream_for_string(version, level, src);
-
-	qrmatrix_write_all(&qrm, &qrs);
-
-	qrstream_destroy(&qrs);
-
+	qrmatrix_write_string(&qrm, src, strlen(src));
 	return qrm;
 }
 
@@ -620,7 +639,7 @@ size_t qrmatrix_read_string(qrmatrix_t *qr, char *buffer, size_t size) {
 	qrstream_init(&qrs, qr->version, qr->level);
 	qrmatrix_read_data(qr, &qrs);
 
-	qrdata_t qrdata = create_qrdata_for(&qrs);
+	qrdata_t qrdata = create_qrdata_for(qrstream_get_bitstream_for_data(&qrs), qr->version);
 	size_t len = qrdata_parse(&qrdata, buffer, size);
 	if (len >= size) len = size - 1;
 	buffer[len] = 0;

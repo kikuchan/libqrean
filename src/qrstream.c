@@ -186,48 +186,6 @@ void qrstream_free(qrstream_t *qrs) {
 #endif
 }
 
-static int qrstream_try_for_string(qrstream_t *qrs, const char *src) {
-	qrdata_t data = create_qrdata_for(qrs);
-	size_t len = strlen(src);
-	if (qrdata_write_string(&data, src, len) < len) return 0;
-	if (qrdata_finalize(&data)) {
-		return 1;
-	}
-	return 0;
-}
-
-qrstream_t *new_qrstream_for_string(qr_version_t version, qr_errorlevel_t level, const char *src) {
-#ifndef NO_MALLOC
-	if (version == QR_VERSION_AUTO) {
-		for (int i = QR_VERSION_1; i <= QR_VERSION_40; i++) {
-			qrstream_t *qrs = new_qrstream((qr_version_t)i, level);
-			if (qrstream_try_for_string(qrs, src)) return qrs;
-			qrstream_free(qrs);
-		}
-	}
-
-	qrstream_t *qrs = new_qrstream(version, level);
-	qrstream_try_for_string(qrs, src);
-	return qrs;
-#else
-	return NULL;
-#endif
-}
-
-qrstream_t create_qrstream_for_string(qr_version_t version, qr_errorlevel_t level, const char *src) {
-	if (version == QR_VERSION_AUTO) {
-		for (int i = QR_VERSION_1; i <= QR_VERSION_40; i++) {
-			qrstream_t qrs = create_qrstream((qr_version_t)i, level);
-			if (qrstream_try_for_string(&qrs, src)) return qrs;
-			qrstream_destroy(&qrs);
-		}
-	}
-
-	qrstream_t qrs = create_qrstream(version, level);
-	qrstream_try_for_string(&qrs, src);
-	return qrs;
-}
-
 static bitpos_t qrstream_data_words_iter(bitstream_t *bs, bitpos_t i, void *opaque) {
 	qrstream_t *qrs = (qrstream_t *)opaque;
 	bitpos_t n = i / 8;
