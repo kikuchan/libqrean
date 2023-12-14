@@ -7,7 +7,8 @@ A portable QR and Barcode manipulation library with a small footprint.
 
 # Examples
 ```c
-qrmatrix_t qr = create_qrmatrix_for_string(QR_VERSION_5, QR_ERRORLEVEL_M, QR_MASKPATTERN_0, "Hello, world");
+qrmatrix_t qr = create_qrmatrix();
+qrmatrix_write_string(&qr, "Hello, world");
 
 size_t len = qrmatrix_read_bitmap(&qr, buffer, sizeof(buffer), 8);
 fwrite(buffer, 1, len, stdout);
