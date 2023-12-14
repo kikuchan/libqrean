@@ -7,27 +7,31 @@ A portable QR and Barcode manipulation library with a small footprint.
 
 # Examples
 ```c
-qrmatrix_t qr = create_qrmatrix(QR_VERSION_5, QR_ERRORLEVEL_M, QR_MASKPATTERN_0);
-qrmatrix_put_string(&qr, "Hello, world");
+qrmatrix_t qr = create_qrmatrix_for_string(QR_VERSION_5, QR_ERRORLEVEL_M, QR_MASKPATTERN_0, "Hello, world");
 
-size_t len = qrmatrix_get_bitmap(&qr, buffer, sizeof(buffer), 8);
+size_t len = qrmatrix_read_bitmap(&qr, buffer, sizeof(buffer), 8);
 fwrite(buffer, 1, len, stdout);
 ```
 
 ```c
-qrmatrix_put_pixel(&qr, qr.symbol_size - 1, qr.symbol_size - 1, 0);
+qrmatrix_write_pixel(&qr, qr.symbol_size - 1, qr.symbol_size - 1, 0);
 qrmatrix_fix_errors(&qr);
 
-qrmatrix_get_string(&qr, buffer, sizeof(buffer));
+qrmatrix_read_string(&qr, buffer, sizeof(buffer));
 printf("%s\n", buffer);
 ```
 
 ```c
-qrmatrix_put_finder_pattern(qr);
-qrmatrix_put_alignment_pattern(qr);
-qrmatrix_put_timing_pattern(qr);
-qrmatrix_put_format_info(qr);
-qrmatrix_put_version_info(qr);
+qrmatrix_t *qr = new_qrmatrix();
+qrmatrix_set_version(qr, QR_VERSION_3);
+qrmatrix_set_errorlevel(qr, QR_ERRORLEVEL_M);
+qrmatrix_set_maskpattern(qr, QR_MASKPATTERN_7);
+
+qrmatrix_write_finder_pattern(qr);
+qrmatrix_write_alignment_pattern(qr);
+qrmatrix_write_timing_pattern(qr);
+qrmatrix_write_format_info(qr);
+qrmatrix_write_version_info(qr);
 ```
 
 # Why?
@@ -35,6 +39,6 @@ qrmatrix_put_version_info(qr);
 As you can see, you can take control.
 I love QR and Barcodes.
 
-It doesn't rely on `malloc()` for portability. It uses a stack instead of a heap, but you can still use `new_qrmatrix`, for example, if you prefer.
+It doesn't rely on `malloc()` for portability. It uses a stack instead of a heap, but you can still use `new_qrmatrix` for example if you prefer.
 
 You can also configure a callback to draw a pixel directly on a screen for example.

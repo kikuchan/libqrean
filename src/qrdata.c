@@ -144,13 +144,13 @@ size_t qrdata_parse(qrdata_t *data, void *buffer, size_t size) {
 		uint8_t ch = bitstream_read_bits(r, 4);
 		switch (ch) {
 		case QR_DATA_MODE_END:
-#ifdef DEBUG
+#ifdef DEBUG_QRDATA
 			bitstream_write_string(w, "[END]");
 #endif
 			goto end;
 
 		case QR_DATA_MODE_NUMERIC:
-#ifdef DEBUG
+#ifdef DEBUG_QRDATA
 			bitstream_write_string(w, "[NUM]");
 #endif
 			len = bitstream_read_bits(r, LENGTH_BIT_SIZE_FOR_NUMERIC(data->qrs->version));
@@ -171,7 +171,7 @@ size_t qrdata_parse(qrdata_t *data, void *buffer, size_t size) {
 			break;
 
 		case QR_DATA_MODE_ALNUM:
-#ifdef DEBUG
+#ifdef DEBUG_QRDATA
 			bitstream_write_string(w, "[ALNUM]");
 #endif
 			len = bitstream_read_bits(r, LENGTH_BIT_SIZE_FOR_ALNUM(data->qrs->version));
@@ -187,7 +187,7 @@ size_t qrdata_parse(qrdata_t *data, void *buffer, size_t size) {
 			break;
 
 		case QR_DATA_MODE_8BIT:
-#ifdef DEBUG
+#ifdef DEBUG_QRDATA
 			bitstream_write_string(w, "[8BIT]");
 #endif
 			len = bitstream_read_bits(r, LENGTH_BIT_SIZE_FOR_8BIT(data->qrs->version));
@@ -198,7 +198,7 @@ size_t qrdata_parse(qrdata_t *data, void *buffer, size_t size) {
 
 		default:
 			// unknown
-#ifdef DEBUG
+#ifdef DEBUG_QRDATA
 			bitstream_write_string(w, "[?]");
 #endif
 			goto end;

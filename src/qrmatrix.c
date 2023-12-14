@@ -320,6 +320,18 @@ static bitpos_t composed_data_iter(bitstream_t *bs, bitpos_t i, void *opaque) {
 	return QR_XYV_TO_BITPOS(qr, x, y, v);
 }
 
+static bitpos_t bitmap_iter(bitstream_t *bs, bitpos_t i, void *opaque) {
+	qrmatrix_t *qr = (qrmatrix_t *)opaque;
+
+	uint8_t side = SYMBOL_SIZE_FOR(QR_VERSION_1 <= qr->version && qr->version <= QR_VERSION_40 ? qr->version : MAX_QR_VERSION);
+	bitpos_t x = i % side;
+	bitpos_t y = i / side;
+
+	if (i >= side * side) return BITPOS_END;
+
+	return QR_XYV_TO_BITPOS(qr, x, y, 0);
+}
+
 void qrmatrix_dump(qrmatrix_t *qr, int padding) {
 #ifndef NO_PRINTF
 	const char *white = "\033[47m  \033[m";
@@ -469,6 +481,10 @@ qrmatrix_t create_qrmatrix_for_string(qr_version_t version, qr_errorlevel_t leve
 	qrmatrix_t qrm = create_qrmatrix();
 
 	qrstream_t qrs = create_qrstream_for_string(version, level, src);
+	qrmatrix_set_version(&qrm, qrs.version);
+	qrmatrix_set_errorlevel(&qrm, qrs.level);
+	qrmatrix_set_maskpattern(&qrm, QR_MASKPATTERN_0); // TODO:
+
 	qrmatrix_write_all(&qrm, &qrs);
 
 	qrstream_destroy(&qrs);
@@ -516,7 +532,7 @@ size_t qrmatrix_read_string(qrmatrix_t *qr, char *buffer, size_t size) {
 }
 
 size_t qrmatrix_read_bitmap(qrmatrix_t *qr, void *buffer, size_t size, bitpos_t bpp) {
-	bitstream_t src = qrmatrix_create_bitstream(qr, NULL);
+	bitstream_t src = qrmatrix_create_bitstream(qr, bitmap_iter);
 	bitstream_t dst = create_bitstream(buffer, size * 8, NULL, NULL);
 
 	while (!bitstream_is_end(&src) && !bitstream_is_end(&dst)) {
@@ -527,7 +543,7 @@ size_t qrmatrix_read_bitmap(qrmatrix_t *qr, void *buffer, size_t size, bitpos_t 
 }
 
 size_t qrmatrix_write_bitmap(qrmatrix_t *qr, const void *buffer, size_t size, bitpos_t bpp) {
-	bitstream_t dst = qrmatrix_create_bitstream(qr, NULL);
+	bitstream_t dst = qrmatrix_create_bitstream(qr, bitmap_iter);
 	bitstream_t src = create_bitstream(buffer, size * 8, NULL, NULL);
 
 	while (!bitstream_is_end(&src) && !bitstream_is_end(&dst)) {
