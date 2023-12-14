@@ -270,8 +270,8 @@ void qrstream_set_error_words(qrstream_t *qrs) {
 	CREATE_GF2_POLY(g, qrs->error_words_in_block);
 	rs_init_generator_polynomial(g);
 
-	bitstream_t bs_data = qrstream_read_bitstream_for_data(qrs);
-	bitstream_t bs_error = qrstream_read_bitstream_for_error(qrs);
+	bitstream_t bs_data = qrstream_get_bitstream_for_data(qrs);
+	bitstream_t bs_error = qrstream_get_bitstream_for_error(qrs);
 
 	for (bitpos_t rsblock_num = 0; rsblock_num < qrs->total_blocks; rsblock_num++) {
 		bitpos_t error_words = qrs->error_words_in_block;
@@ -296,8 +296,8 @@ void qrstream_set_error_words(qrstream_t *qrs) {
 }
 
 int qrstream_fix_errors(qrstream_t *qrs) {
-	bitstream_t bs_data = qrstream_read_bitstream_for_data(qrs);
-	bitstream_t bs_error = qrstream_read_bitstream_for_error(qrs);
+	bitstream_t bs_data = qrstream_get_bitstream_for_data(qrs);
+	bitstream_t bs_error = qrstream_get_bitstream_for_error(qrs);
 
 	int num_errors_total = 0;
 	for (uint16_t rsblock_num = 0; rsblock_num < qrs->total_blocks; rsblock_num++) {
@@ -348,12 +348,12 @@ int qrstream_fix_errors(qrstream_t *qrs) {
 	return num_errors_total;
 }
 
-bitstream_t qrstream_read_bitstream(qrstream_t *qrs) {
+bitstream_t qrstream_get_bitstream(qrstream_t *qrs) {
 	return create_bitstream(qrs->buffer, qrs->total_bits, NULL, NULL);
 }
-bitstream_t qrstream_read_bitstream_for_data(qrstream_t *qrs) {
+bitstream_t qrstream_get_bitstream_for_data(qrstream_t *qrs) {
 	return create_bitstream(qrs->buffer, qrs->total_bits, qrstream_data_words_iter, qrs);
 }
-bitstream_t qrstream_read_bitstream_for_error(qrstream_t *qrs) {
+bitstream_t qrstream_get_bitstream_for_error(qrstream_t *qrs) {
 	return create_bitstream(qrs->buffer, qrs->total_bits, qrstream_error_words_iter, qrs);
 }

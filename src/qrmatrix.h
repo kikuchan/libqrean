@@ -74,7 +74,7 @@ void qrmatrix_set_format_info(qrmatrix_t *qr, qrformat_t fi);
 
 int qrmatrix_fix_errors(qrmatrix_t *qr);
 
-uint8_t qrmatrix_score(qrmatrix_t *qr);
+unsigned int qrmatrix_score(qrmatrix_t *qr);
 
 void qrmatrix_dump(qrmatrix_t *qr, int padding);
 

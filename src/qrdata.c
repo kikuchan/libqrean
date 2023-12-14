@@ -7,7 +7,7 @@
 
 qrdata_t create_qrdata_for(qrstream_t *qrs) {
 	qrdata_t data = {
-		.bs = qrstream_read_bitstream_for_data(qrs),
+		.bs = qrstream_get_bitstream_for_data(qrs),
 		.qrs = qrs,
 	};
 	return data;

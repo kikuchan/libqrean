@@ -51,9 +51,9 @@ qrstream_t *new_qrstream_for_string(qr_version_t version, qr_errorlevel_t level,
 void qrstream_free(qrstream_t *qrs);
 #endif
 
-bitstream_t qrstream_read_bitstream(qrstream_t *qrs);
-bitstream_t qrstream_read_bitstream_for_data(qrstream_t *qrs);
-bitstream_t qrstream_read_bitstream_for_error(qrstream_t *qrs);
+bitstream_t qrstream_get_bitstream(qrstream_t *qrs);
+bitstream_t qrstream_get_bitstream_for_data(qrstream_t *qrs);
+bitstream_t qrstream_get_bitstream_for_error(qrstream_t *qrs);
 
 void qrstream_set_error_words(qrstream_t *qrs);
 int qrstream_fix_errors(qrstream_t *qrs);

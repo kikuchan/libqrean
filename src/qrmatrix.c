@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -437,13 +438,13 @@ void qrmatrix_write_alignment_pattern(qrmatrix_t *qr) {
 
 bitpos_t qrmatrix_write_data(qrmatrix_t *qr, qrstream_t *qrs) {
 	bitstream_t bs = qrmatrix_create_bitstream_for_composed_data(qr);
-	bitstream_t src = qrstream_read_bitstream(qrs);
+	bitstream_t src = qrstream_get_bitstream(qrs);
 	return bitstream_copy(&bs, &src, 0, 0);
 }
 
 bitpos_t qrmatrix_read_data(qrmatrix_t *qr, qrstream_t *qrs) {
 	bitstream_t bs = qrmatrix_create_bitstream_for_composed_data(qr);
-	bitstream_t dst = qrstream_read_bitstream(qrs);
+	bitstream_t dst = qrstream_get_bitstream(qrs);
 	return bitstream_copy(&dst, &bs, 0, 0);
 }
 
@@ -455,25 +456,83 @@ void qrmatrix_write_function_patterns(qrmatrix_t *qr) {
 	qrmatrix_write_version_info(qr);
 }
 
-bitpos_t qrmatrix_write_all(qrmatrix_t *qr, qrstream_t *qrs) {
-	qrmatrix_write_function_patterns(qr);
-	return qrmatrix_write_data(qr, qrs);
-}
+static bit_t check_11311x(uint_fast8_t runlength[]) {
+	if (!runlength[0]) return 0;
 
-// TODO:
-uint8_t qrmatrix_score(qrmatrix_t *qrm) {
+	if (runlength[0] != runlength[1]) return 0;
+	if (runlength[3] != runlength[4]) return 0;
+	if (runlength[0] != runlength[3]) return 0;
+	if (runlength[0] * 3 != runlength[2]) return 0;
+	if (runlength[0] * 4 > runlength[5]) return 0;
+
 	return 1;
 }
 
-static qr_maskpattern_t auto_select_maskpattern(qrmatrix_t *qrm, qrstream_t *qrs) {
-	uint8_t min_score = 255;
+unsigned int qrmatrix_score(qrmatrix_t *qrm) {
+	const int N_1 = 3;
+	const int N_2 = 3;
+	const int N_3 = 40;
+	const int N_4 = 10;
+	size_t score = 0;
+
+	int dark_modules = 0;
+	for (bitpos_t y = 0; y < qrm->symbol_size; y++) {
+		for (int dir = 0; dir < 2; dir++) {
+			bit_t last_v = 2; // XXX:
+			uint_fast8_t runlength[6] = {};
+
+			bit_t v;
+			for (bitpos_t x = 0; x < qrm->symbol_size; x++) {
+				v = qrmatrix_read_pixel(qrm, dir ? y : x, dir ? x : y);
+				if (last_v == v) {
+					runlength[5]++;
+				} else {
+					if (runlength[5] >= 5) score += runlength[5] - 5 + N_1;
+					if (!last_v && check_11311x(runlength)) score += N_3;
+
+					for (int i = 0; i < 5; i++) runlength[i] = runlength[i + 1];
+					runlength[5] = 1;
+					last_v = v;
+				}
+
+				if (dir) continue;
+
+				if (v) dark_modules++;
+
+				int a[4] = {
+					qrmatrix_read_pixel(qrm, x    , y    ),
+					qrmatrix_read_pixel(qrm, x + 1, y    ),
+					qrmatrix_read_pixel(qrm, x    , y + 1),
+					qrmatrix_read_pixel(qrm, x + 1, y + 1),
+				};
+				if (x + 1 < qrm->symbol_size && y + 1 < qrm->symbol_size && a[0] == a[1] && a[1] == a[2] && a[2] == a[3]) {
+					score += N_2;
+				}
+			}
+			if (runlength[5] >= 5) score += runlength[5] - 5 + N_1;
+			if (!last_v && check_11311x(runlength)) score += N_3;
+		}
+	}
+
+	int ratio = dark_modules * 100 / qrm->symbol_size / qrm->symbol_size;
+	if (ratio < 50) {
+		score += (50 - ratio) / 5 * N_4;
+	} else {
+		score += (ratio - 50) / 5 * N_4;
+	}
+
+	return score;
+}
+
+static qr_maskpattern_t select_maskpattern(qrmatrix_t *qrm, qrstream_t *qrs) {
+	unsigned int min_score = UINT_MAX;
 	uint8_t mask = qrm->mask;
 
 	if (mask == QR_MASKPATTERN_AUTO) {
 		for (uint_fast8_t m = QR_MASKPATTERN_0; m <= QR_MASKPATTERN_7; m++) {
 			qrmatrix_set_maskpattern(qrm, m);
 			qrmatrix_write_all(qrm, qrs);
-			uint8_t score = qrmatrix_score(qrm);
+			unsigned int score = qrmatrix_score(qrm);
 			if (min_score > score) {
 				min_score = score;
 				mask = m;
@@ -484,11 +543,19 @@ static qr_maskpattern_t auto_select_maskpattern(qrmatrix_t *qrm, qrstream_t *qrs
 	return mask;
 }
 
+bitpos_t qrmatrix_write_all(qrmatrix_t *qrm, qrstream_t *qrs) {
+	if (qrm->mask == QR_MASKPATTERN_AUTO) {
+		qrmatrix_set_maskpattern(qrm, select_maskpattern(qrm, qrs));
+	}
+
+	qrmatrix_set_version(qrm, qrs->version);
+	qrmatrix_write_function_patterns(qrm);
+	return qrmatrix_write_data(qrm, qrs);
+}
+
 bitpos_t qrmatrix_write_string(qrmatrix_t *qrm, const char *src) {
 	qrstream_t qrs = create_qrstream_for_string(qrm->version, qrm->level, src);
-	qrmatrix_set_version(qrm, qrs.version);
 
-	qrmatrix_set_maskpattern(qrm, auto_select_maskpattern(qrm, &qrs));
 	bitpos_t ret = qrmatrix_write_all(qrm, &qrs);
 
 	qrstream_destroy(&qrs);
@@ -502,9 +569,7 @@ qrmatrix_t *new_qrmatrix_for_string(qr_version_t version, qr_errorlevel_t level,
 	qrmatrix_t *qrm = new_qrmatrix();
 
 	qrstream_t *qrs = new_qrstream_for_string(version, level, src);
-	qrmatrix_set_version(qrm, qrs->version);
 
-	qrmatrix_set_maskpattern(qrm, auto_select_maskpattern(qrm, qrs));
 	qrmatrix_write_all(qrm, qrs);
 
 	qrstream_free(qrs);
@@ -518,9 +583,7 @@ qrmatrix_t create_qrmatrix_for_string(qr_version_t version, qr_errorlevel_t leve
 	qrmatrix_t qrm = create_qrmatrix();
 
 	qrstream_t qrs = create_qrstream_for_string(version, level, src);
-	qrmatrix_set_version(&qrm, qrs.version);
 
-	qrmatrix_set_maskpattern(&qrm, auto_select_maskpattern(&qrm, &qrs));
 	qrmatrix_write_all(&qrm, &qrs);
 
 	qrstream_destroy(&qrs);
