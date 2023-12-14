@@ -73,7 +73,12 @@ void qrmatrix_set_format_info(qrmatrix_t *qr, qrformat_t fi);
 // --------------------------------------
 
 int qrmatrix_fix_errors(qrmatrix_t *qr);
+
+uint8_t qrmatrix_score(qrmatrix_t *qr);
+
 void qrmatrix_dump(qrmatrix_t *qr, int padding);
+
+// --------------------------------------
 
 size_t qrmatrix_write_string(qrmatrix_t *qr, const char *src);
 size_t qrmatrix_read_string(qrmatrix_t *qr, char *buffer, size_t len);

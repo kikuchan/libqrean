@@ -80,12 +80,10 @@ void qrmatrix_set_version(qrmatrix_t *qr, qr_version_t version) {
 }
 
 void qrmatrix_set_maskpattern(qrmatrix_t *qr, qr_maskpattern_t mask) {
-	assert(QR_MASKPATTERN_0 <= mask && mask <= QR_MASKPATTERN_7);
 	qr->mask = mask;
 }
 
 void qrmatrix_set_errorlevel(qrmatrix_t *qr, qr_errorlevel_t level) {
-	assert(QR_ERRORLEVEL_L <= level && level <= QR_ERRORLEVEL_H);
 	qr->level = level;
 }
 
@@ -462,11 +460,35 @@ bitpos_t qrmatrix_write_all(qrmatrix_t *qr, qrstream_t *qrs) {
 	return qrmatrix_write_data(qr, qrs);
 }
 
+// TODO:
+uint8_t qrmatrix_score(qrmatrix_t *qrm) {
+	return 1;
+}
+
+static qr_maskpattern_t auto_select_maskpattern(qrmatrix_t *qrm, qrstream_t *qrs) {
+	uint8_t min_score = 255;
+	uint8_t mask = qrm->mask;
+
+	if (mask == QR_MASKPATTERN_AUTO) {
+		for (uint_fast8_t m = QR_MASKPATTERN_0; m <= QR_MASKPATTERN_7; m++) {
+			qrmatrix_set_maskpattern(qrm, m);
+			qrmatrix_write_all(qrm, qrs);
+			uint8_t score = qrmatrix_score(qrm);
+			if (min_score > score) {
+				min_score = score;
+				mask = m;
+			}
+		}
+	}
+
+	return mask;
+}
+
 bitpos_t qrmatrix_write_string(qrmatrix_t *qrm, const char *src) {
 	qrstream_t qrs = create_qrstream_for_string(qrm->version, qrm->level, src);
 	qrmatrix_set_version(qrm, qrs.version);
 
-	qrmatrix_set_maskpattern(qrm, QR_MASKPATTERN_0); // TODO:
+	qrmatrix_set_maskpattern(qrm, auto_select_maskpattern(qrm, &qrs));
 	bitpos_t ret = qrmatrix_write_all(qrm, &qrs);
 
 	qrstream_destroy(&qrs);
@@ -482,7 +504,7 @@ qrmatrix_t *new_qrmatrix_for_string(qr_version_t version, qr_errorlevel_t level,
 	qrstream_t *qrs = new_qrstream_for_string(version, level, src);
 	qrmatrix_set_version(qrm, qrs->version);
 
-	qrmatrix_set_maskpattern(qrm, QR_MASKPATTERN_0); // TODO:
+	qrmatrix_set_maskpattern(qrm, auto_select_maskpattern(qrm, qrs));
 	qrmatrix_write_all(qrm, qrs);
 
 	qrstream_free(qrs);
@@ -498,7 +520,7 @@ qrmatrix_t create_qrmatrix_for_string(qr_version_t version, qr_errorlevel_t leve
 	qrstream_t qrs = create_qrstream_for_string(version, level, src);
 	qrmatrix_set_version(&qrm, qrs.version);
 
-	qrmatrix_set_maskpattern(&qrm, QR_MASKPATTERN_0); // TODO:
+	qrmatrix_set_maskpattern(&qrm, auto_select_maskpattern(&qrm, &qrs));
 	qrmatrix_write_all(&qrm, &qrs);
 
 	qrstream_destroy(&qrs);
