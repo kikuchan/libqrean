@@ -1,5 +1,5 @@
-#include "qrtypes.h"
 #include "bitstream.h"
+#include "qrtypes.h"
 
 typedef struct {
 	bitstream_t bs;

@@ -134,8 +134,9 @@ bit_t qrmatrix_read_bit_at(bitstream_t *bs, bitpos_t pos, void *opaque) {
 void qrmatrix_write_pixel(qrmatrix_t *qr, int x, int y, bit_t v) {
 	if (x < 0) return;
 	if (y < 0) return;
-	if (x >= QR_BUFFER_SIDE_LENGTH) return;
-	if (y >= QR_BUFFER_SIDE_LENGTH) return;
+	int side = QR_VERSION_1 <= qr->version && qr->version <= QR_VERSION_40 ? SYMBOL_SIZE_FOR(qr->version) : QR_BUFFER_SIDE_LENGTH;
+	if (x >= side) return;
+	if (y >= side) return;
 
 	bitpos_t pos = QR_XY_TO_BITPOS(qr, x, y);
 	qrmatrix_write_bit_at(NULL, pos, qr, v);
@@ -144,8 +145,9 @@ void qrmatrix_write_pixel(qrmatrix_t *qr, int x, int y, bit_t v) {
 bit_t qrmatrix_read_pixel(qrmatrix_t *qr, int x, int y) {
 	if (x < 0) return 0;
 	if (y < 0) return 0;
-	if (x >= QR_BUFFER_SIDE_LENGTH) return 0;
-	if (y >= QR_BUFFER_SIDE_LENGTH) return 0;
+	int side = QR_VERSION_1 <= qr->version && qr->version <= QR_VERSION_40 ? SYMBOL_SIZE_FOR(qr->version) : QR_BUFFER_SIDE_LENGTH;
+	if (x >= side) return 0;
+	if (y >= side) return 0;
 
 	bitpos_t pos = QR_XY_TO_BITPOS(qr, x, y);
 	return qrmatrix_read_bit_at(NULL, pos, qr);
@@ -493,7 +495,8 @@ unsigned int qrmatrix_score(qrmatrix_t *qrm) {
 					if (runlength[5] >= 5) score += runlength[5] - 5 + N_1;
 					if (!last_v && check_11311x(runlength)) score += N_3;
 
-					for (int i = 0; i < 5; i++) runlength[i] = runlength[i + 1];
+					for (int i = 0; i < 5; i++)
+						runlength[i] = runlength[i + 1];
 					runlength[5] = 1;
 					last_v = v;
 				}
@@ -503,9 +506,9 @@ unsigned int qrmatrix_score(qrmatrix_t *qrm) {
 				if (v) dark_modules++;
 
 				int a[4] = {
-					qrmatrix_read_pixel(qrm, x    , y    ),
-					qrmatrix_read_pixel(qrm, x + 1, y    ),
-					qrmatrix_read_pixel(qrm, x    , y + 1),
+					qrmatrix_read_pixel(qrm, x, y),
+					qrmatrix_read_pixel(qrm, x + 1, y),
+					qrmatrix_read_pixel(qrm, x, y + 1),
 					qrmatrix_read_pixel(qrm, x + 1, y + 1),
 				};
 				if (x + 1 < qrm->symbol_size && y + 1 < qrm->symbol_size && a[0] == a[1] && a[1] == a[2] && a[2] == a[3]) {
@@ -554,8 +557,8 @@ bitpos_t qrmatrix_write_all(qrmatrix_t *qrm, qrpayload_t *qrp) {
 	return qrmatrix_write_data(qrm, qrp);
 }
 
-static bitpos_t qrmatrix_try_write_string_with_writer(qrmatrix_t *qrm, qr_version_t version, const char *src, size_t len, qrdata_writer_t writer)
-{
+static bitpos_t qrmatrix_try_write_string_with_writer(qrmatrix_t *qrm, qr_version_t version, const char *src, size_t len,
+                                                      qrdata_writer_t writer) {
 	qrpayload_t qrp = {};
 	qrpayload_init(&qrp, version, qrm->level);
 
