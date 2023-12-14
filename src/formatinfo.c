@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdint.h>
 
 #include "formatinfo.h"
@@ -10,6 +11,9 @@ static const uint16_t bch[] = {
 };
 
 formatinfo_t create_formatinfo(qr_errorlevel_t level, qr_maskpattern_t mask) {
+	assert(QR_ERRORLEVEL_L <= level && level <= QR_ERRORLEVEL_H);
+	assert(QR_MASKPATTERN_0 <= mask && mask <= QR_MASKPATTERN_7);
+
 	formatinfo_t fi;
 	fi.value = bch[(level * 8) | mask];
 	fi.mask = mask;
@@ -17,6 +21,7 @@ formatinfo_t create_formatinfo(qr_errorlevel_t level, qr_maskpattern_t mask) {
 	return fi;
 }
 
+#include <stdio.h>
 formatinfo_t parse_formatinfo(uint16_t value) {
 	for (int i = 0; i < 8 * 4; i++) {
 		if (bch[i] == value) {

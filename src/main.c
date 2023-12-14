@@ -16,7 +16,6 @@ bit_t write_pixel(qrmatrix_t *qr, bitpos_t x, bitpos_t y, bitpos_t idx, bit_t v)
 	    printf("P5\n%d %d\n255\n", qr->symbol_size, qr->symbol_size);
 	    fwrite(buffer, 1, len, stdout);
 	*/
-	printf("%ld %ld\n", x, y);
 	return 0;
 }
 
@@ -26,14 +25,19 @@ bit_t read_pixel(qrmatrix_t *qr, bitpos_t x, bitpos_t y, bitpos_t idx) {
 
 int main() {
 	qrmatrix_t qr = create_qrmatrix();
-	qrmatrix_set_maskpattern(&qr, QR_MASKPATTERN_0);
-	qrmatrix_set_version(&qr, QR_VERSION_5);
-	qrmatrix_set_errorlevel(&qr, QR_ERRORLEVEL_L);
+	qrmatrix_set_version(&qr, 3);
+	qrmatrix_set_errorlevel(&qr, 1);
+	qrmatrix_set_maskpattern(&qr, 1);
 
 	// qrmatrix_on_write_pixel(&qr, write_pixel);
 	//	qrmatrix_on_read_pixel(&qr, read_pixel);
 
-	qrmatrix_write_string(&qr, "Hello, world");
+	//qrmatrix_write_string(&qr, "Hello, world, 1234567");
+	qrmatrix_write_string(&qr, "1234567, Hello, world, 1234567");
+
+	char buffer[1024];
+	qrmatrix_read_string(&qr, buffer, sizeof(buffer));
+	printf("recv; %s\n", buffer);
 
 	qrmatrix_dump(&qr, 1);
 

@@ -69,6 +69,8 @@ qr_errorlevel_t qrmatrix_get_errorlevel(qrmatrix_t *qr);
 void qrmatrix_set_version(qrmatrix_t *qr, qr_version_t v);
 qr_version_t qrmatrix_get_version(qrmatrix_t *qr);
 
+void qrmatrix_set_format_info(qrmatrix_t *qr, formatinfo_t fi);
+
 // --------------------------------------
 
 int qrmatrix_fix_errors(qrmatrix_t *qr);
@@ -78,8 +80,8 @@ size_t qrmatrix_write_string(qrmatrix_t *qr, const char *src);
 size_t qrmatrix_read_string(qrmatrix_t *qr, char *buffer, size_t len);
 
 // --------------------------------------
-void qrmatrix_write_pixel(qrmatrix_t *qr, int_fast8_t x, int_fast8_t y, bit_t v);
-bit_t qrmatrix_read_pixel(qrmatrix_t *qr, int_fast8_t x, int_fast8_t y);
+void qrmatrix_write_pixel(qrmatrix_t *qr, int x, int y, bit_t v);
+bit_t qrmatrix_read_pixel(qrmatrix_t *qr, int x, int y);
 
 size_t qrmatrix_write_bitmap(qrmatrix_t *qr, const void *src, size_t len, bitpos_t bpp);
 size_t qrmatrix_read_bitmap(qrmatrix_t *qr, void *src, size_t len, bitpos_t bpp);

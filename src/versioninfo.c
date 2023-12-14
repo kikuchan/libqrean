@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdint.h>
 
 #include "versioninfo.h"
@@ -7,6 +8,8 @@ static const uint32_t bch[40] = {0x07c94, 0x085bc, 0x09a99, 0x0a4d3, 0x0bbf6, 0x
                                  0x1f250, 0x209d5, 0x216fd, 0x228ba, 0x2379f, 0x24b0b, 0x2542e, 0x26a64, 0x27541, 0x28c69};
 
 versioninfo_t create_versioninfo(qr_version_t version) {
+	assert(QR_VERSION_1 <= version && version <= QR_VERSION_40);
+
 	versioninfo_t vi;
 	vi.version = version;
 	vi.value = version >= 7 ? bch[version - 7] : 0xffffffff;

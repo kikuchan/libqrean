@@ -120,6 +120,7 @@ static bitpos_t qrstream_available_bits(uint_fast8_t version) {
 
 void qrstream_init(qrstream_t *qrs, qr_version_t version, qr_errorlevel_t level) {
 	assert(QR_VERSION_1 <= version && version <= QR_VERSION_40);
+	assert(QR_ERRORLEVEL_L <= level && level <= QR_ERRORLEVEL_H);
 
 	qrs->version = version;
 	qrs->level = level;
