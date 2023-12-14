@@ -42,3 +42,15 @@ I love QR and Barcodes.
 It doesn't rely on `malloc()` for portability. It uses a stack instead of a heap, but you can still use `new_qrmatrix` for example if you prefer.
 
 You can also configure a callback to draw a pixel directly on a screen for example.
+
+# Supported codes
+
+| type                | encode | decode | detection
+|---------------------|--------|--------|-----------
+| QR                  | ✓      | ✓      | - (not yet)
+| UPCA / EAN13 / EAN8 | ✓      | -      | -
+| CODE39              | ✓      | -      | -
+| CODE93              | ✓      | -      | -
+| NW7                 | ✓      | -      | -
+| ITF                 | ✓      | -      | -
+
