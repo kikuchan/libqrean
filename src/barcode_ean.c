@@ -31,15 +31,7 @@ static int calc_checkdigit(const char *src, int len) {
 	return 10 - result;
 }
 
-void barcode_ean13_init(barcode_t *code, barcode_type_t type) {
-	barcode_buffer_init(code, 0);
-}
-
-void barcode_ean13_deinit(barcode_t *code) {
-	barcode_buffer_deinit(code);
-}
-
-bitpos_t barcode_ean13_write_string(barcode_t *code, const char *src) {
+bitpos_t barcode_write_ean13_string(barcode_t *code, const char *src) {
 	int tfd = 0;
 	int len = strlen(src);
 	int checkdigit;

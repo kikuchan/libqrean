@@ -67,15 +67,7 @@ static uint16_t symbol[] = {
 
 static const char *symbol_lookup = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-. $/+%";
 
-void barcode_code93_init(barcode_t *code) {
-	barcode_buffer_init(code, 0);
-}
-
-void barcode_code93_deinit(barcode_t *code) {
-	barcode_buffer_deinit(code);
-}
-
-bitpos_t barcode_code93_write_string(barcode_t *code, const char *src) {
+bitpos_t barcode_write_code93_string(barcode_t *code, const char *src) {
 	int len = strlen(src);
 
 	bitstream_t bs = barcode_create_bitstream(code, NULL);

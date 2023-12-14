@@ -10,15 +10,7 @@ static const uint8_t symbol[] = {
 	0b00110, 0b10001, 0b01001, 0b11000, 0b00101, 0b10100, 0b01100, 0b00011, 0b10010, 0b01010,
 };
 
-void barcode_itf_init(barcode_t *code) {
-	barcode_buffer_init(code, 0);
-}
-
-void barcode_itf_deinit(barcode_t *code) {
-	barcode_buffer_deinit(code);
-}
-
-bitpos_t barcode_itf_write_string(barcode_t *code, const char *src) {
+bitpos_t barcode_write_itf_string(barcode_t *code, const char *src) {
 	int len = strlen(src);
 
 	if (len % 2 != 0) {

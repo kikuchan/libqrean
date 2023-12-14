@@ -4,76 +4,7 @@
 #include "barcode.h"
 #include "bitstream.h"
 
-void barcode_init(barcode_t *code, barcode_type_t type) {
-	switch (type) {
-	case BARCODE_TYPE_UPCA:
-	case BARCODE_TYPE_EAN13:
-	case BARCODE_TYPE_EAN8:
-		barcode_ean13_init(code, type);
-		break;
-
-	case BARCODE_TYPE_CODE39:
-		barcode_code39_init(code);
-		break;
-
-	case BARCODE_TYPE_CODE93:
-		barcode_code93_init(code);
-		break;
-
-	case BARCODE_TYPE_NW7:
-		barcode_nw7_init(code);
-		break;
-
-	case BARCODE_TYPE_ITF:
-		barcode_itf_init(code);
-		break;
-	}
-}
-
-void barcode_deinit(barcode_t *code) {
-	switch (code->type) {
-	case BARCODE_TYPE_UPCA:
-	case BARCODE_TYPE_EAN13:
-	case BARCODE_TYPE_EAN8:
-		return barcode_ean13_deinit(code);
-
-	case BARCODE_TYPE_CODE39:
-		return barcode_code39_deinit(code);
-
-	case BARCODE_TYPE_CODE93:
-		return barcode_code93_deinit(code);
-
-	case BARCODE_TYPE_NW7:
-		return barcode_nw7_deinit(code);
-
-	case BARCODE_TYPE_ITF:
-		return barcode_itf_deinit(code);
-	}
-}
-
-bitpos_t barcode_write_string(barcode_t *code, const char *src) {
-	switch (code->type) {
-	case BARCODE_TYPE_UPCA:
-	case BARCODE_TYPE_EAN13:
-	case BARCODE_TYPE_EAN8:
-		return barcode_ean13_write_string(code, src);
-
-	case BARCODE_TYPE_CODE39:
-		return barcode_code39_write_string(code, src);
-
-	case BARCODE_TYPE_CODE93:
-		return barcode_code93_write_string(code, src);
-
-	case BARCODE_TYPE_NW7:
-		return barcode_nw7_write_string(code, src);
-
-	case BARCODE_TYPE_ITF:
-		return barcode_itf_write_string(code, src);
-	}
-	return 0;
-}
-
-void barcode_buffer_init(barcode_t *code, bitpos_t bits) {
+void barcode_init(barcode_t *code, bitpos_t bits) {
 	code->size = bits && bits < MAX_BARCODE_BITS ? bits : MAX_BARCODE_BITS;
 #ifndef NO_BARCODE_BUFFER
 #if defined(USE_MALLOC_BUFFER) && !defined(NO_MALLOC)
@@ -83,7 +14,7 @@ void barcode_buffer_init(barcode_t *code, bitpos_t bits) {
 #endif
 }
 
-void barcode_buffer_deinit(barcode_t *code) {
+void barcode_deinit(barcode_t *code) {
 #ifndef NO_BARCODE_BUFFER
 #ifdef USE_MALLOC_BUFFER
 	free(code->buffer);
@@ -91,9 +22,32 @@ void barcode_buffer_deinit(barcode_t *code) {
 #endif
 }
 
-barcode_t create_barcode(barcode_type_t type) {
+
+bitpos_t barcode_write_string(barcode_t *code, const char *src) {
+	switch (code->type) {
+	case BARCODE_TYPE_UPCA:
+	case BARCODE_TYPE_EAN13:
+	case BARCODE_TYPE_EAN8:
+		return barcode_write_ean13_string(code, src);
+
+	case BARCODE_TYPE_CODE39:
+		return barcode_write_code39_string(code, src);
+
+	case BARCODE_TYPE_CODE93:
+		return barcode_write_code93_string(code, src);
+
+	case BARCODE_TYPE_NW7:
+		return barcode_write_nw7_string(code, src);
+
+	case BARCODE_TYPE_ITF:
+		return barcode_write_itf_string(code, src);
+	}
+	return 0;
+}
+
+barcode_t create_barcode() {
 	barcode_t code = {};
-	barcode_init(&code, type);
+	barcode_init(&code, 0);
 	return code;
 }
 
@@ -101,11 +55,11 @@ void barcode_destroy(barcode_t *code) {
 	barcode_deinit(code);
 }
 
-barcode_t *new_barcode(barcode_type_t type) {
+barcode_t *new_barcode() {
 #ifndef NO_MALLOC
 	barcode_t *code = (barcode_t *)malloc(sizeof(barcode_t));
 	if (!code) return NULL;
-	barcode_init(code, type);
+	barcode_init(code, 0);
 	return code;
 #else
 	return NULL;
@@ -121,14 +75,14 @@ void barcode_free(barcode_t *code) {
 
 barcode_t create_barcode_with_string(barcode_type_t type, const char *src) {
 	barcode_t code = {};
-	barcode_init(&code, type);
+	barcode_init(&code, 0);
 	barcode_write_string(&code, src);
 	return code;
 }
 
 barcode_t *new_barcode_with_string(barcode_type_t type, const char *src) {
 #ifndef NO_MALLOC
-	barcode_t *code = new_barcode(type);
+	barcode_t *code = new_barcode();
 	if (code) barcode_write_string(code, src);
 	return code;
 #else

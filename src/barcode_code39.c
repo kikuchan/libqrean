@@ -56,15 +56,7 @@ static uint16_t symbol[] = {
 
 static const char *symbol_lookup = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ-. $/+%";
 
-void barcode_code39_init(barcode_t *code) {
-	barcode_buffer_init(code, 0);
-}
-
-void barcode_code39_deinit(barcode_t *code) {
-	barcode_buffer_deinit(code);
-}
-
-bitpos_t barcode_code39_write_string(barcode_t *code, const char *src) {
+bitpos_t barcode_write_code39_string(barcode_t *code, const char *src) {
 	bitstream_t bs = barcode_create_bitstream(code, NULL);
 
 	bitstream_write_bits(&bs, 0, 10);

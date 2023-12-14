@@ -35,15 +35,7 @@ static const struct {
 
 static const char *symbol_lookup = "0123456789-$./:+";
 
-void barcode_nw7_init(barcode_t *code) {
-	barcode_buffer_init(code, 0);
-}
-
-void barcode_nw7_deinit(barcode_t *code) {
-	barcode_buffer_deinit(code);
-}
-
-bitpos_t barcode_nw7_write_string(barcode_t *code, const char *src) {
+bitpos_t barcode_write_nw7_string(barcode_t *code, const char *src) {
 	char tmp[strlen(src) + 1];
 	char *p = tmp;
 	int start_code, stop_code;
