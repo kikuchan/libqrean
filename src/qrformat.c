@@ -1,7 +1,8 @@
 #include <assert.h>
 #include <stdint.h>
 
-#include "formatinfo.h"
+#include "qrformat.h"
+#include "galois.h"
 
 static const uint16_t bch[] = {
 	0x23D6, 0x26E1, 0x29B8, 0x2C8F, 0x323D, 0x370A, 0x3853, 0x3D64, // L
@@ -10,33 +11,31 @@ static const uint16_t bch[] = {
 	0x429B, 0x47AC, 0x48F5, 0x4DC2, 0x5370, 0x5647, 0x591E, 0x5C29, // H
 };
 
-formatinfo_t create_formatinfo(qr_errorlevel_t level, qr_maskpattern_t mask) {
+qrformat_t qrformat_for(qr_errorlevel_t level, qr_maskpattern_t mask) {
 	assert(QR_ERRORLEVEL_L <= level && level <= QR_ERRORLEVEL_H);
 	assert(QR_MASKPATTERN_0 <= mask && mask <= QR_MASKPATTERN_7);
 
-	formatinfo_t fi;
+	qrformat_t fi;
 	fi.value = bch[(level * 8) | mask];
 	fi.mask = mask;
 	fi.level = level;
 	return fi;
 }
 
-#include <stdio.h>
-formatinfo_t parse_formatinfo(uint16_t value) {
+qrformat_t qrformat_from(uint16_t value) {
+	qrformat_t fi = {
+		.mask = QR_MASKPATTERN_INVALID,
+		.level = QR_ERRORLEVEL_INVALID,
+		.value = value,
+	};
+
 	for (int i = 0; i < 8 * 4; i++) {
-		if (bch[i] == value) {
-			formatinfo_t fi;
-			// XXX:
-			fi.mask = (qr_maskpattern_t)(i % 8);
-			fi.level = (qr_errorlevel_t)(i / 8);
+		if (hamming_distance(bch[i], value) <= 3) {
+			fi.mask = (qr_maskpattern_t)(i % 8 + QR_MASKPATTERN_0);
+			fi.level = (qr_errorlevel_t)(i / 8 + QR_ERRORLEVEL_L);
 			fi.value = bch[(fi.level * 8) | fi.mask];
 			return fi;
 		}
 	}
-
-	formatinfo_t fi;
-	fi.mask = QR_MASKPATTERN_INVALID;
-	fi.level = QR_ERRORLEVEL_INVALID;
-	fi.value = value;
 	return fi;
 }

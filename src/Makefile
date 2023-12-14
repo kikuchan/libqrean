@@ -1,8 +1,8 @@
 OBJS += hexdump.o
 OBJS += bitstream.o
 OBJS += qrmatrix.o
-OBJS += formatinfo.o
-OBJS += versioninfo.o
+OBJS += qrformat.o
+OBJS += qrversion.o
 OBJS += qrstream.o
 OBJS += galois.o
 OBJS += qrdata.o
@@ -33,13 +33,10 @@ CFLAGS += -Wall # -Werror
 #CFLAGS += -D NO_QRMATRIX_BUFFER
 #CFLAGS += -D NO_BARCODE_BUFFER
 
-all: size decode
+all: size
 
 main: $(OBJS) Makefile main.o
 	$(CC) $(CFLAGS) -o main $(OBJS) main.o
-
-decode: $(OBJS) Makefile decode.o pngle/*.o
-	$(CC) $(CFLAGS) -o decode $(OBJS) decode.o pngle/pngle.c pngle/miniz.c -lm
 
 libqrean.a: ${OBJS}
 	${AR} rcs libqrean.a $(OBJS)

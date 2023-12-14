@@ -41,3 +41,5 @@ int gf2_poly_is_zero(const gf2_poly_t *poly);
 void gf2_solve_key_equation(gf2_poly_t *sigma, gf2_poly_t *omega, const gf2_poly_t *a, const gf2_poly_t *b);
 
 void gf2_poly_print(const gf2_poly_t *poly);
+
+uint_fast8_t hamming_distance(uint32_t a, uint32_t b);

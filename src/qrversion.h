@@ -5,10 +5,11 @@
 typedef struct {
 	qr_version_t version;
 	uint32_t value;
-} versioninfo_t;
+} qrversion_t;
 
-#define VERSIONINFO_SIZE (18)
+#define QR_VERSIONINFO_SIZE (18)
 
-versioninfo_t create_versioninfo(qr_version_t version);
+qrversion_t qrversion_for(qr_version_t version);
+qrversion_t qrversion_from(uint32_t version);
 
 #endif /* __QR_VERSIONINFO_H__ */

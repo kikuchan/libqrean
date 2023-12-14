@@ -6,11 +6,11 @@
 
 #include "bitstream.h"
 #include "debug.h"
-#include "formatinfo.h"
+#include "qrformat.h"
 #include "qrdata.h"
 #include "qrmatrix.h"
 #include "qrstream.h"
-#include "versioninfo.h"
+#include "qrversion.h"
 
 #define QR_XY_TO_BITPOS(qr, x, y) ((y) * QR_BUFFER_SIDE_LENGTH + (x))
 #define QR_XYV_TO_BITPOS(qr, x, y, v)                                             \
@@ -75,8 +75,8 @@ void qrmatrix_free(qrmatrix_t *qr) {
 void qrmatrix_set_version(qrmatrix_t *qr, qr_version_t version) {
 	assert(QR_VERSION_1 <= version && version <= QR_VERSION_40);
 
-	qr->symbol_size = SYMBOL_SIZE_FOR(version);
 	qr->version = version;
+	qr->symbol_size = SYMBOL_SIZE_FOR(version);
 }
 
 void qrmatrix_set_maskpattern(qrmatrix_t *qr, qr_maskpattern_t mask) {
@@ -181,7 +181,7 @@ static bitpos_t version_info_iter(bitstream_t *bs, bitpos_t i, void *opaque) {
 	qrmatrix_t *qr = (qrmatrix_t *)opaque;
 	if (qr->version < 7) return BITPOS_END;
 
-	uint_fast8_t n = i / VERSIONINFO_SIZE;
+	uint_fast8_t n = i / QR_VERSIONINFO_SIZE;
 	if (n >= 2) return BITPOS_END;
 
 	return QR_XYV_TO_BITPOS(qr, n == 0 ? i / 3 % 6 : qr->symbol_size - 11 + i % 3, n == 0 ? qr->symbol_size - 11 + i % 3 : i / 3 % 6, 0);
@@ -196,8 +196,8 @@ static bit_t is_version_info(qrmatrix_t *qr, int_fast8_t x, int_fast8_t y) {
 
 static bitpos_t format_info_iter(bitstream_t *bs, bitpos_t i, void *opaque) {
 	qrmatrix_t *qr = (qrmatrix_t *)opaque;
-	uint_fast8_t n = i / FORMATINFO_SIZE;
-	uint_fast8_t u = i % FORMATINFO_SIZE;
+	uint_fast8_t n = i / QR_FORMATINFO_SIZE;
+	uint_fast8_t u = i % QR_FORMATINFO_SIZE;
 
 	if (n >= 2) return BITPOS_END;
 
@@ -366,43 +366,52 @@ bitstream_t qrmatrix_create_bitstream_for_composed_data(qrmatrix_t *qr) {
 // format info
 void qrmatrix_write_format_info(qrmatrix_t *qr) {
 	bitstream_t bs = qrmatrix_create_bitstream(qr, format_info_iter);
-	formatinfo_t fi = create_formatinfo(qr->level, qr->mask);
+	qrformat_t fi = qrformat_for(qr->level, qr->mask);
 
-	bitstream_write_bits(&bs, fi.value, FORMATINFO_SIZE);
-	bitstream_write_bits(&bs, fi.value, FORMATINFO_SIZE);
+	bitstream_write_bits(&bs, fi.value, QR_FORMATINFO_SIZE);
+	bitstream_write_bits(&bs, fi.value, QR_FORMATINFO_SIZE);
 
 	// XXX: dark module
 	qrmatrix_write_pixel(qr, 8, qr->symbol_size - 8, 1);
 }
 
-formatinfo_t qrmatrix_read_format_info(qrmatrix_t *qr) {
+qrformat_t qrmatrix_read_format_info(qrmatrix_t *qr) {
 	bitstream_t bs = qrmatrix_create_bitstream(qr, format_info_iter);
 
-	formatinfo_t fi1 = parse_formatinfo(bitstream_read_bits(&bs, FORMATINFO_SIZE));
+	qrformat_t fi1 = qrformat_from(bitstream_read_bits(&bs, QR_FORMATINFO_SIZE));
+	qrformat_t fi2 = qrformat_from(bitstream_read_bits(&bs, QR_FORMATINFO_SIZE));
 
-	// TODO: sanity check
-	//formatinfo_t fi2 = parse_formatinfo(bitstream_read_bits(&bs, FORMATINFO_SIZE));
-
-	return fi1;
+	if (fi1.mask != QR_MASKPATTERN_INVALID) return fi1;
+	return fi2;
 }
 
-void qrmatrix_set_format_info(qrmatrix_t *qr, formatinfo_t fi) {
+void qrmatrix_set_format_info(qrmatrix_t *qr, qrformat_t fi) {
 	qr->level = fi.level;
 	qr->mask = fi.mask;
 }
 
-void qrmatrix_set_version_info(qrmatrix_t *qr, versioninfo_t vi) {
-	qr->version = vi.version;
-	qr->symbol_size = SYMBOL_SIZE_FOR(qr->version);
+void qrmatrix_set_version_info(qrmatrix_t *qr, qrversion_t vi) {
+	qrmatrix_set_version(qr, vi.version);
 }
 
 void qrmatrix_write_version_info(qrmatrix_t *qr) {
 	bitstream_t bs = qrmatrix_create_bitstream(qr, version_info_iter);
-	versioninfo_t vi = create_versioninfo(qr->version);
+	qrversion_t vi = qrversion_for(qr->version);
 
-	bitstream_write_bits(&bs, vi.value, VERSIONINFO_SIZE);
-	bitstream_write_bits(&bs, vi.value, VERSIONINFO_SIZE);
+	bitstream_write_bits(&bs, vi.value, QR_VERSIONINFO_SIZE);
+	bitstream_write_bits(&bs, vi.value, QR_VERSIONINFO_SIZE);
 }
+
+qrversion_t qrmatrix_read_version_info(qrmatrix_t *qr) {
+	bitstream_t bs = qrmatrix_create_bitstream(qr, version_info_iter);
+
+	qrversion_t vi1 = qrversion_from(bitstream_read_bits(&bs, QR_VERSIONINFO_SIZE));
+	qrversion_t vi2 = qrversion_from(bitstream_read_bits(&bs, QR_VERSIONINFO_SIZE));
+
+	if (vi1.version != QR_VERSION_INVALID) return vi1;
+	return vi2;
+}
+
 
 void qrmatrix_write_timing_pattern(qrmatrix_t *qr) {
 	const uint8_t timing_pattern_bits[] = {0x55};

@@ -3,8 +3,8 @@
 #include "bitstream.h"
 #include "qrstream.h"
 #include "types.h"
-#include "formatinfo.h"
-#include "versioninfo.h"
+#include "qrformat.h"
+#include "qrversion.h"
 
 #define MAX_QR_VERSION           (40)
 #define SYMBOL_SIZE_FOR(version) (17 + (version)*4)
@@ -69,7 +69,7 @@ qr_errorlevel_t qrmatrix_get_errorlevel(qrmatrix_t *qr);
 void qrmatrix_set_version(qrmatrix_t *qr, qr_version_t v);
 qr_version_t qrmatrix_get_version(qrmatrix_t *qr);
 
-void qrmatrix_set_format_info(qrmatrix_t *qr, formatinfo_t fi);
+void qrmatrix_set_format_info(qrmatrix_t *qr, qrformat_t fi);
 
 // --------------------------------------
 
@@ -91,10 +91,10 @@ void qrmatrix_write_alignment_pattern(qrmatrix_t *qr);
 void qrmatrix_write_timing_pattern(qrmatrix_t *qr);
 
 void qrmatrix_write_format_info(qrmatrix_t *qr);
-formatinfo_t qrmatrix_read_format_info(qrmatrix_t *qr);
+qrformat_t qrmatrix_read_format_info(qrmatrix_t *qr);
 
 void qrmatrix_write_version_info(qrmatrix_t *qr);
-qr_version_t qrmatrix_read_version_info(qrmatrix_t *qr);
+qrversion_t qrmatrix_read_version_info(qrmatrix_t *qr);
 
 bitpos_t qrmatrix_write_data(qrmatrix_t *qr, qrstream_t *qrs);
 bitpos_t qrmatrix_read_data(qrmatrix_t *qr, qrstream_t *qrs);
