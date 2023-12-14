@@ -10,7 +10,7 @@
 #include "qrdata.h"
 #include "qrformat.h"
 #include "qrmatrix.h"
-#include "qrstream.h"
+#include "qrpayload.h"
 #include "qrversion.h"
 
 #define QR_XY_TO_BITPOS(qr, x, y) ((y)*QR_BUFFER_SIDE_LENGTH + (x))
@@ -439,15 +439,15 @@ void qrmatrix_write_alignment_pattern(qrmatrix_t *qr) {
 	bitstream_write(&alignment_pattern_bs, alignment_pattern_bits, ALIGNMENT_PATTERN_SIZE, 0);
 }
 
-bitpos_t qrmatrix_write_data(qrmatrix_t *qr, qrstream_t *qrs) {
+bitpos_t qrmatrix_write_data(qrmatrix_t *qr, qrpayload_t *qrp) {
 	bitstream_t bs = qrmatrix_create_bitstream_for_composed_data(qr);
-	bitstream_t src = qrstream_get_bitstream(qrs);
+	bitstream_t src = qrpayload_get_bitstream(qrp);
 	return bitstream_copy(&bs, &src, 0, 0);
 }
 
-bitpos_t qrmatrix_read_data(qrmatrix_t *qr, qrstream_t *qrs) {
+bitpos_t qrmatrix_read_data(qrmatrix_t *qr, qrpayload_t *qrp) {
 	bitstream_t bs = qrmatrix_create_bitstream_for_composed_data(qr);
-	bitstream_t dst = qrstream_get_bitstream(qrs);
+	bitstream_t dst = qrpayload_get_bitstream(qrp);
 	return bitstream_copy(&dst, &bs, 0, 0);
 }
 
@@ -527,13 +527,13 @@ unsigned int qrmatrix_score(qrmatrix_t *qrm) {
 	return score;
 }
 
-static qr_maskpattern_t select_maskpattern(qrmatrix_t *qrm, qrstream_t *qrs) {
+static qr_maskpattern_t select_maskpattern(qrmatrix_t *qrm, qrpayload_t *qrp) {
 	unsigned int min_score = UINT_MAX;
 	uint8_t mask = qrm->mask;
 
 	for (uint_fast8_t m = QR_MASKPATTERN_0; m <= QR_MASKPATTERN_7; m++) {
 		qrmatrix_set_maskpattern(qrm, m);
-		qrmatrix_write_all(qrm, qrs);
+		qrmatrix_write_all(qrm, qrp);
 		unsigned int score = qrmatrix_score(qrm);
 		if (min_score > score) {
 			min_score = score;
@@ -544,28 +544,28 @@ static qr_maskpattern_t select_maskpattern(qrmatrix_t *qrm, qrstream_t *qrs) {
 	return mask;
 }
 
-bitpos_t qrmatrix_write_all(qrmatrix_t *qrm, qrstream_t *qrs) {
+bitpos_t qrmatrix_write_all(qrmatrix_t *qrm, qrpayload_t *qrp) {
 	if (qrm->mask == QR_MASKPATTERN_AUTO) {
-		qrmatrix_set_maskpattern(qrm, select_maskpattern(qrm, qrs));
+		qrmatrix_set_maskpattern(qrm, select_maskpattern(qrm, qrp));
 	}
 
-	qrmatrix_set_version(qrm, qrs->version);
+	qrmatrix_set_version(qrm, qrp->version);
 	qrmatrix_write_function_patterns(qrm);
-	return qrmatrix_write_data(qrm, qrs);
+	return qrmatrix_write_data(qrm, qrp);
 }
 
 static bitpos_t qrmatrix_try_write_string_with_writer(qrmatrix_t *qrm, qr_version_t version, const char *src, size_t len, qrdata_writer_t writer)
 {
-	qrstream_t qrs = {};
-	qrstream_init(&qrs, version, qrm->level);
+	qrpayload_t qrp = {};
+	qrpayload_init(&qrp, version, qrm->level);
 
-	qrdata_t data = create_qrdata_for(qrstream_get_bitstream_for_data(&qrs), version);
+	qrdata_t data = create_qrdata_for(qrpayload_get_bitstream_for_data(&qrp), version);
 	if (writer(&data, src, len) == len && qrdata_finalize(&data)) {
-		qrstream_set_error_words(&qrs);
+		qrpayload_set_error_words(&qrp);
 
 		qrmatrix_set_version(qrm, version);
-		bitpos_t ret = qrmatrix_write_all(qrm, &qrs);
-		qrstream_deinit(&qrs);
+		bitpos_t ret = qrmatrix_write_all(qrm, &qrp);
+		qrpayload_deinit(&qrp);
 		return ret;
 	}
 	return 0;
@@ -611,16 +611,16 @@ qrmatrix_t create_qrmatrix_for_string(qr_version_t version, qr_errorlevel_t leve
 }
 
 int qrmatrix_fix_errors(qrmatrix_t *qr) {
-	qrstream_t qrs = {};
-	qrstream_init(&qrs, qr->version, qr->level);
-	qrmatrix_read_data(qr, &qrs);
+	qrpayload_t qrp = {};
+	qrpayload_init(&qrp, qr->version, qr->level);
+	qrmatrix_read_data(qr, &qrp);
 
-	int n = qrstream_fix_errors(&qrs);
+	int n = qrpayload_fix_errors(&qrp);
 	if (n > 0) {
-		qrmatrix_write_data(qr, &qrs);
+		qrmatrix_write_data(qr, &qrp);
 	}
 
-	qrstream_deinit(&qrs);
+	qrpayload_deinit(&qrp);
 	return n;
 }
 
@@ -635,16 +635,16 @@ void qrmatrix_on_read_pixel(qrmatrix_t *qr, bit_t (*read_pixel)(qrmatrix_t *qr, 
 #endif
 
 size_t qrmatrix_read_string(qrmatrix_t *qr, char *buffer, size_t size) {
-	qrstream_t qrs = {};
-	qrstream_init(&qrs, qr->version, qr->level);
-	qrmatrix_read_data(qr, &qrs);
+	qrpayload_t qrp = {};
+	qrpayload_init(&qrp, qr->version, qr->level);
+	qrmatrix_read_data(qr, &qrp);
 
-	qrdata_t qrdata = create_qrdata_for(qrstream_get_bitstream_for_data(&qrs), qr->version);
+	qrdata_t qrdata = create_qrdata_for(qrpayload_get_bitstream_for_data(&qrp), qr->version);
 	size_t len = qrdata_parse(&qrdata, buffer, size);
 	if (len >= size) len = size - 1;
 	buffer[len] = 0;
 
-	qrstream_deinit(&qrs);
+	qrpayload_deinit(&qrp);
 
 	return len;
 }

@@ -2,7 +2,7 @@
 
 #include "bitstream.h"
 #include "qrformat.h"
-#include "qrstream.h"
+#include "qrpayload.h"
 #include "qrtypes.h"
 #include "qrversion.h"
 
@@ -106,11 +106,11 @@ qrformat_t qrmatrix_read_format_info(qrmatrix_t *qr);
 void qrmatrix_write_version_info(qrmatrix_t *qr);
 qrversion_t qrmatrix_read_version_info(qrmatrix_t *qr);
 
-bitpos_t qrmatrix_write_data(qrmatrix_t *qr, qrstream_t *qrs);
-bitpos_t qrmatrix_read_data(qrmatrix_t *qr, qrstream_t *qrs);
+bitpos_t qrmatrix_write_data(qrmatrix_t *qr, qrpayload_t *qrp);
+bitpos_t qrmatrix_read_data(qrmatrix_t *qr, qrpayload_t *qrp);
 
 void qrmatrix_write_function_patterns(qrmatrix_t *qr);
-bitpos_t qrmatrix_write_all(qrmatrix_t *qr, qrstream_t *qrs);
+bitpos_t qrmatrix_write_all(qrmatrix_t *qr, qrpayload_t *qrp);
 
 // --------------------------------------
 

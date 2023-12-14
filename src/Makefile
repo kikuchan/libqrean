@@ -4,7 +4,7 @@ OBJS += hexdump.o
 OBJS += qrdata.o
 OBJS += qrformat.o
 OBJS += qrmatrix.o
-OBJS += qrstream.o
+OBJS += qrpayload.o
 OBJS += qrversion.o
 OBJS += reedsolomon.o
 

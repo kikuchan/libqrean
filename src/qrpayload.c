@@ -6,13 +6,13 @@
 #include "debug.h"
 #include "galois.h"
 #include "qrdata.h"
-#include "qrstream.h"
+#include "qrpayload.h"
 #include "reedsolomon.h"
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
-#define QRSTREAM_BUFFER_SIZE(qrs) (((qrs)->total_bits + 7) / 8)
+#define QRSTREAM_BUFFER_SIZE(qrp) (((qrp)->total_bits + 7) / 8)
 
 static const uint8_t QR_ERROR_WORDS_IN_BLOCK[40][4] = {
   //  L,  M,  Q,  H
@@ -103,7 +103,7 @@ static const uint8_t QR_TOTAL_RS_BLOCKS[40][4] = {
 	{25, 49, 68, 81}, // 40
 };
 
-static bitpos_t qrstream_available_bits(uint_fast8_t version) {
+static bitpos_t qrpayload_available_bits(uint_fast8_t version) {
 	bitpos_t symbol_size = 17 + 4 * version;
 
 	bitpos_t finder_pattern = 8 * 8 * 3;
@@ -118,122 +118,122 @@ static bitpos_t qrstream_available_bits(uint_fast8_t version) {
 	return symbol_size * symbol_size - function_bits;
 }
 
-void qrstream_init(qrstream_t *qrs, qr_version_t version, qr_errorlevel_t level) {
+void qrpayload_init(qrpayload_t *qrp, qr_version_t version, qr_errorlevel_t level) {
 	assert(QR_VERSION_1 <= version && version <= QR_VERSION_40);
 	assert(QR_ERRORLEVEL_L <= level && level <= QR_ERRORLEVEL_H);
 
-	qrs->version = version;
-	qrs->level = level;
+	qrp->version = version;
+	qrp->level = level;
 
 	// counts
-	qrs->total_bits = qrstream_available_bits(version);
-	qrs->total_words = qrs->total_bits / 8;
+	qrp->total_bits = qrpayload_available_bits(version);
+	qrp->total_words = qrp->total_bits / 8;
 
 	// refer to the known values
-	qrs->total_blocks = QR_TOTAL_RS_BLOCKS[version - QR_VERSION_1][level];
-	qrs->error_words_in_block = QR_ERROR_WORDS_IN_BLOCK[version - QR_VERSION_1][level];
+	qrp->total_blocks = QR_TOTAL_RS_BLOCKS[version - QR_VERSION_1][level];
+	qrp->error_words_in_block = QR_ERROR_WORDS_IN_BLOCK[version - QR_VERSION_1][level];
 
 	// let's do the simple math
-	qrs->error_words = qrs->error_words_in_block * qrs->total_blocks;
-	qrs->data_words = qrs->total_words - qrs->error_words;
+	qrp->error_words = qrp->error_words_in_block * qrp->total_blocks;
+	qrp->data_words = qrp->total_words - qrp->error_words;
 
-	qrs->large_blocks = qrs->data_words % qrs->total_blocks;
-	qrs->small_blocks = qrs->total_blocks - qrs->large_blocks;
+	qrp->large_blocks = qrp->data_words % qrp->total_blocks;
+	qrp->small_blocks = qrp->total_blocks - qrp->large_blocks;
 
-	qrs->data_words_in_small_block = qrs->data_words / qrs->total_blocks;
-	qrs->data_words_in_large_block = qrs->data_words_in_small_block + 1;
+	qrp->data_words_in_small_block = qrp->data_words / qrp->total_blocks;
+	qrp->data_words_in_large_block = qrp->data_words_in_small_block + 1;
 
-	qrs->error_words_in_block = qrs->error_words / qrs->total_blocks;
+	qrp->error_words_in_block = qrp->error_words / qrp->total_blocks;
 
-	qrs->total_words_in_small_block = qrs->data_words_in_small_block + qrs->error_words_in_block;
-	qrs->total_words_in_large_block = qrs->data_words_in_large_block + qrs->error_words_in_block;
+	qrp->total_words_in_small_block = qrp->data_words_in_small_block + qrp->error_words_in_block;
+	qrp->total_words_in_large_block = qrp->data_words_in_large_block + qrp->error_words_in_block;
 
 #if defined(USE_MALLOC_BUFFER) && !defined(NO_MALLOC)
-	qrs->buffer = (uint8_t *)malloc(QRSTREAM_BUFFER_SIZE(qrs));
+	qrp->buffer = (uint8_t *)malloc(QRSTREAM_BUFFER_SIZE(qrp));
 #endif
-	memset(qrs->buffer, 0, QRSTREAM_BUFFER_SIZE(qrs));
+	memset(qrp->buffer, 0, QRSTREAM_BUFFER_SIZE(qrp));
 }
 
-void qrstream_deinit(qrstream_t *qrs) {
+void qrpayload_deinit(qrpayload_t *qrp) {
 #if defined(USE_MALLOC_BUFFER) && !defined(NO_MALLOC)
-	free(qrs->buffer);
+	free(qrp->buffer);
 #endif
 }
 
-qrstream_t create_qrstream(qr_version_t version, qr_errorlevel_t level) {
-	qrstream_t qrs;
-	qrstream_init(&qrs, version, level);
-	return qrs;
+qrpayload_t create_qrpayload(qr_version_t version, qr_errorlevel_t level) {
+	qrpayload_t qrp;
+	qrpayload_init(&qrp, version, level);
+	return qrp;
 }
 
-void qrstream_destroy(qrstream_t *qrs) {
-	qrstream_deinit(qrs);
+void qrpayload_destroy(qrpayload_t *qrp) {
+	qrpayload_deinit(qrp);
 }
 
-qrstream_t *new_qrstream(qr_version_t version, qr_errorlevel_t level) {
+qrpayload_t *new_qrpayload(qr_version_t version, qr_errorlevel_t level) {
 #ifndef NO_MALLOC
-	qrstream_t *qrs = (qrstream_t *)malloc(sizeof(qrstream_t));
-	qrstream_init(qrs, version, level);
-	return qrs;
+	qrpayload_t *qrp = (qrpayload_t *)malloc(sizeof(qrpayload_t));
+	qrpayload_init(qrp, version, level);
+	return qrp;
 #else
 	return NULL;
 #endif
 }
 
-void qrstream_free(qrstream_t *qrs) {
+void qrpayload_free(qrpayload_t *qrp) {
 #ifndef NO_MALLOC
-	free(qrs);
+	free(qrp);
 #endif
 }
 
-static bitpos_t qrstream_data_words_iter(bitstream_t *bs, bitpos_t i, void *opaque) {
-	qrstream_t *qrs = (qrstream_t *)opaque;
+static bitpos_t qrpayload_data_words_iter(bitstream_t *bs, bitpos_t i, void *opaque) {
+	qrpayload_t *qrp = (qrpayload_t *)opaque;
 	bitpos_t n = i / 8;
 	bitpos_t u = i % 8;
 
-	if (n >= qrs->data_words) return BITPOS_END;
+	if (n >= qrp->data_words) return BITPOS_END;
 
 	// data words
-	if (n < qrs->data_words_in_small_block * qrs->small_blocks) {
-		const bitpos_t x = n % qrs->data_words_in_small_block;
-		const bitpos_t y = n / qrs->data_words_in_small_block;
+	if (n < qrp->data_words_in_small_block * qrp->small_blocks) {
+		const bitpos_t x = n % qrp->data_words_in_small_block;
+		const bitpos_t y = n / qrp->data_words_in_small_block;
 
-		return (x * qrs->total_blocks + y) * 8 + u;
+		return (x * qrp->total_blocks + y) * 8 + u;
 	} else {
-		const bitpos_t base = qrs->data_words_in_small_block * qrs->small_blocks;
+		const bitpos_t base = qrp->data_words_in_small_block * qrp->small_blocks;
 		n -= base;
 
-		const bitpos_t x = n % qrs->data_words_in_large_block;
-		const bitpos_t y = n / qrs->data_words_in_large_block;
+		const bitpos_t x = n % qrp->data_words_in_large_block;
+		const bitpos_t y = n / qrp->data_words_in_large_block;
 
-		return (qrs->small_blocks * MIN(x + 1, qrs->data_words_in_small_block) + qrs->large_blocks * x + y) * 8 + u;
+		return (qrp->small_blocks * MIN(x + 1, qrp->data_words_in_small_block) + qrp->large_blocks * x + y) * 8 + u;
 	}
 }
 
-static bitpos_t qrstream_error_words_iter(bitstream_t *bs, bitpos_t i, void *opaque) {
-	qrstream_t *qrs = (qrstream_t *)opaque;
+static bitpos_t qrpayload_error_words_iter(bitstream_t *bs, bitpos_t i, void *opaque) {
+	qrpayload_t *qrp = (qrpayload_t *)opaque;
 	bitpos_t n = i / 8;
 	bitpos_t u = i % 8;
 
-	if (n >= qrs->error_words) return BITPOS_END;
+	if (n >= qrp->error_words) return BITPOS_END;
 
 	// error words
-	const bitpos_t x = n % qrs->error_words_in_block;
-	const bitpos_t y = n / qrs->error_words_in_block;
+	const bitpos_t x = n % qrp->error_words_in_block;
+	const bitpos_t y = n / qrp->error_words_in_block;
 
-	return (x * qrs->total_blocks + y + qrs->data_words) * 8 + u;
+	return (x * qrp->total_blocks + y + qrp->data_words) * 8 + u;
 }
 
-void qrstream_set_error_words(qrstream_t *qrs) {
-	CREATE_GF2_POLY(g, qrs->error_words_in_block);
+void qrpayload_set_error_words(qrpayload_t *qrp) {
+	CREATE_GF2_POLY(g, qrp->error_words_in_block);
 	rs_init_generator_polynomial(g);
 
-	bitstream_t bs_data = qrstream_get_bitstream_for_data(qrs);
-	bitstream_t bs_error = qrstream_get_bitstream_for_error(qrs);
+	bitstream_t bs_data = qrpayload_get_bitstream_for_data(qrp);
+	bitstream_t bs_error = qrpayload_get_bitstream_for_error(qrp);
 
-	for (bitpos_t rsblock_num = 0; rsblock_num < qrs->total_blocks; rsblock_num++) {
-		bitpos_t error_words = qrs->error_words_in_block;
-		bitpos_t data_words = rsblock_num < qrs->small_blocks ? qrs->data_words_in_small_block : qrs->data_words_in_large_block;
+	for (bitpos_t rsblock_num = 0; rsblock_num < qrp->total_blocks; rsblock_num++) {
+		bitpos_t error_words = qrp->error_words_in_block;
+		bitpos_t data_words = rsblock_num < qrp->small_blocks ? qrp->data_words_in_small_block : qrp->data_words_in_large_block;
 
 		// I
 		CREATE_GF2_POLY(I, data_words + error_words - 1);
@@ -253,14 +253,14 @@ void qrstream_set_error_words(qrstream_t *qrs) {
 	}
 }
 
-int qrstream_fix_errors(qrstream_t *qrs) {
-	bitstream_t bs_data = qrstream_get_bitstream_for_data(qrs);
-	bitstream_t bs_error = qrstream_get_bitstream_for_error(qrs);
+int qrpayload_fix_errors(qrpayload_t *qrp) {
+	bitstream_t bs_data = qrpayload_get_bitstream_for_data(qrp);
+	bitstream_t bs_error = qrpayload_get_bitstream_for_error(qrp);
 
 	int num_errors_total = 0;
-	for (uint16_t rsblock_num = 0; rsblock_num < qrs->total_blocks; rsblock_num++) {
-		bitpos_t error_words = qrs->error_words_in_block;
-		bitpos_t data_words = rsblock_num < qrs->small_blocks ? qrs->data_words_in_small_block : qrs->data_words_in_large_block;
+	for (uint16_t rsblock_num = 0; rsblock_num < qrp->total_blocks; rsblock_num++) {
+		bitpos_t error_words = qrp->error_words_in_block;
+		bitpos_t data_words = rsblock_num < qrp->small_blocks ? qrp->data_words_in_small_block : qrp->data_words_in_large_block;
 
 		// backup
 		bitpos_t pos_data = bitstream_tell(&bs_data);
@@ -306,12 +306,12 @@ int qrstream_fix_errors(qrstream_t *qrs) {
 	return num_errors_total;
 }
 
-bitstream_t qrstream_get_bitstream(qrstream_t *qrs) {
-	return create_bitstream(qrs->buffer, qrs->total_bits, NULL, NULL);
+bitstream_t qrpayload_get_bitstream(qrpayload_t *qrp) {
+	return create_bitstream(qrp->buffer, qrp->total_bits, NULL, NULL);
 }
-bitstream_t qrstream_get_bitstream_for_data(qrstream_t *qrs) {
-	return create_bitstream(qrs->buffer, qrs->total_bits, qrstream_data_words_iter, qrs);
+bitstream_t qrpayload_get_bitstream_for_data(qrpayload_t *qrp) {
+	return create_bitstream(qrp->buffer, qrp->total_bits, qrpayload_data_words_iter, qrp);
 }
-bitstream_t qrstream_get_bitstream_for_error(qrstream_t *qrs) {
-	return create_bitstream(qrs->buffer, qrs->total_bits, qrstream_error_words_iter, qrs);
+bitstream_t qrpayload_get_bitstream_for_error(qrpayload_t *qrp) {
+	return create_bitstream(qrp->buffer, qrp->total_bits, qrpayload_error_words_iter, qrp);
 }
