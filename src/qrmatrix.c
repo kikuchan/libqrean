@@ -571,7 +571,7 @@ static bitpos_t qrmatrix_try_write_string_with_writer(qrmatrix_t *qrm, qr_versio
 	return 0;
 }
 
-static size_t qrmatrix_write_string_with_writer(qrmatrix_t *qrm, const char *src, size_t len, qrdata_writer_t writer) {
+static size_t qrmatrix_write_buffer_with_writer(qrmatrix_t *qrm, const char *src, size_t len, qrdata_writer_t writer) {
 	if (qrm->version == QR_VERSION_AUTO) {
 		for (int i = QR_VERSION_1; i < QR_VERSION_40; i++) {
 			bitpos_t ret = qrmatrix_try_write_string_with_writer(qrm, i, src, len, writer);
@@ -582,23 +582,35 @@ static size_t qrmatrix_write_string_with_writer(qrmatrix_t *qrm, const char *src
 	return qrmatrix_try_write_string_with_writer(qrm, qrm->version, src, len, writer) / 8;
 }
 
-size_t qrmatrix_write_string_numeric(qrmatrix_t *qrm, const char *src, size_t len) {
-	return qrmatrix_write_string_with_writer(qrm, src, len, qrdata_write_numeric_string);
+size_t qrmatrix_write_string_numeric(qrmatrix_t *qrm, const char *src) {
+	return qrmatrix_write_buffer_with_writer(qrm, src, strlen(src), qrdata_write_numeric_string);
 }
-size_t qrmatrix_write_string_alnum(qrmatrix_t *qrm, const char *src, size_t len) {
-	return qrmatrix_write_string_with_writer(qrm, src, len, qrdata_write_alnum_string);
+size_t qrmatrix_write_string_alnum(qrmatrix_t *qrm, const char *src) {
+	return qrmatrix_write_buffer_with_writer(qrm, src, strlen(src), qrdata_write_alnum_string);
 }
-size_t qrmatrix_write_string_8bit(qrmatrix_t *qrm, const char *src, size_t len) {
-	return qrmatrix_write_string_with_writer(qrm, src, len, qrdata_write_8bit_string);
+size_t qrmatrix_write_string_8bit(qrmatrix_t *qrm, const char *src) {
+	return qrmatrix_write_buffer_with_writer(qrm, src, strlen(src), qrdata_write_8bit_string);
 }
-size_t qrmatrix_write_string(qrmatrix_t *qrm, const char *src, size_t len) {
-	return qrmatrix_write_string_with_writer(qrm, src, len, qrdata_write_string);
+size_t qrmatrix_write_string(qrmatrix_t *qrm, const char *src) {
+	return qrmatrix_write_buffer_with_writer(qrm, src, strlen(src), qrdata_write_string);
+}
+size_t qrmatrix_write_buffer_numeric(qrmatrix_t *qrm, const char *src, size_t len) {
+	return qrmatrix_write_buffer_with_writer(qrm, src, len, qrdata_write_numeric_string);
+}
+size_t qrmatrix_write_buffer_alnum(qrmatrix_t *qrm, const char *src, size_t len) {
+	return qrmatrix_write_buffer_with_writer(qrm, src, len, qrdata_write_alnum_string);
+}
+size_t qrmatrix_write_buffer_8bit(qrmatrix_t *qrm, const char *src, size_t len) {
+	return qrmatrix_write_buffer_with_writer(qrm, src, len, qrdata_write_8bit_string);
+}
+size_t qrmatrix_write_buffer(qrmatrix_t *qrm, const char *src, size_t len) {
+	return qrmatrix_write_buffer_with_writer(qrm, src, len, qrdata_write_string);
 }
 
 #ifndef NO_MALLOC
 qrmatrix_t *new_qrmatrix_for_string(qr_version_t version, qr_errorlevel_t level, qr_maskpattern_t mask, const char *src) {
 	qrmatrix_t *qrm = new_qrmatrix();
-	qrmatrix_write_string(qrm, src, strlen(src));
+	qrmatrix_write_string(qrm, src);
 	return qrm;
 }
 #endif
@@ -606,7 +618,7 @@ qrmatrix_t *new_qrmatrix_for_string(qr_version_t version, qr_errorlevel_t level,
 qrmatrix_t create_qrmatrix_for_string(qr_version_t version, qr_errorlevel_t level, qr_maskpattern_t mask, const char *src) {
 	// TODO: auto select mask pattern
 	qrmatrix_t qrm = create_qrmatrix();
-	qrmatrix_write_string(&qrm, src, strlen(src));
+	qrmatrix_write_string(&qrm, src);
 	return qrm;
 }
 

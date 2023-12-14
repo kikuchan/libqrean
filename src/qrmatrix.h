@@ -82,12 +82,17 @@ void qrmatrix_fill(qrmatrix_t *qr, bit_t v);
 
 // --------------------------------------
 
-size_t qrmatrix_write_string(qrmatrix_t *qr, const char *src, size_t len);
-size_t qrmatrix_read_string(qrmatrix_t *qr, char *buffer, size_t len);
+size_t qrmatrix_write_string(qrmatrix_t *qr, const char *src);
+size_t qrmatrix_read_string(qrmatrix_t *qr, char *buffer, size_t size);
 
-size_t qrmatrix_write_string_numeric(qrmatrix_t *qrm, const char *src, size_t len);
-size_t qrmatrix_write_string_alnum(qrmatrix_t *qrm, const char *src, size_t len);
-size_t qrmatrix_write_string_8bit(qrmatrix_t *qrm, const char *src, size_t len);
+size_t qrmatrix_write_string_numeric(qrmatrix_t *qrm, const char *src);
+size_t qrmatrix_write_string_alnum(qrmatrix_t *qrm, const char *src);
+size_t qrmatrix_write_string_8bit(qrmatrix_t *qrm, const char *src);
+
+size_t qrmatrix_write_buffer(qrmatrix_t *qr, const char *src, size_t len);
+size_t qrmatrix_write_buffer_numeric(qrmatrix_t *qrm, const char *src, size_t len);
+size_t qrmatrix_write_buffer_alnum(qrmatrix_t *qrm, const char *src, size_t len);
+size_t qrmatrix_write_buffer_8bit(qrmatrix_t *qrm, const char *src, size_t len);
 
 // --------------------------------------
 void qrmatrix_write_pixel(qrmatrix_t *qr, int x, int y, bit_t v);
