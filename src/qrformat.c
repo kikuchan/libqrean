@@ -1,8 +1,8 @@
 #include <assert.h>
 #include <stdint.h>
 
-#include "qrformat.h"
 #include "galois.h"
+#include "qrformat.h"
 
 static const uint16_t bch[] = {
 	0x23D6, 0x26E1, 0x29B8, 0x2C8F, 0x323D, 0x370A, 0x3853, 0x3D64, // L

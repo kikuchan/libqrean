@@ -1,11 +1,11 @@
-OBJS += hexdump.o
 OBJS += bitstream.o
-OBJS += qrmatrix.o
-OBJS += qrformat.o
-OBJS += qrversion.o
-OBJS += qrstream.o
 OBJS += galois.o
+OBJS += hexdump.o
 OBJS += qrdata.o
+OBJS += qrformat.o
+OBJS += qrmatrix.o
+OBJS += qrstream.o
+OBJS += qrversion.o
 OBJS += reedsolomon.o
 
 OBJS += barcode.o

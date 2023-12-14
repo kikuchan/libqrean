@@ -77,7 +77,7 @@ bitpos_t barcode_write_ean13_string(barcode_t *code, const char *src) {
 	bitstream_t bs = barcode_create_bitstream(code, NULL);
 
 	// start marker
-	//bitstream_write_bits(&bs, 0, 9);
+	// bitstream_write_bits(&bs, 0, 9);
 	bitstream_write_bits(&bs, 0, 9);
 	bitstream_write_bits(&bs, 0b101, 3);
 

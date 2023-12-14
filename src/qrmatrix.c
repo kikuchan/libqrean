@@ -6,21 +6,21 @@
 
 #include "bitstream.h"
 #include "debug.h"
-#include "qrformat.h"
 #include "qrdata.h"
+#include "qrformat.h"
 #include "qrmatrix.h"
 #include "qrstream.h"
 #include "qrversion.h"
 
-#define QR_XY_TO_BITPOS(qr, x, y) ((y) * QR_BUFFER_SIDE_LENGTH + (x))
+#define QR_XY_TO_BITPOS(qr, x, y) ((y)*QR_BUFFER_SIDE_LENGTH + (x))
 #define QR_XYV_TO_BITPOS(qr, x, y, v)                                             \
 	(((x) < 0 || (y) < 0 || (x) >= (qr)->symbol_size || (y) >= (qr)->symbol_size) \
 	     ? BITPOS_BLANK                                                           \
 	     : ((QR_XY_TO_BITPOS((qr), (x), (y)) & BITPOS_MASK) | ((v) ? BITPOS_TOGGLE : 0)))
 
 bit_t qrmatrix_init(qrmatrix_t *qr) {
-	qr->version = QR_VERSION_AUTO;;
-	qr->level = QR_ERRORLEVEL_M;;
+	qr->version = QR_VERSION_AUTO;
+	qr->level = QR_ERRORLEVEL_M;
 	qr->mask = QR_MASKPATTERN_AUTO;
 
 #ifndef NO_QRMATRIX_BUFFER
@@ -411,7 +411,6 @@ qrversion_t qrmatrix_read_version_info(qrmatrix_t *qr) {
 	if (vi1.version != QR_VERSION_INVALID) return vi1;
 	return vi2;
 }
-
 
 void qrmatrix_write_timing_pattern(qrmatrix_t *qr) {
 	const uint8_t timing_pattern_bits[] = {0x55};

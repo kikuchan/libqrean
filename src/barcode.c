@@ -22,7 +22,6 @@ void barcode_deinit(barcode_t *code) {
 #endif
 }
 
-
 bitpos_t barcode_write_string(barcode_t *code, const char *src) {
 	switch (code->type) {
 	case BARCODE_TYPE_UPCA:

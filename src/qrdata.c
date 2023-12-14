@@ -13,14 +13,14 @@ qrdata_t create_qrdata_for(qrstream_t *qrs) {
 	return data;
 }
 
-#define VERDEPLEN(version, a, b, c) ((version)  < QR_VERSION_10 ? (a) : (version) < QR_VERSION_27 ? (b) : (c))
+#define VERDEPLEN(version, a, b, c) ((version) < QR_VERSION_10 ? (a) : (version) < QR_VERSION_27 ? (b) : (c))
 
-#define LENGTH_BIT_SIZE_FOR_8BIT(version)    VERDEPLEN(version,  8, 16, 16)
+#define LENGTH_BIT_SIZE_FOR_8BIT(version)    VERDEPLEN(version, 8, 16, 16)
 #define LENGTH_BIT_SIZE_FOR_NUMERIC(version) VERDEPLEN(version, 10, 12, 14)
-#define LENGTH_BIT_SIZE_FOR_ALNUM(version)   VERDEPLEN(version,  9, 11, 13)
+#define LENGTH_BIT_SIZE_FOR_ALNUM(version)   VERDEPLEN(version, 9, 11, 13)
 
 #define BITSIZE_FOR_NUMERIC(len) ((len) >= 3 ? 10 : (len) == 2 ? 7 : 4)
-#define BITSIZE_FOR_ALNUM(len) (11)
+#define BITSIZE_FOR_ALNUM(len)   (11)
 
 static const char alnum_cmp[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:";
 static const char alnum[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:";
@@ -28,7 +28,8 @@ static const char alnum[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:";
 #define IS_NUMERIC(ch) ('0' <= (ch) && (ch) <= '9')
 static size_t measure_numeric(const char *src) {
 	int len;
-	for (len = 0; src[len] && IS_NUMERIC(src[len]); len++) /* COUNT */;
+	for (len = 0; src[len] && IS_NUMERIC(src[len]); len++) /* COUNT */
+		;
 	return len;
 }
 
@@ -36,10 +37,10 @@ static size_t measure_alnum(const char *src) {
 	return strspn(src, alnum);
 }
 
-#define LEN_CMP_8BIT(ch) (strcspn((ch), alnum))
+#define LEN_CMP_8BIT(ch)  (strcspn((ch), alnum))
 #define LEN_CMP_ALNUM(ch) (strspn((ch), alnum_cmp))
-#define LEN_NUMERIC(ch) (measure_numeric(ch))
-#define LEN_ALNUM(ch)   (measure_alnum(ch))
+#define LEN_NUMERIC(ch)   (measure_numeric(ch))
+#define LEN_ALNUM(ch)     (measure_alnum(ch))
 
 size_t qrdata_write_8bit_string(qrdata_t *data, const char *src, size_t len) {
 	if (len == 0) return 0;
@@ -63,7 +64,7 @@ size_t qrdata_write_numeric_string(qrdata_t *data, const char *src, size_t len) 
 	bitstream_write_bits(&data->bs, len, LENGTH_BIT_SIZE_FOR_NUMERIC(data->qrs->version));
 
 	size_t i = 0;
-	for (i = 0; i < len && !bitstream_is_end(&data->bs); ) {
+	for (i = 0; i < len && !bitstream_is_end(&data->bs);) {
 		size_t remain = MIN(len - i, 3);
 		uint_fast16_t n = 0;
 
@@ -85,7 +86,7 @@ size_t qrdata_write_alnum_string(qrdata_t *data, const char *src, size_t len) {
 	bitstream_write_bits(&data->bs, len, LENGTH_BIT_SIZE_FOR_ALNUM(data->qrs->version));
 
 	size_t i = 0;
-	for (i = 0; i < len && !bitstream_is_end(&data->bs); ) {
+	for (i = 0; i < len && !bitstream_is_end(&data->bs);) {
 		size_t remain = MIN(len - i, 2);
 		uint_fast16_t n = 0;
 
@@ -196,7 +197,6 @@ size_t qrdata_write_string(qrdata_t *data, const char *src, size_t len) {
 	size_t r = last_i + qrdata_flush(data, last_mode, src + last_i, len - last_i);
 	return r;
 }
-
 
 size_t qrdata_parse(qrdata_t *data, void *buffer, size_t size) {
 	bitstream_t *r = &data->bs;

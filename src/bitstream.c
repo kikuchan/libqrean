@@ -169,12 +169,11 @@ bitpos_t bitstream_read(bitstream_t *src, void *buffer, bitpos_t size, bitpos_t 
 	return bitstream_copy(&dst, src, size, n);
 }
 
-// DEBUG
-#ifndef NO_PRINTF
 void bitstream_dump(bitstream_t *bs) {
+#ifndef NO_PRINTF
 	hexdump(bs->bits, BYTE_SIZE(bs->size), 0);
-}
 #endif
+}
 
 bitpos_t bitstream_loop_iter(bitstream_t *bs, bitpos_t i, void *opaque) {
 	return i % bs->size;
@@ -193,4 +192,3 @@ void bitstream_on_read_bit(bitstream_t *bs, bitstream_read_bit_callback_t cb, vo
 	bs->opaque_read = opaque;
 #endif
 }
-

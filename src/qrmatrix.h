@@ -1,17 +1,16 @@
 #include <stdint.h>
 
 #include "bitstream.h"
+#include "qrformat.h"
 #include "qrstream.h"
 #include "qrtypes.h"
-#include "qrformat.h"
 #include "qrversion.h"
 
 #define MAX_QR_VERSION           (40)
 #define SYMBOL_SIZE_FOR(version) (17 + (version)*4)
 
 #define QR_BUFFER_SIDE_LENGTH SYMBOL_SIZE_FOR(MAX_QR_VERSION)
-#define QR_BUFFER_SIZE ((QR_BUFFER_SIDE_LENGTH * QR_BUFFER_SIDE_LENGTH + 7) / 8)
-
+#define QR_BUFFER_SIZE        ((QR_BUFFER_SIDE_LENGTH * QR_BUFFER_SIDE_LENGTH + 7) / 8)
 
 typedef struct _qrmatrix_t qrmatrix_t;
 typedef struct {
@@ -113,4 +112,3 @@ bitstream_t qrmatrix_create_bitstream_for_composed_data(qrmatrix_t *qr);
 void qrmatrix_on_write_pixel(qrmatrix_t *qr, bit_t (*write_pixel)(qrmatrix_t *qr, bitpos_t x, bitpos_t y, bitpos_t pos, bit_t v));
 void qrmatrix_on_read_pixel(qrmatrix_t *qr, bit_t (*read_pixel)(qrmatrix_t *qr, bitpos_t x, bitpos_t y, bitpos_t pos));
 #endif
-
