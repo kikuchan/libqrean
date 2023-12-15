@@ -168,12 +168,18 @@ bitstream_t barcode_create_bitstream(barcode_t *code, bitstream_iterator_t iter)
 
 void barcode_dump(barcode_t *code) {
 #ifndef NO_PRINTF
-	const char *white = "\033[47m \033[m";
-	const char *black = " ";
+	const char *dots[4] = { "\u2588", "\u2580", "\u2584", " " };
 
-	for (int_fast16_t y = -code->padding.t; y < (int_fast16_t)code->bar_height + code->padding.b; y++) {
-		for (int_fast16_t x = -code->padding.l; x < (int_fast16_t)code->size + code->padding.r; x++) {
-			printf("%s", barcode_read_pixel(code, x, y) ? black : white);
+	int_fast16_t sx = -code->padding.l;
+	int_fast16_t sy = -code->padding.t;
+	int_fast16_t ex = (int_fast16_t)code->size + code->padding.r;
+	int_fast16_t ey = (int_fast16_t)code->bar_height + code->padding.b;
+	for (int_fast16_t y = sy; y < ey; y += 2) {
+		for (int_fast16_t x = sx; x < ex; x++) {
+			bit_t u = barcode_read_pixel(code, x, y + 0);
+			bit_t l = y + 1 >= ey ? 1 : barcode_read_pixel(code, x, y + 1);
+
+			printf("%s", dots[((u << 1) | l) & 3]);
 		}
 		printf("\n");
 	}

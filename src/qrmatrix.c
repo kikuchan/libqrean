@@ -356,12 +356,18 @@ static bitpos_t bitmap_iter(bitstream_t *bs, bitpos_t i, void *opaque) {
 
 void qrmatrix_dump(qrmatrix_t *qr) {
 #ifndef NO_PRINTF
-	const char *white = "\033[47m  \033[m";
-	const char *black = "  ";
+	const char *dots[4] = { "\u2588", "\u2580", "\u2584", " " };
 
-	for (int_fast16_t y = -qr->padding.t; y < qr->symbol_size + qr->padding.b; y++) {
-		for (int_fast16_t x = -qr->padding.l; x < qr->symbol_size + qr->padding.r; x++) {
-			printf("%s", qrmatrix_read_pixel(qr, x, y) ? black : white);
+	int_fast16_t sx = -qr->padding.l;
+	int_fast16_t sy = -qr->padding.t;
+	int_fast16_t ex = (int_fast16_t)qr->symbol_size + qr->padding.r;
+	int_fast16_t ey = (int_fast16_t)qr->symbol_size + qr->padding.b;
+	for (int_fast16_t y = sy; y < ey; y += 2) {
+		for (int_fast16_t x = sx; x < ex; x++) {
+			bit_t u = qrmatrix_read_pixel(qr, x, y + 0);
+			bit_t l = y + 1 >= ey ? 1 : qrmatrix_read_pixel(qr, x, y + 1);
+
+			printf("%s", dots[((u << 1) | l) & 3]);
 		}
 		printf("\n");
 	}
