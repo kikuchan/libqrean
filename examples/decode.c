@@ -1,10 +1,10 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <unistd.h>
 #include <errno.h>
 #include <math.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 // https://github.com/kikuchan/pngle
 #include "pngle.h"
@@ -14,13 +14,16 @@
 
 qrmatrix_t *qr;
 
-void done(pngle_t *pngle)
-{
+#define PADDING (2)
+
+void done(pngle_t *pngle) {
 	qrmatrix_set_format_info(qr, qrmatrix_read_format_info(qr));
 
 	fprintf(stderr, "version; %d\n", qr->version);
 	fprintf(stderr, "level; %d\n", qr->level);
 	fprintf(stderr, "mask; %d\n", qr->mask);
+
+	qrmatrix_dump(qr);
 
 	char buffer[1024];
 	size_t len = qrmatrix_read_string(qr, buffer, sizeof(buffer));
@@ -29,19 +32,17 @@ void done(pngle_t *pngle)
 	printf("RECV: %s\n", buffer);
 }
 
-void draw_pixel(pngle_t *pngle, uint32_t x, uint32_t y, uint32_t w, uint32_t h, const uint8_t rgba[4])
-{
-	qrmatrix_write_pixel(qr, x, y, rgba[0] ? 0 : 1);
+void draw_pixel(pngle_t *pngle, uint32_t x, uint32_t y, uint32_t w, uint32_t h, const uint8_t rgba[4]) {
+	qrmatrix_write_pixel(qr, x - PADDING, y - PADDING, rgba[0] ? 0 : 1);
 }
 
-void init_screen(pngle_t *pngle, uint32_t x, uint32_t y)
-{
-	qrmatrix_set_version(qr, (x - 17) / 4);
+void init_screen(pngle_t *pngle, uint32_t x, uint32_t y) {
+	qrmatrix_set_version(qr, (x - 17 - PADDING * 2) / 4);
+	qrmatrix_set_padding(qr, PADDING);
 }
 
-// % qrencode -s 1 -m 0 -o - 'Hello' | ./decode
-int main(int argc, char *argv[])
-{
+// % qrencode -s 1 -m 2 -o - 'Hello' | ./decode
+int main(int argc, char *argv[]) {
 	char buf[1024];
 	size_t remain = 0;
 	int len;

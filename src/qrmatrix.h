@@ -27,6 +27,10 @@ struct _qrmatrix_t {
 	qr_maskpattern_t mask;
 	uint8_t symbol_size;
 
+	uint8_t width;
+	uint8_t height;
+	uint8_t padding;
+
 #if defined(USE_MALLOC_BUFFER) && defined(NO_MALLOC)
 #error "Specify both of USE_MALLOC_BUFFER and NO_MALLOC doesn't make sense"
 #endif
@@ -70,13 +74,18 @@ qr_version_t qrmatrix_get_version(qrmatrix_t *qr);
 
 void qrmatrix_set_format_info(qrmatrix_t *qr, qrformat_t fi);
 
+void qrmatrix_set_padding(qrmatrix_t *qr, uint_fast8_t padding);
+uint_fast8_t qrmatrix_get_padding(qrmatrix_t *qr);
+
+uint_fast8_t qrmatrix_get_width(qrmatrix_t *qr);
+uint_fast8_t qrmatrix_get_height(qrmatrix_t *qr);
 // --------------------------------------
 
 int qrmatrix_fix_errors(qrmatrix_t *qr);
 
 unsigned int qrmatrix_score(qrmatrix_t *qr);
 
-void qrmatrix_dump(qrmatrix_t *qr, int padding);
+void qrmatrix_dump(qrmatrix_t *qr);
 
 void qrmatrix_fill(qrmatrix_t *qr, bit_t v);
 

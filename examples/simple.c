@@ -4,8 +4,8 @@
 
 int main() {
 	qrmatrix_t qr = create_qrmatrix();
+
 	qrmatrix_write_string(&qr, "Hello, world");
 
-	qrmatrix_dump(&qr, 2);
+	qrmatrix_dump(&qr);
 }
-
