@@ -5,6 +5,8 @@ QR and Barcode library `libqrean`
 
 A portable QR and Barcode manipulation library with a small footprint.
 
+![animation](https://github.com/kikuchan/libqrean/assets/445223/1fdf9b2f-df63-4c0e-8cd6-a72633f2abc3)
+
 # Examples
 ```c
 qrmatrix_t qr = create_qrmatrix();
@@ -34,6 +36,8 @@ qrmatrix_write_timing_pattern(qr);
 qrmatrix_write_format_info(qr);
 qrmatrix_write_version_info(qr);
 ```
+
+See [examples](examples)
 
 # Why?
 
