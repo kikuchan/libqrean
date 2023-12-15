@@ -59,7 +59,6 @@ static const char *symbol_lookup = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ-. $/+%"
 bitpos_t barcode_write_code39_string(barcode_t *code, const char *src) {
 	bitstream_t bs = barcode_create_bitstream(code, NULL);
 
-	bitstream_write_bits(&bs, 0, 10);
 	bitstream_write_bits(&bs, symbol[43], 15); // Start Symbol
 	bitstream_write_bits(&bs, 0, 1);
 
@@ -72,7 +71,6 @@ bitpos_t barcode_write_code39_string(barcode_t *code, const char *src) {
 	}
 
 	bitstream_write_bits(&bs, symbol[43], 15); // Stop Symbol
-	bitstream_write_bits(&bs, 0, 10);
 
 	barcode_set_size(code, bitstream_tell(&bs));
 	return code->size;

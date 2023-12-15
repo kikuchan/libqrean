@@ -58,7 +58,6 @@ bitpos_t barcode_write_nw7_string(barcode_t *code, const char *src) {
 
 	bitstream_t bs = barcode_create_bitstream(code, NULL);
 
-	bitstream_write_bits(&bs, 0, 10);
 	bitstream_write_bits(&bs, symbol[start_code].v, symbol[start_code].w); // start symbol
 	bitstream_write_bits(&bs, 0, 1);
 
@@ -72,7 +71,6 @@ bitpos_t barcode_write_nw7_string(barcode_t *code, const char *src) {
 	}
 
 	bitstream_write_bits(&bs, symbol[stop_code].v, symbol[stop_code].w); // stop symbol
-	bitstream_write_bits(&bs, 0, 10);
 
 	barcode_set_size(code, bitstream_tell(&bs));
 	return code->size;

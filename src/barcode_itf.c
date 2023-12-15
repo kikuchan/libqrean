@@ -22,7 +22,6 @@ bitpos_t barcode_write_itf_string(barcode_t *code, const char *src) {
 
 	bitstream_t bs = barcode_create_bitstream(code, NULL);
 
-	bitstream_write_bits(&bs, 0, 9);
 	bitstream_write_bits(&bs, 0b1010, 4);
 
 	for (const char *p = src; *p; p += 2) {
@@ -36,7 +35,6 @@ bitpos_t barcode_write_itf_string(barcode_t *code, const char *src) {
 	}
 
 	bitstream_write_bits(&bs, 0b111010, 6);
-	bitstream_write_bits(&bs, 0, 9);
 
 	barcode_set_size(code, bitstream_tell(&bs));
 	return code->size;

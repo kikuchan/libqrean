@@ -72,7 +72,6 @@ bitpos_t barcode_write_code93_string(barcode_t *code, const char *src) {
 
 	bitstream_t bs = barcode_create_bitstream(code, NULL);
 
-	bitstream_write_bits(&bs, 0, 10);         // Quiet zone
 	bitstream_write_bits(&bs, symbol[47], 9); // Start Symbol
 
 	int w = (len - 1);
@@ -98,7 +97,6 @@ bitpos_t barcode_write_code93_string(barcode_t *code, const char *src) {
 
 	bitstream_write_bits(&bs, symbol[47], 9); // Stop Symbol
 	bitstream_write_bits(&bs, 1, 1);          // Termination bar
-	bitstream_write_bits(&bs, 0, 10);         // Quiet zone
 
 	barcode_set_size(code, bitstream_tell(&bs));
 	return code->size;
