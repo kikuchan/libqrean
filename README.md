@@ -37,7 +37,7 @@ qrmatrix_write_format_info(qr);
 qrmatrix_write_version_info(qr);
 ```
 
-See [examples](examples)
+See [examples/](examples/) directory for working examples.
 
 # Why?
 

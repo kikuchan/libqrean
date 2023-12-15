@@ -6,7 +6,8 @@
 #include "qrtypes.h"
 #include "qrversion.h"
 
-#define MAX_QR_VERSION           (40)
+#define MAX_QR_VERSION (40)
+
 #define SYMBOL_SIZE_FOR(version) (17 + (version)*4)
 
 #define QR_BUFFER_SIDE_LENGTH SYMBOL_SIZE_FOR(MAX_QR_VERSION)
