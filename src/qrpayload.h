@@ -1,5 +1,5 @@
-#ifndef __QR_QRSTREAM_H__
-#define __QR_QRSTREAM_H__
+#ifndef __QR_QRPAYLOAD_H__
+#define __QR_QRPAYLOAD_H__
 
 #include "bitstream.h"
 #include "qrtypes.h"
@@ -60,4 +60,4 @@ int qrpayload_fix_errors(qrpayload_t *qrs);
 
 int qrpayload_set_string(qrpayload_t *qrs, const char *src);
 
-#endif /* __QR_QRSTREAM_H__ */
+#endif /* __QR_QRPAYLOAD_H__ */

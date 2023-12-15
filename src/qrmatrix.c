@@ -24,7 +24,7 @@ bit_t qrmatrix_init(qrmatrix_t *qr) {
 	qrmatrix_set_errorlevel(qr, QR_ERRORLEVEL_M);
 	qrmatrix_set_maskpattern(qr, QR_MASKPATTERN_AUTO);
 
-	qrmatrix_set_padding(qr, 2);
+	qrmatrix_set_padding(qr, create_padding1(2));
 
 #ifndef NO_QRMATRIX_BUFFER
 #if defined(USE_MALLOC_BUFFER) && !defined(NO_MALLOC)
@@ -78,8 +78,8 @@ void qrmatrix_free(qrmatrix_t *qr) {
 void qrmatrix_set_version(qrmatrix_t *qr, qr_version_t version) {
 	qr->version = version;
 	qr->symbol_size = SYMBOL_SIZE_FOR(version == QR_VERSION_AUTO ? MAX_QR_VERSION : version);
-	qr->width = qr->symbol_size + qr->padding * 2;
-	qr->height = qr->symbol_size + qr->padding * 2;
+	qr->width = qr->symbol_size + qr->padding.l + qr->padding.r;
+	qr->height = qr->symbol_size + qr->padding.t + qr->padding.b;
 }
 
 void qrmatrix_set_maskpattern(qrmatrix_t *qr, qr_maskpattern_t mask) {
@@ -90,10 +90,10 @@ void qrmatrix_set_errorlevel(qrmatrix_t *qr, qr_errorlevel_t level) {
 	qr->level = level;
 }
 
-void qrmatrix_set_padding(qrmatrix_t *qr, uint_fast8_t padding) {
+void qrmatrix_set_padding(qrmatrix_t *qr, padding_t padding) {
 	qr->padding = padding;
-	qr->width = qr->symbol_size + qr->padding * 2;
-	qr->height = qr->symbol_size + qr->padding * 2;
+	qr->width = qr->padding.l + qr->symbol_size + qr->padding.r;
+	qr->height = qr->padding.t + qr->symbol_size + qr->padding.b;
 }
 
 uint_fast8_t qrmatrix_get_width(qrmatrix_t *qr) {
@@ -103,7 +103,7 @@ uint_fast8_t qrmatrix_get_height(qrmatrix_t *qr) {
 	return qr->width;
 }
 
-uint_fast8_t qrmatrix_get_padding(qrmatrix_t *qr) {
+padding_t qrmatrix_get_padding(qrmatrix_t *qr) {
 	return qr->padding;
 }
 
@@ -134,7 +134,7 @@ static void qrmatrix_write_bit_at(bitstream_t *bs, bitpos_t pos, void *opaque, b
 #endif
 }
 
-bit_t qrmatrix_read_bit_at(bitstream_t *bs, bitpos_t pos, void *opaque) {
+static bit_t qrmatrix_read_bit_at(bitstream_t *bs, bitpos_t pos, void *opaque) {
 	qrmatrix_t *qr = (qrmatrix_t *)opaque;
 #ifndef NO_CALLBACK
 	if (qr->read_pixel) {
@@ -348,8 +348,8 @@ static bitpos_t bitmap_iter(bitstream_t *bs, bitpos_t i, void *opaque) {
 
 	if (i >= qr->width * qr->height) return BITPOS_END;
 
-	int_fast16_t x = i % qr->width - qr->padding;
-	int_fast16_t y = i / qr->width - qr->padding;
+	ssize_t x = (ssize_t)(i % qr->width) - qr->padding.l;
+	ssize_t y = (ssize_t)(i / qr->width) - qr->padding.t;
 
 	return QR_XYV_TO_BITPOS(qr, x, y, 0);
 }
@@ -359,8 +359,8 @@ void qrmatrix_dump(qrmatrix_t *qr) {
 	const char *white = "\033[47m  \033[m";
 	const char *black = "  ";
 
-	for (int_fast16_t y = -qr->padding; y < qr->symbol_size + qr->padding; y++) {
-		for (int_fast16_t x = -qr->padding; x < qr->symbol_size + qr->padding; x++) {
+	for (int_fast16_t y = -qr->padding.t; y < qr->symbol_size + qr->padding.b; y++) {
+		for (int_fast16_t x = -qr->padding.l; x < qr->symbol_size + qr->padding.r; x++) {
 			printf("%s", qrmatrix_read_pixel(qr, x, y) ? black : white);
 		}
 		printf("\n");

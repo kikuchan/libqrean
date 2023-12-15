@@ -1,8 +1,8 @@
-#include <stdint.h>
-#include <stdio.h>
-
 #ifndef __QR_BITSTREAM_H__
 #define __QR_BITSTREAM_H__
+
+#include <stdint.h>
+#include <stdio.h>
 
 typedef uint_fast8_t bit_t;
 typedef uint_fast32_t bitpos_t;

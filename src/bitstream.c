@@ -6,6 +6,7 @@
 
 #include "bitstream.h"
 #include "hexdump.h"
+#include "utils.h"
 
 #define BYTE_SIZE(len) (((len) + 7) / 8)
 
@@ -72,10 +73,10 @@ static bit_t bitstream_read_bit_at(bitstream_t *bs, bitpos_t pos) {
 	}
 #endif
 
-	return bs->bits[pos / 8] & (0x80 >> (pos % 8)) ? 1 : 0;
+	return READ_BIT(bs->bits, pos);
 }
 
-static int bitstream_write_bit_at(bitstream_t *bs, bitpos_t pos, bit_t bit) {
+static bit_t bitstream_write_bit_at(bitstream_t *bs, bitpos_t pos, bit_t bit) {
 	if (pos >= bs->size) return 0;
 
 #ifndef NO_CALLBACK

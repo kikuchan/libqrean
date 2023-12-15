@@ -1,3 +1,6 @@
+#ifndef __QR_DEBUG_H__
+#define __QR_DEBUG_H__
+
 #include <stdio.h>
 
 #ifdef DEBUG
@@ -12,3 +15,5 @@
 		debug_printf("%s\n", s); \
 		assert(0);               \
 	} while (0)
+
+#endif /* __QR_DEBUG_H__ */

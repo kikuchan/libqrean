@@ -177,19 +177,6 @@ int gf2_poly_is_zero(const gf2_poly_t *poly) {
 	return 1;
 }
 
-uint_fast8_t hamming_distance(uint32_t a, uint32_t b) {
-	uint32_t c;
-	bitpos_t d = 0;
-
-	c = a ^ b;
-	while (c) {
-		c &= c - 1;
-		d++;
-	}
-
-	return d;
-}
-
 #ifdef DEBUG
 void gf2_print(gf2_value_t a) {
 	if (a == 0)

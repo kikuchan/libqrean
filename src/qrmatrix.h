@@ -1,3 +1,6 @@
+#ifndef __QR_QRMATRIX_H__
+#define __QR_QRMATRIX_H__
+
 #include <stdint.h>
 
 #include "bitstream.h"
@@ -5,6 +8,7 @@
 #include "qrpayload.h"
 #include "qrtypes.h"
 #include "qrversion.h"
+#include "utils.h"
 
 #define MAX_QR_VERSION (40)
 
@@ -30,7 +34,7 @@ struct _qrmatrix_t {
 
 	uint8_t width;
 	uint8_t height;
-	uint8_t padding;
+	padding_t padding;
 
 #if defined(USE_MALLOC_BUFFER) && defined(NO_MALLOC)
 #error "Specify both of USE_MALLOC_BUFFER and NO_MALLOC doesn't make sense"
@@ -75,8 +79,8 @@ qr_version_t qrmatrix_get_version(qrmatrix_t *qr);
 
 void qrmatrix_set_format_info(qrmatrix_t *qr, qrformat_t fi);
 
-void qrmatrix_set_padding(qrmatrix_t *qr, uint_fast8_t padding);
-uint_fast8_t qrmatrix_get_padding(qrmatrix_t *qr);
+void qrmatrix_set_padding(qrmatrix_t *qr, padding_t padding);
+padding_t qrmatrix_get_padding(qrmatrix_t *qr);
 
 uint_fast8_t qrmatrix_get_width(qrmatrix_t *qr);
 uint_fast8_t qrmatrix_get_height(qrmatrix_t *qr);
@@ -138,3 +142,5 @@ bitstream_t qrmatrix_create_bitstream_for_composed_data(qrmatrix_t *qr);
 void qrmatrix_on_write_pixel(qrmatrix_t *qr, bit_t (*write_pixel)(qrmatrix_t *qr, bitpos_t x, bitpos_t y, bitpos_t pos, bit_t v));
 void qrmatrix_on_read_pixel(qrmatrix_t *qr, bit_t (*read_pixel)(qrmatrix_t *qr, bitpos_t x, bitpos_t y, bitpos_t pos));
 #endif
+
+#endif /* __QR_MATRIX_H__ */

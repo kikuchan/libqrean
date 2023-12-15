@@ -1,3 +1,6 @@
+#ifndef __QR_GALOIS_H__
+#define __QR_GALOIS_H__
+
 #include <stdint.h>
 #include <string.h>
 
@@ -42,4 +45,4 @@ void gf2_solve_key_equation(gf2_poly_t *sigma, gf2_poly_t *omega, const gf2_poly
 
 void gf2_poly_print(const gf2_poly_t *poly);
 
-uint_fast8_t hamming_distance(uint32_t a, uint32_t b);
+#endif /* __QR_GALOIS_H__ */

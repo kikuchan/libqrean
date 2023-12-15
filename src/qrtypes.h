@@ -1,7 +1,7 @@
-#include <stdint.h>
+#ifndef __QR_QRTYPES_H__
+#define __QR_QRTYPES_H__
 
-#ifndef __QR_TYPES_H__
-#define __QR_TYPES_H__
+#include <stdint.h>
 
 typedef enum {
 	QR_VERSION_INVALID = 0,
@@ -74,4 +74,4 @@ typedef enum {
 	QR_MASKPATTERN_AUTO,
 } qr_maskpattern_t;
 
-#endif /* __QR_TYPES_H__*/
+#endif /* __QR_QRTYPES_H__*/

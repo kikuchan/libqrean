@@ -31,7 +31,7 @@ static int calc_checkdigit(const char *src, int len) {
 	return 10 - result;
 }
 
-bitpos_t barcode_write_ean13_string(barcode_t *code, const char *src) {
+bitpos_t barcode_write_ean13_like_string(barcode_t *code, barcode_type_t type, const char *src) {
 	int tfd = 0;
 	int len = strlen(src);
 	int checkdigit;
@@ -42,7 +42,7 @@ bitpos_t barcode_write_ean13_string(barcode_t *code, const char *src) {
 		if (src[i] < '0' || src[i] > '9') return 0;
 	}
 
-	switch (code->type) {
+	switch (type) {
 	case BARCODE_TYPE_UPCA:
 		if (len == 12)
 			checkdigit = src[len - 1] - '0';
@@ -77,13 +77,11 @@ bitpos_t barcode_write_ean13_string(barcode_t *code, const char *src) {
 	bitstream_t bs = barcode_create_bitstream(code, NULL);
 
 	// start marker
-	// bitstream_write_bits(&bs, 0, 9);
-	bitstream_write_bits(&bs, 0, 9);
 	bitstream_write_bits(&bs, 0b101, 3);
 
 	const char *ptr = src;
 	// the first digit
-	if (code->type == BARCODE_TYPE_UPCA || code->type == BARCODE_TYPE_EAN8) {
+	if (type == BARCODE_TYPE_UPCA || type == BARCODE_TYPE_EAN8) {
 		tfd = 0;
 	} else {
 		tfd = (*ptr++) - '0';
@@ -111,8 +109,18 @@ bitpos_t barcode_write_ean13_string(barcode_t *code, const char *src) {
 
 	// end marker
 	bitstream_write_bits(&bs, 0b101, 3);
-	bitstream_write_bits(&bs, 0, 9);
 
 	barcode_set_size(code, bitstream_tell(&bs));
 	return code->size;
+}
+
+bitpos_t barcode_write_ean13_string(barcode_t *code, const char *src) {
+	return barcode_write_ean13_like_string(code, BARCODE_TYPE_EAN13, src);
+}
+
+bitpos_t barcode_write_ean8_string(barcode_t *code, const char *src) {
+	return barcode_write_ean13_like_string(code, BARCODE_TYPE_EAN8, src);
+}
+bitpos_t barcode_write_upca_string(barcode_t *code, const char *src) {
+	return barcode_write_ean13_like_string(code, BARCODE_TYPE_UPCA, src);
 }

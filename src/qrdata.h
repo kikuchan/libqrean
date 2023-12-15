@@ -1,3 +1,6 @@
+#ifndef __QR_QRDATA_H__
+#define __QR_QRDATA_H__
+
 #include "bitstream.h"
 #include "qrtypes.h"
 
@@ -30,3 +33,5 @@ size_t qrdata_write_string(qrdata_t *data, const char *src, size_t len);
 bit_t qrdata_finalize(qrdata_t *data);
 
 size_t qrdata_parse(qrdata_t *data, void *buffer, size_t size);
+
+#endif /* __QR_QRDATA_H__ */
