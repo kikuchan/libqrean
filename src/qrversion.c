@@ -26,7 +26,7 @@ qrversion_t qrversion_from(uint32_t value) {
 
 	for (int i = QR_VERSION_7; i < QR_VERSION_40; i++) {
 		if (hamming_distance(bch[i - QR_VERSION_7], value) <= 3) {
-			vi.version = i;
+			vi.version = (qr_version_t)i;
 			vi.value = bch[i - QR_VERSION_7];
 			return vi;
 		}

@@ -3,12 +3,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 
 #include "bitstream.h"
 #include "hexdump.h"
 #include "utils.h"
-
-#define BYTE_SIZE(len) (((len) + 7) / 8)
 
 void bitstream_init(bitstream_t *bs, void *src, bitpos_t len, bitstream_iterator_t iter, void *opaque) {
 	assert(src != NULL);
@@ -65,7 +64,10 @@ bit_t bitstream_is_end(bitstream_t *bs) {
 }
 
 static bit_t bitstream_read_bit_at(bitstream_t *bs, bitpos_t pos) {
-	if (pos >= bs->size) return 0;
+	if (pos >= bs->size) {
+	printf("X %ld %ld\n", pos, bs->size);
+	  return 0;
+	  }
 
 #ifndef NO_CALLBACK
 	if (bs->read_bit_at) {
@@ -143,12 +145,21 @@ bit_t bitstream_write_bits(bitstream_t *bs, uint_fast32_t value, uint_fast8_t nu
 	return 1;
 }
 
-bitpos_t bitstream_write_string(bitstream_t *bs, const char *str) {
+bitpos_t bitstream_write_string(bitstream_t *bs, const char *fmt, ...) {
+#ifndef NO_PRINTF
+	char buf[1024];
 	bitpos_t i = 0;
-	while (str[i] && !bitstream_is_end(bs)) {
-		bitstream_write_bits(bs, str[i++], 8);
+	va_list ap;
+
+	va_start(ap, fmt);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
+	va_end(ap);
+
+	while (buf[i] && !bitstream_is_end(bs) && i < sizeof(buf)) {
+		bitstream_write_bits(bs, buf[i++], 8);
 	}
 	return i;
+#endif
 }
 
 bitpos_t bitstream_copy(bitstream_t *dst, bitstream_t *src, bitpos_t size, bitpos_t n) {

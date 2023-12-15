@@ -4,9 +4,9 @@
 #include "qrtypes.h"
 
 typedef struct {
-	uint16_t value;
-	qr_errorlevel_t level;
 	qr_maskpattern_t mask;
+	qr_errorlevel_t level;
+	uint16_t value;
 } qrformat_t;
 
 #define QR_FORMATINFO_SIZE (15)

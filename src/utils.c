@@ -34,3 +34,16 @@ uint_fast8_t hamming_distance(uint32_t a, uint32_t b) {
 
 	return d;
 }
+
+uint_fast8_t hamming_distance_mem(const uint8_t *mem1, const uint8_t *mem2, bitpos_t bitlen) {
+	int score = 0;
+	for (bitpos_t i = 0; i < bitlen / 8; i++) {
+		score += hamming_distance(mem1[i], mem2[i]);
+	}
+	if (bitlen % 8) {
+		bitpos_t i = bitlen / 8;
+		uint8_t mask = 0xff << (8 - bitlen % 8);
+		score += hamming_distance(mem1[i] & mask, mem2[i] & mask);
+	}
+	return score;
+}

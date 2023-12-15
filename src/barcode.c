@@ -141,19 +141,19 @@ static bit_t barcode_read_bit_at(bitstream_t *bs, bitpos_t pos, void *opaque) {
 	}
 }
 
-void barcode_write_pixel(barcode_t *code, int x, int y, bit_t v) {
+void barcode_write_pixel(barcode_t *code, int_fast16_t x, int_fast16_t y, bit_t v) {
 	if (x < 0) return;
 	if (y < 0) return;
-	if (x >= code->size) return;
+	if (x >= (int_fast32_t)code->size) return;
 	if (y >= code->bar_height) return;
 
 	barcode_write_bit_at(NULL, x, code, v);
 }
 
-bit_t barcode_read_pixel(barcode_t *code, int x, int y) {
+bit_t barcode_read_pixel(barcode_t *code, int_fast16_t x, int_fast16_t y) {
 	if (x < 0) return 0;
 	if (y < 0) return 0;
-	if (x >= code->size) return 0;
+	if (x >= (int_fast32_t)code->size) return 0;
 	if (y >= code->bar_height) return 0;
 
 	return barcode_read_bit_at(NULL, x, code);
@@ -168,7 +168,7 @@ bitstream_t barcode_create_bitstream(barcode_t *code, bitstream_iterator_t iter)
 
 void barcode_dump(barcode_t *code) {
 #ifndef NO_PRINTF
-	const char *dots[4] = { "\u2588", "\u2580", "\u2584", " " };
+	const char *dots[4] = {"\u2588", "\u2580", "\u2584", " "};
 
 	int_fast16_t sx = -code->padding.l;
 	int_fast16_t sy = -code->padding.t;
@@ -191,9 +191,9 @@ static bitpos_t bitmap_iter(bitstream_t *bs, bitpos_t i, void *opaque) {
 
 	if (i >= code->width * code->height) return BITPOS_END;
 
-	ssize_t x = (ssize_t)(i % code->width) - code->padding.l;
+	int_fast32_t x = (int_fast32_t)(i % code->width) - code->padding.l;
 
-	return ((x) < 0 || (x) > (code)->size) ? BITPOS_BLANK : (x)&BITPOS_MASK;
+	return ((x) < 0 || (x) > (int_fast32_t)(code)->size) ? BITPOS_BLANK : (x)&BITPOS_MASK;
 }
 
 size_t barcode_read_bitmap(barcode_t *code, void *buffer, size_t size, bitpos_t bpp) {

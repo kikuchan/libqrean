@@ -15,9 +15,9 @@ qrdata_t create_qrdata_for(bitstream_t bs, qr_version_t version) {
 
 #define VERDEPLEN(version, a, b, c) ((version) < QR_VERSION_10 ? (a) : (version) < QR_VERSION_27 ? (b) : (c))
 
-#define LENGTH_BIT_SIZE_FOR_8BIT(version)    VERDEPLEN(version, 8, 16, 16)
 #define LENGTH_BIT_SIZE_FOR_NUMERIC(version) VERDEPLEN(version, 10, 12, 14)
 #define LENGTH_BIT_SIZE_FOR_ALNUM(version)   VERDEPLEN(version, 9, 11, 13)
+#define LENGTH_BIT_SIZE_FOR_8BIT(version)    VERDEPLEN(version, 8, 16, 16)
 
 #define BITSIZE_FOR_NUMERIC(len) ((len) >= 3 ? 10 : (len) == 2 ? 7 : 4)
 #define BITSIZE_FOR_ALNUM(len)   (11)
@@ -258,10 +258,38 @@ size_t qrdata_parse(qrdata_t *data, void *buffer, size_t size) {
 			}
 			break;
 
+		case QR_DATA_MODE_ECI:;
+			{
+				uint_fast32_t eci;
+				if (!bitstream_read_bit(r)) {
+					// 0
+					eci = bitstream_read_bits(r, 7);
+				} else if (!bitstream_read_bit(r)) {
+					// 10
+					eci = bitstream_read_bits(r, 14);
+				} else if (!bitstream_read_bit(r)) {
+					// 110
+					eci = bitstream_read_bits(r, 21);
+				} else {
+					// unsupported
+					goto end;
+				}
+
+				bitstream_write_string(w, "[ECI %u]", eci);
+			}
+			break;
+
+		case QR_DATA_MODE_STRUCTURED:
+			bitstream_write_string(w, "[S]");
+
+			bitstream_read_bits(r, 8);
+			bitstream_read_bits(r, 8);
+			break;
+
 		default:
 			// unknown
 #ifdef DEBUG_QRDATA
-			bitstream_write_string(w, "[?]");
+			bitstream_write_string(w, "[??? %u]", ch);
 #endif
 			goto end;
 		}

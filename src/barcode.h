@@ -11,8 +11,6 @@
 #define BARCODE_DEFAULT_PADDING \
 	{ 1, 10, 1, 10 }
 
-#define BYTE_SIZE(bits) ((bits + 7) / 8)
-
 typedef enum {
 	BARCODE_TYPE_UPCA,
 	BARCODE_TYPE_EAN13,
@@ -82,8 +80,8 @@ bitpos_t barcode_write_itf_string(barcode_t *code, const char *src);
 // bitpos_t barcode_write_code128_string(barcode_t *code, const char *src);
 
 // --------------------------------------
-void barcode_write_pixel(barcode_t *code, int x, int y, bit_t v);
-bit_t barcode_read_pixel(barcode_t *code, int x, int y);
+void barcode_write_pixel(barcode_t *code, int_fast16_t x, int_fast16_t y, bit_t v);
+bit_t barcode_read_pixel(barcode_t *code, int_fast16_t x, int_fast16_t y);
 
 size_t barcode_write_bitmap(barcode_t *code, const void *buffer, size_t size, bitpos_t bpp);
 size_t barcode_read_bitmap(barcode_t *code, void *buffer, size_t size, bitpos_t bpp);

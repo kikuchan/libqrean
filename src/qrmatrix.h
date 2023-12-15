@@ -18,13 +18,6 @@
 #define QR_BUFFER_SIZE        ((QR_BUFFER_SIDE_LENGTH * QR_BUFFER_SIDE_LENGTH + 7) / 8)
 
 typedef struct _qrmatrix_t qrmatrix_t;
-typedef struct {
-	uint8_t x;
-	uint8_t y;
-	uint8_t v;
-} qrpos_t;
-
-typedef qrpos_t (*qrmatrix_iterator_t)(qrmatrix_t *qr, bitpos_t i, void *opaque);
 
 struct _qrmatrix_t {
 	qr_version_t version;
@@ -45,7 +38,6 @@ struct _qrmatrix_t {
 	uint8_t buffer[QR_BUFFER_SIZE];
 #endif
 
-	qrmatrix_iterator_t iter;
 	void *opaque;
 
 #ifndef NO_CALLBACK
@@ -68,18 +60,19 @@ void qrmatrix_free(qrmatrix_t *qr);
 
 // --------------------------------------
 
-void qrmatrix_set_maskpattern(qrmatrix_t *qr, qr_maskpattern_t mask);
+bit_t qrmatrix_set_maskpattern(qrmatrix_t *qr, qr_maskpattern_t mask);
 qr_maskpattern_t qrmatrix_get_maskpattern(qrmatrix_t *qr);
 
-void qrmatrix_set_errorlevel(qrmatrix_t *qr, qr_errorlevel_t level);
+bit_t qrmatrix_set_errorlevel(qrmatrix_t *qr, qr_errorlevel_t level);
 qr_errorlevel_t qrmatrix_get_errorlevel(qrmatrix_t *qr);
 
-void qrmatrix_set_version(qrmatrix_t *qr, qr_version_t v);
+bit_t qrmatrix_set_version(qrmatrix_t *qr, qr_version_t v);
 qr_version_t qrmatrix_get_version(qrmatrix_t *qr);
 
-void qrmatrix_set_format_info(qrmatrix_t *qr, qrformat_t fi);
+bit_t qrmatrix_set_version_info(qrmatrix_t *qr, qrversion_t vi);
+bit_t qrmatrix_set_format_info(qrmatrix_t *qr, qrformat_t fi);
 
-void qrmatrix_set_padding(qrmatrix_t *qr, padding_t padding);
+bit_t qrmatrix_set_padding(qrmatrix_t *qr, padding_t padding);
 padding_t qrmatrix_get_padding(qrmatrix_t *qr);
 
 uint_fast8_t qrmatrix_get_width(qrmatrix_t *qr);
@@ -116,17 +109,23 @@ size_t qrmatrix_write_bitmap(qrmatrix_t *qr, const void *src, size_t len, bitpos
 size_t qrmatrix_read_bitmap(qrmatrix_t *qr, void *src, size_t len, bitpos_t bpp);
 
 void qrmatrix_write_finder_pattern(qrmatrix_t *qr);
+uint_fast8_t qrmatrix_read_finder_pattern(qrmatrix_t *qr);
+
 void qrmatrix_write_alignment_pattern(qrmatrix_t *qr);
+uint_fast8_t qrmatrix_read_alignment_pattern(qrmatrix_t *qr);
+
 void qrmatrix_write_timing_pattern(qrmatrix_t *qr);
+uint_fast8_t qrmatrix_read_timing_pattern(qrmatrix_t *qr);
 
 void qrmatrix_write_format_info(qrmatrix_t *qr);
 qrformat_t qrmatrix_read_format_info(qrmatrix_t *qr);
 
 void qrmatrix_write_version_info(qrmatrix_t *qr);
 qrversion_t qrmatrix_read_version_info(qrmatrix_t *qr);
+qr_version_t qrmatrix_read_version(qrmatrix_t *qr);
 
-bitpos_t qrmatrix_write_data(qrmatrix_t *qr, qrpayload_t *qrp);
-bitpos_t qrmatrix_read_data(qrmatrix_t *qr, qrpayload_t *qrp);
+bitpos_t qrmatrix_write_payload(qrmatrix_t *qr, qrpayload_t *qrp);
+bitpos_t qrmatrix_read_payload(qrmatrix_t *qr, qrpayload_t *qrp);
 
 void qrmatrix_write_function_patterns(qrmatrix_t *qr);
 bitpos_t qrmatrix_write_all(qrmatrix_t *qr, qrpayload_t *qrp);
