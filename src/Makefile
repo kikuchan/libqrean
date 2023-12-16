@@ -9,6 +9,7 @@ OBJS += qrmatrix.o
 OBJS += qrpayload.o
 OBJS += qrversion.o
 OBJS += reedsolomon.o
+OBJS += runlength.o
 
 OBJS += barcode.o
 OBJS += barcode_code39.o

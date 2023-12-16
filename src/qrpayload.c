@@ -289,7 +289,7 @@ int qrpayload_fix_errors(qrpayload_t *qrp) {
 			continue;
 		case -1:
 			debug_printf(BANNER "rsblock #%d: Too much errors\n", rsblock_num);
-			continue;
+			return -1;
 		};
 
 		// write back

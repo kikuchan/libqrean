@@ -13,6 +13,7 @@
 #include "qrpayload.h"
 #include "qrtypes.h"
 #include "qrversion.h"
+#include "runlength.h"
 
 #define QR_XY_TO_BITPOS(qr, x, y) ((y)*QR_BUFFER_SIDE_LENGTH + (x))
 #define QR_XYV_TO_BITPOS(qr, x, y, v)                                             \
@@ -550,45 +551,39 @@ void qrmatrix_write_function_patterns(qrmatrix_t *qr) {
 	qrmatrix_write_version_info(qr);
 }
 
-static bit_t check_11311x(uint_fast8_t runlength[]) {
-	if (!runlength[0]) return 0;
+static bit_t check_N3(runlength_t *rl, bit_t v) {
+	if (!v && runlength_match_ratio(rl, 6, 1, 1, 3, 1, 1, 0) && runlength_get_count(rl, 0) / 4 >= runlength_get_count(rl, 1)) return 1;
+	if (v && runlength_match_ratio(rl, 6, 0, 1, 1, 3, 1, 1) && runlength_get_count(rl, 5) / 4 >= runlength_get_count(rl, 4)) return 1;
 
-	if (runlength[0] != runlength[1]) return 0;
-	if (runlength[3] != runlength[4]) return 0;
-	if (runlength[0] != runlength[3]) return 0;
-	if (runlength[0] * 3 != runlength[2]) return 0;
-	if (runlength[0] * 4 > runlength[5]) return 0;
-
-	return 1;
+	return 0;
 }
 
 unsigned int qrmatrix_score(qrmatrix_t *qrm) {
-	const int N_1 = 3;
-	const int N_2 = 3;
-	const int N_3 = 40;
-	const int N_4 = 10;
+	// penalty
+	const int N1 = 3;
+	const int N2 = 3;
+	const int N3 = 40;
+	const int N4 = 10;
 	size_t score = 0;
 
 	int dark_modules = 0;
 	for (bitpos_t y = 0; y < qrm->symbol_size; y++) {
 		for (int dir = 0; dir < 2; dir++) {
 			bit_t last_v = 2; // XXX:
-			uint_fast8_t runlength[6] = {};
+			runlength_t rl = create_runlength();
 
 			bit_t v;
 			for (bitpos_t x = 0; x < qrm->symbol_size; x++) {
 				v = qrmatrix_read_pixel(qrm, dir ? y : x, dir ? x : y);
-				if (last_v == v) {
-					runlength[5]++;
-				} else {
-					if (runlength[5] >= 5) score += runlength[5] - 5 + N_1;
-					if (!last_v && check_11311x(runlength)) score += N_3;
 
-					for (int i = 0; i < 5; i++)
-						runlength[i] = runlength[i + 1];
-					runlength[5] = 1;
+				if (last_v != v) {
+					if (runlength_latest_count(&rl) >= 5) score += runlength_latest_count(&rl) - 5 + N1;
+					if (check_N3(&rl, last_v)) score += N3;
+
+					runlength_next(&rl);
 					last_v = v;
 				}
+				runlength_count(&rl);
 
 				if (dir) continue;
 
@@ -601,19 +596,20 @@ unsigned int qrmatrix_score(qrmatrix_t *qrm) {
 					qrmatrix_read_pixel(qrm, x + 1, y + 1),
 				};
 				if (x + 1 < qrm->symbol_size && y + 1 < qrm->symbol_size && a[0] == a[1] && a[1] == a[2] && a[2] == a[3]) {
-					score += N_2;
+					score += N2;
 				}
 			}
-			if (runlength[5] >= 5) score += runlength[5] - 5 + N_1;
-			if (!last_v && check_11311x(runlength)) score += N_3;
+
+			if (runlength_latest_count(&rl) >= 5) score += runlength_latest_count(&rl) - 5 + N1;
+			if (check_N3(&rl, last_v)) score += N3;
 		}
 	}
 
 	int ratio = dark_modules * 100 / qrm->symbol_size / qrm->symbol_size;
 	if (ratio < 50) {
-		score += (50 - ratio) / 5 * N_4;
+		score += (50 - ratio) / 5 * N4;
 	} else {
-		score += (ratio - 50) / 5 * N_4;
+		score += (ratio - 50) / 5 * N4;
 	}
 
 	return score;

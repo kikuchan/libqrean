@@ -1,9 +1,9 @@
 #include <assert.h>
+#include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
 
 #include "bitstream.h"
 #include "hexdump.h"
@@ -64,10 +64,7 @@ bit_t bitstream_is_end(bitstream_t *bs) {
 }
 
 static bit_t bitstream_read_bit_at(bitstream_t *bs, bitpos_t pos) {
-	if (pos >= bs->size) {
-	printf("X %ld %ld\n", pos, bs->size);
-	  return 0;
-	  }
+	if (pos >= bs->size) return 0;
 
 #ifndef NO_CALLBACK
 	if (bs->read_bit_at) {
