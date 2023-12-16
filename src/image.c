@@ -1,6 +1,7 @@
 #include "image.h"
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 
 image_t *new_image(int width, int height) {
@@ -16,6 +17,21 @@ image_t *new_image(int width, int height) {
 	}
 
 	return img;
+}
+
+void image_free(image_t *img)
+{
+	free(img->buffer);
+	free(img);
+}
+
+image_t *image_clone(image_t *img)
+{
+	image_t *clone = new_image(img->width, img->height);
+	if (clone) {
+		memcpy(clone->buffer, img->buffer, img->width * img->height * sizeof(uint32_t));
+	}
+	return clone;
 }
 
 void image_write_pixel(image_t *img, int x, int y, uint32_t pixel) {
@@ -158,3 +174,4 @@ image_extent_t image_paint(image_t *img, int cx, int cy, uint32_t pix) {
 
 	return extent;
 }
+

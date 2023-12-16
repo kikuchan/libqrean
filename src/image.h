@@ -23,6 +23,9 @@ typedef struct {
 #define PIXEL_B(pix)      (((pix) >> 0) & 0xFF)
 
 image_t *new_image(int width, int height);
+void image_free(image_t *img);
+image_t *image_clone(image_t *img);
+
 void image_write_pixel(image_t *img, int x, int y, uint32_t pixel);
 uint32_t image_read_pixel(image_t *img, int x, int y);
 void image_dump(image_t *img);
