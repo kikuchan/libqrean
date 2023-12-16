@@ -29,7 +29,7 @@ runlength_count_t runlength_latest_count(runlength_t *rl) {
 
 runlength_count_t runlength_sum(runlength_t *rl, runlength_size_t s, runlength_size_t e) {
 	runlength_count_t sum = 0;
-	for (int i = s; i < e; i++) {
+	for (runlength_size_t i = s; i < e; i++) {
 		sum += runlength_get_count(rl, i);
 	}
 	return sum;

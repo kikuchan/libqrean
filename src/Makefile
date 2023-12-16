@@ -1,6 +1,7 @@
 OBJS += bitstream.o
 OBJS += hexdump.o
 OBJS += utils.o
+OBJS += image.o
 
 OBJS += galois.o
 OBJS += qrdata.o
