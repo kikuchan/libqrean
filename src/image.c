@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
 image_t *new_image(int width, int height) {
 	image_t *img = (image_t *)malloc(sizeof(image_t));
@@ -10,7 +11,7 @@ image_t *new_image(int width, int height) {
 
 	img->width = width;
 	img->height = height;
-	img->buffer = (uint32_t *)calloc(width * height, sizeof(uint32_t));
+	img->buffer = (image_pixel_t *)calloc(width * height, sizeof(image_pixel_t));
 	if (!img->buffer) {
 		free(img);
 		return NULL;
@@ -29,17 +30,21 @@ image_t *image_clone(image_t *img)
 {
 	image_t *clone = new_image(img->width, img->height);
 	if (clone) {
-		memcpy(clone->buffer, img->buffer, img->width * img->height * sizeof(uint32_t));
+		memcpy(clone->buffer, img->buffer, img->width * img->height * sizeof(image_pixel_t));
 	}
 	return clone;
 }
 
-void image_write_pixel(image_t *img, int x, int y, uint32_t pixel) {
+void image_draw_pixel(image_t *img, image_point_t p, image_pixel_t pixel) {
+	int x = POINT_X(p);
+	int y = POINT_Y(p);
 	if (x < 0 || y < 0 || x >= (int)img->width || y >= (int)img->height) return;
 	img->buffer[y * img->width + x] = pixel;
 }
 
-uint32_t image_read_pixel(image_t *img, int x, int y) {
+image_pixel_t image_read_pixel(image_t *img, image_point_t p) {
+	int x = POINT_X(p);
+	int y = POINT_Y(p);
 	if (x < 0 || y < 0 || x >= (int)img->width || y >= (int)img->height) return 0;
 	return img->buffer[y * img->width + x];
 }
@@ -49,20 +54,22 @@ void image_dump(image_t *img) {
 
 	for (uint32_t y = 0; y < img->height; y++) {
 		for (uint32_t x = 0; x < img->width; x++) {
-			uint32_t pix = image_read_pixel(img, x, y);
-			putchar(PIXEL_R(pix));
-			putchar(PIXEL_G(pix));
-			putchar(PIXEL_B(pix));
+			image_pixel_t pix = image_read_pixel(img, POINT(x, y));
+			putchar(PIXEL_GET_R(pix));
+			putchar(PIXEL_GET_G(pix));
+			putchar(PIXEL_GET_B(pix));
 		}
 	}
 }
 
-void image_write_filled_rectangle(image_t *img, int x, int y, int w, int h, uint32_t pix) {
+void image_draw_filled_rectangle(image_t *img, image_point_t p, int w, int h, image_pixel_t pix) {
+	int x = POINT_X(p);
+	int y = POINT_Y(p);
 	int ix, iy;
 
 	for (iy = 0; iy < h; iy++) {
 		for (ix = 0; ix < w; ix++) {
-			image_write_pixel(img, x + ix, y + iy, pix);
+			image_draw_pixel(img, POINT(x + ix, y + iy), pix);
 		}
 	}
 }
@@ -75,7 +82,11 @@ static void swap(int *a, int *b) {
 	*b = tmp;
 }
 
-void image_write_line(image_t *img, int x0, int y0, int x1, int y1, uint32_t pix, int thickness) {
+void image_draw_line(image_t *img, image_point_t s, image_point_t e, image_pixel_t pix, int thickness) {
+	int x0 = POINT_X(s);
+	int y0 = POINT_Y(s);
+	int x1 = POINT_X(e);
+	int y1 = POINT_Y(e);
 	int steep = abs(y1 - y0) > abs(x1 - x0);
 	int deltax;
 	int deltay;
@@ -101,15 +112,15 @@ void image_write_line(image_t *img, int x0, int y0, int x1, int y1, uint32_t pix
 	for (x = x0; x <= x1; x++) {
 		if (steep) {
 			if (thickness > 0) {
-				image_write_filled_rectangle(img, y, x, thickness, 1, pix);
+				image_draw_filled_rectangle(img, POINT(y, x), thickness, 1, pix);
 			} else {
-				image_write_pixel(img, y, x, pix);
+				image_draw_pixel(img, POINT(y, x), pix);
 			}
 		} else {
 			if (thickness > 0) {
-				image_write_filled_rectangle(img, x, y, thickness, 1, pix);
+				image_draw_filled_rectangle(img, POINT(x, y), thickness, 1, pix);
 			} else {
-				image_write_pixel(img, x, y, pix);
+				image_draw_pixel(img, POINT(x, y), pix);
 			}
 		}
 
@@ -121,7 +132,16 @@ void image_write_line(image_t *img, int x0, int y0, int x1, int y1, uint32_t pix
 	}
 }
 
-void image_write_filled_ellipse(image_t *img, int cx, int cy, int w, int h, uint32_t pix) {
+void image_draw_polygon(image_t *img, int N, image_point_t points[], image_pixel_t pixel, int thickness)
+{
+	for (int i = 0; i < N; i++) {
+		image_draw_line(img, points[i], points[(i + 1) % N], pixel, thickness);
+	}
+}
+
+void image_draw_filled_ellipse(image_t *img, image_point_t center, int w, int h, image_pixel_t pix) {
+	int cx = POINT_X(center);
+	int cy = POINT_Y(center);
 	float a, b;
 	int x, y;
 
@@ -141,7 +161,7 @@ void image_write_filled_ellipse(image_t *img, int cx, int cy, int w, int h, uint
 			ty = y - cy + 0.5f;
 
 			if (((tx * tx) / (a * a) + (ty * ty) / (b * b)) < 1.0f) {
-				image_write_pixel(img, x, y, pix);
+				image_draw_pixel(img, POINT(x, y), pix);
 			}
 		}
 	}
@@ -159,18 +179,20 @@ void image_extent_dump(image_extent_t *extent) {
 	fprintf(stderr, "[%u %u %u %u]\n", extent->top, extent->right, extent->bottom, extent->left);
 }
 
-image_extent_t image_paint(image_t *img, int cx, int cy, uint32_t pix) {
+image_extent_t image_paint(image_t *img, image_point_t center, image_pixel_t pix) {
+	int cx = POINT_X(center);
+	int cy = POINT_Y(center);
 	image_extent_t extent = {cy, cx, cy, cx};
 
-	uint32_t bg = image_read_pixel(img, cx, cy);
+	image_pixel_t bg = image_read_pixel(img, center);
 	if (bg == pix) return extent;
 
-	image_write_pixel(img, cx, cy, pix);
+	image_draw_pixel(img, center, pix);
 
-	if (image_read_pixel(img, cx + 1, cy) == bg) image_extent_update(&extent, image_paint(img, cx + 1, cy, pix));
-	if (image_read_pixel(img, cx - 1, cy) == bg) image_extent_update(&extent, image_paint(img, cx - 1, cy, pix));
-	if (image_read_pixel(img, cx, cy + 1) == bg) image_extent_update(&extent, image_paint(img, cx, cy + 1, pix));
-	if (image_read_pixel(img, cx, cy - 1) == bg) image_extent_update(&extent, image_paint(img, cx, cy - 1, pix));
+	if (image_read_pixel(img, POINT(cx + 1, cy)) == bg) image_extent_update(&extent, image_paint(img, POINT(cx + 1, cy), pix));
+	if (image_read_pixel(img, POINT(cx - 1, cy)) == bg) image_extent_update(&extent, image_paint(img, POINT(cx - 1, cy), pix));
+	if (image_read_pixel(img, POINT(cx, cy + 1)) == bg) image_extent_update(&extent, image_paint(img, POINT(cx, cy + 1), pix));
+	if (image_read_pixel(img, POINT(cx, cy - 1)) == bg) image_extent_update(&extent, image_paint(img, POINT(cx, cy - 1), pix));
 
 	return extent;
 }

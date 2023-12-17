@@ -11,6 +11,7 @@ OBJS += qrpayload.o
 OBJS += qrversion.o
 OBJS += reedsolomon.o
 OBJS += runlength.o
+OBJS += qrdetect.o
 
 OBJS += barcode.o
 OBJS += barcode_code39.o
