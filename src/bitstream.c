@@ -118,6 +118,14 @@ uint_fast32_t bitstream_read_bits(bitstream_t *bs, uint_fast8_t num_bits) {
 	return val;
 }
 
+uint_fast8_t bitstream_skip_bits(bitstream_t *bs, uint_fast8_t num_bits) {
+	uint_fast8_t skipped = 0;
+	for (uint_fast8_t i = 0; i < num_bits && !bitstream_is_end(bs); i++) {
+		bitstream_read_bit(bs);
+	}
+	return skipped;
+}
+
 bit_t bitstream_write_bit(bitstream_t *bs, bit_t bit) {
 	bitpos_t pos;
 

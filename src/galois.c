@@ -1,11 +1,9 @@
 #include <assert.h>
 #include <stdint.h>
 
+#include "utils.h"
 #include "debug.h"
 #include "galois.h"
-
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 // GF(2, 8): x^8 + x^4 + x^3 + x^2 + 1
 static const gf2_value_t exp2val[] = {

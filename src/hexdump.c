@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 #ifndef HEXDUMP_PRINTF
-#define HEXDUMP_PRINTF(...) printf(__VA_ARGS__)
+#define HEXDUMP_PRINTF(...) fprintf(stderr, __VA_ARGS__)
 #endif
 
 int hexdump(const void *buf_, size_t len, unsigned long start_addr) {

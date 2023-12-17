@@ -24,6 +24,8 @@ padding_t create_padding4(uint8_t t, uint8_t r, uint8_t b, uint8_t l);
 uint_fast8_t hamming_distance(uint32_t a, uint32_t b);
 uint_fast8_t hamming_distance_mem(const uint8_t *mem1, const uint8_t *mem2, bitpos_t bitlen);
 
+int safe_fprintf(FILE *fp, const char *fmt, ...);
+
 #define READ_BIT(buffer, pos) (((uint8_t *)(buffer))[(pos) / 8] & (0x80 >> ((pos) % 8)) ? 1 : 0)
 #define WRITE_BIT(buffer, pos, v)                          \
 	do {                                                   \
@@ -34,8 +36,12 @@ uint_fast8_t hamming_distance_mem(const uint8_t *mem1, const uint8_t *mem2, bitp
 		}                                                  \
 	} while (0)
 
-#endif /* __QR_UTILS_H__ */
 
 #define error(x) assert(!(x))
 
 #define BYTE_SIZE(bits) (((bits) + 7) / 8)
+
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+
+#endif /* __QR_UTILS_H__ */

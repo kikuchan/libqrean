@@ -1,4 +1,6 @@
+#include <stdarg.h>
 #include <stdint.h>
+#include <string.h>
 
 #include "bitstream.h"
 #include "utils.h"
@@ -47,3 +49,23 @@ uint_fast8_t hamming_distance_mem(const uint8_t *mem1, const uint8_t *mem2, bitp
 	}
 	return score;
 }
+
+int safe_fprintf(FILE *fp, const char *fmt, ...) {
+	unsigned char buf[4096];
+	va_list ap;
+	int ret;
+
+	va_start(ap, fmt);
+	ret = vsnprintf((char *)buf, sizeof(buf), fmt, ap);
+	va_end(ap);
+
+	for (size_t i = 0; i < strlen((char *)buf); i++) {
+		char hex[32];
+		snprintf(hex, sizeof(hex), "[%02x]", buf[i]);
+		if (buf[i] == '\r' || buf[i] == '\n' || (0x20 <= buf[i] && buf[i] < 0x7f)) fputc(buf[i], fp);
+		else fputs(hex, fp);
+	}
+
+	return ret;
+}
+

@@ -11,7 +11,8 @@ OBJS += qrpayload.o
 OBJS += qrversion.o
 OBJS += reedsolomon.o
 OBJS += runlength.o
-OBJS += qrdetect.o
+OBJS += qrdetector.o
+OBJS += qrspec.o
 
 OBJS += barcode.o
 OBJS += barcode_code39.o
@@ -20,6 +21,10 @@ OBJS += barcode_ean.o
 OBJS += barcode_itf.o
 OBJS += barcode_nw7.o
 
+
+#CFLAGS += -D USE_IMAGE_PNG
+#OBJS += miniz.o
+
 #CC=avr-gcc -mmcu=atmega32u4
 #CC=clang
 #CC=c++
@@ -27,9 +32,10 @@ OBJS += barcode_nw7.o
 SIZE = size
 
 CFLAGS += -g
-#CFLAGS += -DDEBUG
 #CFLAGS += -std=c2x
 CFLAGS += -Wall # -Werror
+
+CFLAGS += -Wno-misleading-indentation
 
 #CFLAGS += -D USE_MALLOC_BUFFER
 #CFLAGS += -D NO_MALLOC
@@ -37,6 +43,9 @@ CFLAGS += -Wall # -Werror
 #CFLAGS += -D NO_CALLBACK
 #CFLAGS += -D NO_QRMATRIX_BUFFER
 #CFLAGS += -D NO_BARCODE_BUFFER
+
+CFLAGS += -D DEBUG
+#CFLAGS += -D DEBUG_QRDATA
 
 all: size
 

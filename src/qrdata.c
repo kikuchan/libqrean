@@ -1,9 +1,7 @@
+#include "utils.h"
 #include "qrdata.h"
 #include "bitstream.h"
 #include <string.h>
-
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 qrdata_t create_qrdata_for(bitstream_t bs, qr_version_t version) {
 	qrdata_t data = {
@@ -18,6 +16,7 @@ qrdata_t create_qrdata_for(bitstream_t bs, qr_version_t version) {
 #define LENGTH_BIT_SIZE_FOR_NUMERIC(version) VERDEPLEN(version, 10, 12, 14)
 #define LENGTH_BIT_SIZE_FOR_ALNUM(version)   VERDEPLEN(version, 9, 11, 13)
 #define LENGTH_BIT_SIZE_FOR_8BIT(version)    VERDEPLEN(version, 8, 16, 16)
+#define LENGTH_BIT_SIZE_FOR_KANJI(version)    VERDEPLEN(version, 8, 10, 12)
 
 #define BITSIZE_FOR_NUMERIC(len) ((len) >= 3 ? 10 : (len) == 2 ? 7 : 4)
 #define BITSIZE_FOR_ALNUM(len)   (11)
@@ -212,10 +211,10 @@ size_t qrdata_parse(qrdata_t *data, void *buffer, size_t size) {
 			goto end;
 
 		case QR_DATA_MODE_NUMERIC:
-#ifdef DEBUG_QRDATA
-			bitstream_write_string(w, "[NUM]");
-#endif
 			len = bitstream_read_bits(r, LENGTH_BIT_SIZE_FOR_NUMERIC(data->version));
+#ifdef DEBUG_QRDATA
+			bitstream_write_string(w, "[NUM: %u]", len);
+#endif
 			while (len > 0) {
 				uint16_t v = bitstream_read_bits(r, len >= 3 ? 10 : len == 2 ? 7 : 4);
 
@@ -233,12 +232,12 @@ size_t qrdata_parse(qrdata_t *data, void *buffer, size_t size) {
 			break;
 
 		case QR_DATA_MODE_ALNUM:
-#ifdef DEBUG_QRDATA
-			bitstream_write_string(w, "[ALNUM]");
-#endif
 			len = bitstream_read_bits(r, LENGTH_BIT_SIZE_FOR_ALNUM(data->version));
+#ifdef DEBUG_QRDATA
+			bitstream_write_string(w, "[ALNUM: %u]", len);
+#endif
 			while (len > 0) {
-				uint16_t v = bitstream_read_bits(r, 11);
+				uint16_t v = bitstream_read_bits(r, len >= 2 ? 11 : 6);
 				if (len >= 2) {
 					bitstream_write_bits(w, alnum[v / 45 % 45], 8);
 					if (--len == 0) break;
@@ -249,10 +248,10 @@ size_t qrdata_parse(qrdata_t *data, void *buffer, size_t size) {
 			break;
 
 		case QR_DATA_MODE_8BIT:
-#ifdef DEBUG_QRDATA
-			bitstream_write_string(w, "[8BIT]");
-#endif
 			len = bitstream_read_bits(r, LENGTH_BIT_SIZE_FOR_8BIT(data->version));
+#ifdef DEBUG_QRDATA
+			bitstream_write_string(w, "[8BIT: %u]", len);
+#endif
 			while (len-- > 0) {
 				bitstream_write_bits(w, bitstream_read_bits(r, 8), 8);
 			}
@@ -278,6 +277,17 @@ size_t qrdata_parse(qrdata_t *data, void *buffer, size_t size) {
 				bitstream_write_string(w, "[ECI %u]", eci);
 			}
 			break;
+		case QR_DATA_MODE_KANJI:
+			len = bitstream_read_bits(r, LENGTH_BIT_SIZE_FOR_8BIT(data->version));
+#ifdef DEBUG_QRDATA
+			bitstream_write_string(w, "[KANJI: %u]", len);
+#endif
+			bitstream_write_string(w, "(KANJI Unsupported yet)");
+
+			while (len-- > 0) {
+				bitstream_skip_bits(r, 13);
+			}
+			break;
 
 		case QR_DATA_MODE_STRUCTURED:
 			bitstream_write_string(w, "[S]");
@@ -288,6 +298,7 @@ size_t qrdata_parse(qrdata_t *data, void *buffer, size_t size) {
 
 		default:
 			// unknown
+			bitstream_write_string(w, "[??? %u]", ch);
 #ifdef DEBUG_QRDATA
 			bitstream_write_string(w, "[??? %u]", ch);
 #endif

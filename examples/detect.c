@@ -12,78 +12,149 @@
 #include "hexdump.h"
 #include "qrmatrix.h"
 #include "qrpayload.h"
+#include "qrspec.h"
 #include "runlength.h"
-#include "qrdetect.h"
+#include "qrdetector.h"
 
 #include "image.h"
 
 image_t *img;
 
+#ifdef DEBUG_DETECT
+image_t *detected;
+#endif
+
 uint32_t W = 0;
 uint32_t H = 0;
 
-void tryDecode(image_t *img, image_point_t a, image_point_t b, image_point_t c) {
-	// ABu + ACv
+#ifdef DEBUG_DETECT
+bit_t write_image_pixel(qrmatrix_t *qr, bitpos_t x, bitpos_t y, bitpos_t pos, bit_t value, void *opaque) {
+	qrdetector_perspective_t *warp = (qrdetector_perspective_t *)opaque;
+	// image_draw_pixel(detected, image_point_transform(POINT(x, y), warp->h), value ? PIXEL(255, 0, 0) : PIXEL(0, 255, 0));
+	image_draw_filled_ellipse(detected, image_point_transform(POINT(x, y), warp->h), 2, 2, value ? PIXEL(255, 0, 0) : PIXEL(0, 255, 0));
+	return 1;
+}
+#endif
+
+
+int tryDecode(image_t *imgsrc, image_point_t src[3]) {
+	image_t *img = image_clone(imgsrc);
 	qrmatrix_t *qr = new_qrmatrix();
+	int found = 0;
 
-	for (int version = 1; version <= 40; version++) {
+	for (int version = 1; version <= 40 && !found; version++) {
 		qrmatrix_set_version(qr, version);
-		int size = qr->symbol_size;
 
-		double alpha = 3.0;
-		double beta = 7;
-		double gamma = 0.5;
+		qrdetector_perspective_t warp = create_qrdetector_perspective(qr, img);
+		qrdetector_perspective_setup_by_finder_pattern(&warp, src);
 
-		for (double u = 0; u < size; u += 1) {
-			for (double v = 0; v < size; v += 1) {
-				int x = POINT_X(a) + (POINT_X(b) - POINT_X(a)) * (u - alpha) / (double)(size - beta) + (POINT_X(c) - POINT_X(a)) * (v - alpha) / (double)(size - beta) + gamma;
-				int y = POINT_Y(a) + (POINT_Y(b) - POINT_Y(a)) * (u - alpha) / (double)(size - beta) + (POINT_Y(c) - POINT_Y(a)) * (v - alpha) / (double)(size - beta) + gamma;
+#ifdef DEBUG_DETECT
+		qrmatrix_on_write_pixel(qr, write_image_pixel, &warp);
+#endif
 
-				uint32_t pix = image_read_pixel(img, POINT(x, y));
-				qrmatrix_write_pixel(qr, u, v, pix == 0 ? 1 : 0);
-			}
+		if (qrmatrix_read_finder_pattern(qr, 0) > 10) continue;
+
+		// qrmatrix_set_version(qr, qrmatrix_read_version(qr));
+
+		//qrmatrix_write_finder_pattern(qr);
+		//qrmatrix_write_alignment_pattern(qr);
+		//image_dump(img, stdout);
+
+		if (qrdetector_perspective_fit_by_alignment_pattern(&warp)) {
+			fprintf(stderr, "   ** Ajusted\n");
 		}
+
+//		qrmatrix_dump(qr);
+
+#ifdef DEBUG_DETECT
+		qrmatrix_write_finder_pattern(qr);
+		qrmatrix_write_alignment_pattern(qr);
+		qrmatrix_write_timing_pattern(qr);
+#endif
+
+		// image_dump(img, stdout);
 
 		if (qrmatrix_set_format_info(qr, qrmatrix_read_format_info(qr))) {
 			char buf[1024];
 
+#ifdef DEBUG_DETECT
+			qrmatrix_write_format_info(qr);
+#endif
+
 			qrformat_t f = qrmatrix_read_format_info(qr);
-			fprintf(stderr, "formatinfo; %d %d\n", f.mask, f.level);
+			fprintf(stderr, "formatinfo; %d %d %04x\n", f.mask, f.level, f.value);
 
-			if (qrmatrix_fix_errors(qr) >= 0) {
-				qrpayload_t *payload = new_qrpayload(qr->version, qr->level);
-				qrmatrix_read_payload(qr, payload);
+			qrpayload_t *payload = new_qrpayload(qr->version, qr->level);
+			qrmatrix_read_payload(qr, payload);
 
-				size_t l = qrmatrix_read_string(qr, buf, sizeof(buf));
-				fprintf(stderr, "RECV: (%ld) '%s'\n", l, buf);
+#ifdef DEBUG_DETECT
+			qrmatrix_write_payload(qr, payload);
+#endif
+
+			if (qrpayload_fix_errors(payload) >= 0) {
+				size_t l = qrpayload_read_string(payload, buf, sizeof(buf));
+				safe_fprintf(stderr, "RECV (len %zu): '%s'\n", l, buf);
+#ifndef DEBUG_DETECT
+				printf("Found: RECV: '%s'\n", buf);
+#endif
 				qrmatrix_dump(qr);
+
+				found |= 1;
+			} else {
+#ifdef DEBUG_DETECT
+//				qrmatrix_dump(qr);
+#endif
 			}
+
+			qrpayload_free(payload);
 		}
+
+//		qrmatrix_dump(qr);
 	}
+
+	return found;
 }
+
 
 void done(pngle_t *pngle) {
 	int num_candidates;
-	image_point_t *candidates = qrdetect_scan_finder_pattern(img, &num_candidates);
+	qrdetector_candidate_t *candidates = qrdetector_scan_finder_pattern(img, &num_candidates);
+	int found = 0;
 
+#ifdef DEBUG_DETECT
+	detected = image_clone(img);
+	for (int i = 0; i < num_candidates; i++) {
+		image_draw_filled_ellipse(detected, POINT(candidates[i].center_x, candidates[i].center_y), 5, 5, PIXEL(255, 0, 0));
+		image_draw_extent(detected, candidates[i].extent, PIXEL(255, 0, 0), 1);
+	}
+#endif
+
+	// try all possible pairs!
 	for (int i = 0; i < num_candidates; i++) {
 		for (int j = i + 1; j < num_candidates; j++) {
 			for (int k = j + 1; k < num_candidates; k++) {
-				int idx[] = { i, j, k };
+				int idx[] = { i, j, k, i, k, j, j, i, k, j, k, i, k, i, j, k, j, i };
+				for (int l = 0; l < 6; l++) {
+					image_point_t points[] = {
+						candidates[idx[l * 3 + 0]].center,
+						candidates[idx[l * 3 + 1]].center,
+						candidates[idx[l * 3 + 2]].center,
+					};
 
-				for (int l = 0; l < 3; l++) {
-					image_t *clone = image_clone(img);
-					tryDecode(
-						img,
-						candidates[idx[(l + 0) % 3]],
-						candidates[idx[(l + 1) % 3]],
-						candidates[idx[(l + 2) % 3]]
-					);
-					image_free(clone);
+					found |= tryDecode(img, points);
 				}
 			}
 		}
 	}
+
+	if (!found) {
+#ifndef DEBUG_DETECT
+		printf("Not found\n");
+#endif
+	}
+#ifdef DEBUG_DETECT
+	image_dump(detected, stdout);
+#endif
 }
 
 double gamma_value = 1.8;
@@ -105,8 +176,8 @@ void init_screen(pngle_t *pngle, uint32_t w, uint32_t h) {
 	img = new_image(W, H);
 }
 
-// % convert -auto-threshold otsu input.png - | ./decode3
-
+// run command like with
+// % convert -resize 640 -auto-threshold otsu -morphology Dilate Square -morphology Erode Square input.png png:- | ./detect
 int main(int argc, char *argv[]) {
 	char buf[1024];
 	size_t remain = 0;

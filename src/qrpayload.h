@@ -2,6 +2,7 @@
 #define __QR_QRPAYLOAD_H__
 
 #include "bitstream.h"
+#include "qrdata.h"
 #include "qrtypes.h"
 
 #define RSBLOCK_BUFFER_SIZE (3706)
@@ -58,6 +59,7 @@ bitstream_t qrpayload_get_bitstream_for_error(qrpayload_t *qrs);
 void qrpayload_set_error_words(qrpayload_t *qrs);
 int qrpayload_fix_errors(qrpayload_t *qrs);
 
-int qrpayload_set_string(qrpayload_t *qrs, const char *src);
+size_t qrpayload_read_string(qrpayload_t *payload, char *buffer, size_t size);
+bit_t qrpayload_write_string(qrpayload_t *payload, const char *src, size_t len, qrdata_writer_t writer);
 
 #endif /* __QR_QRPAYLOAD_H__ */

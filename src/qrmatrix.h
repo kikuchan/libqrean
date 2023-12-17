@@ -38,11 +38,11 @@ struct _qrmatrix_t {
 	uint8_t buffer[QR_BUFFER_SIZE];
 #endif
 
-	void *opaque;
-
 #ifndef NO_CALLBACK
-	bit_t (*write_pixel)(qrmatrix_t *qr, bitpos_t x, bitpos_t y, bitpos_t pos, bit_t v);
-	bit_t (*read_pixel)(qrmatrix_t *qr, bitpos_t x, bitpos_t y, bitpos_t pos);
+	bit_t (*write_pixel)(qrmatrix_t *qr, bitpos_t x, bitpos_t y, bitpos_t pos, bit_t v, void *opaque);
+	void *opaque_write;
+	bit_t (*read_pixel)(qrmatrix_t *qr, bitpos_t x, bitpos_t y, bitpos_t pos, void *opaque);
+	void *opaque_read;
 #endif
 };
 
@@ -92,14 +92,14 @@ void qrmatrix_fill(qrmatrix_t *qr, bit_t v);
 size_t qrmatrix_write_string(qrmatrix_t *qr, const char *src);
 size_t qrmatrix_read_string(qrmatrix_t *qr, char *buffer, size_t size);
 
-size_t qrmatrix_write_string_numeric(qrmatrix_t *qrm, const char *src);
-size_t qrmatrix_write_string_alnum(qrmatrix_t *qrm, const char *src);
-size_t qrmatrix_write_string_8bit(qrmatrix_t *qrm, const char *src);
+size_t qrmatrix_write_string_numeric(qrmatrix_t *qr, const char *src);
+size_t qrmatrix_write_string_alnum(qrmatrix_t *qr, const char *src);
+size_t qrmatrix_write_string_8bit(qrmatrix_t *qr, const char *src);
 
 size_t qrmatrix_write_buffer(qrmatrix_t *qr, const char *src, size_t len);
-size_t qrmatrix_write_buffer_numeric(qrmatrix_t *qrm, const char *src, size_t len);
-size_t qrmatrix_write_buffer_alnum(qrmatrix_t *qrm, const char *src, size_t len);
-size_t qrmatrix_write_buffer_8bit(qrmatrix_t *qrm, const char *src, size_t len);
+size_t qrmatrix_write_buffer_numeric(qrmatrix_t *qr, const char *src, size_t len);
+size_t qrmatrix_write_buffer_alnum(qrmatrix_t *qr, const char *src, size_t len);
+size_t qrmatrix_write_buffer_8bit(qrmatrix_t *qr, const char *src, size_t len);
 
 // --------------------------------------
 void qrmatrix_write_pixel(qrmatrix_t *qr, int x, int y, bit_t v);
@@ -109,13 +109,13 @@ size_t qrmatrix_write_bitmap(qrmatrix_t *qr, const void *src, size_t len, bitpos
 size_t qrmatrix_read_bitmap(qrmatrix_t *qr, void *src, size_t len, bitpos_t bpp);
 
 void qrmatrix_write_finder_pattern(qrmatrix_t *qr);
-uint_fast8_t qrmatrix_read_finder_pattern(qrmatrix_t *qr);
+int qrmatrix_read_finder_pattern(qrmatrix_t *qr, int idx);
 
 void qrmatrix_write_alignment_pattern(qrmatrix_t *qr);
-uint_fast8_t qrmatrix_read_alignment_pattern(qrmatrix_t *qr);
+int qrmatrix_read_alignment_pattern(qrmatrix_t *qr, int idx);
 
 void qrmatrix_write_timing_pattern(qrmatrix_t *qr);
-uint_fast8_t qrmatrix_read_timing_pattern(qrmatrix_t *qr);
+int qrmatrix_read_timing_pattern(qrmatrix_t *qr);
 
 void qrmatrix_write_format_info(qrmatrix_t *qr);
 qrformat_t qrmatrix_read_format_info(qrmatrix_t *qr);
@@ -124,22 +124,23 @@ void qrmatrix_write_version_info(qrmatrix_t *qr);
 qrversion_t qrmatrix_read_version_info(qrmatrix_t *qr);
 qr_version_t qrmatrix_read_version(qrmatrix_t *qr);
 
-bitpos_t qrmatrix_write_payload(qrmatrix_t *qr, qrpayload_t *qrp);
-bitpos_t qrmatrix_read_payload(qrmatrix_t *qr, qrpayload_t *qrp);
+bitpos_t qrmatrix_write_payload(qrmatrix_t *qr, qrpayload_t *payload);
+bitpos_t qrmatrix_read_payload(qrmatrix_t *qr, qrpayload_t *payload);
 
 void qrmatrix_write_function_patterns(qrmatrix_t *qr);
-bitpos_t qrmatrix_write_all(qrmatrix_t *qr, qrpayload_t *qrp);
+bitpos_t qrmatrix_write_all(qrmatrix_t *qr, qrpayload_t *payload);
 
 // --------------------------------------
 
 bitstream_t qrmatrix_create_bitstream(qrmatrix_t *qr, bitstream_iterator_t iter);
 bitstream_t qrmatrix_create_bitstream_for_composed_data(qrmatrix_t *qr);
+bitstream_t qrmatrix_create_bitstream_for_alignment_pattern(qrmatrix_t *qr, int idx);
 
 // --------------------------------------
 
 #ifndef NO_CALLBACK
-void qrmatrix_on_write_pixel(qrmatrix_t *qr, bit_t (*write_pixel)(qrmatrix_t *qr, bitpos_t x, bitpos_t y, bitpos_t pos, bit_t v));
-void qrmatrix_on_read_pixel(qrmatrix_t *qr, bit_t (*read_pixel)(qrmatrix_t *qr, bitpos_t x, bitpos_t y, bitpos_t pos));
+void qrmatrix_on_write_pixel(qrmatrix_t *qr, bit_t (*write_pixel)(qrmatrix_t *qr, bitpos_t x, bitpos_t y, bitpos_t pos, bit_t v, void *opaque), void *opaque);
+void qrmatrix_on_read_pixel(qrmatrix_t *qr, bit_t (*read_pixel)(qrmatrix_t *qr, bitpos_t x, bitpos_t y, bitpos_t pos, void *opaque), void *opaque);
 #endif
 
 #endif /* __QR_MATRIX_H__ */

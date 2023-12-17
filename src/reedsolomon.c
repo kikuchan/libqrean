@@ -1,7 +1,5 @@
+#include "utils.h"
 #include "galois.h"
-
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 gf2_poly_t *rs_init_generator_polynomial(gf2_poly_t *ans) {
 	int i;

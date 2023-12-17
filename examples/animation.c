@@ -23,7 +23,7 @@ void dump(qrmatrix_t *qr) {
 	}
 }
 
-bit_t write_pixel(qrmatrix_t *qr, bitpos_t x, bitpos_t y, bitpos_t pos, bit_t v) {
+bit_t write_pixel(qrmatrix_t *qr, bitpos_t x, bitpos_t y, bitpos_t pos, bit_t v, void *opaque) {
 	dump(qr);
 
 	return 0; // indicates let the library draw the pixel. Skip drawing otherwise.
@@ -36,7 +36,7 @@ int main() {
 	qrmatrix_set_maskpattern(qr, QR_MASKPATTERN_0);
 
 	// Setup callbacks
-	qrmatrix_on_write_pixel(qr, write_pixel);
+	qrmatrix_on_write_pixel(qr, write_pixel, NULL);
 
 	// Start drawing
 	qrmatrix_write_string(qr, "Hello, world");

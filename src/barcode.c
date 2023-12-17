@@ -179,9 +179,9 @@ void barcode_dump(barcode_t *code) {
 			bit_t u = barcode_read_pixel(code, x, y + 0);
 			bit_t l = y + 1 >= ey ? 1 : barcode_read_pixel(code, x, y + 1);
 
-			printf("%s", dots[((u << 1) | l) & 3]);
+			fprintf(stderr, "%s", dots[((u << 1) | l) & 3]);
 		}
-		printf("\n");
+		fprintf(stderr, "\n");
 	}
 #endif
 }

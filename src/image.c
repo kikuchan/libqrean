@@ -1,9 +1,15 @@
-#include "image.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <math.h>
+
+#include "image.h"
+
+#ifdef USE_IMAGE_PNG
+#include "miniz.h"
+#endif
 
 image_t *new_image(int width, int height) {
 	image_t *img = (image_t *)malloc(sizeof(image_t));
@@ -49,17 +55,36 @@ image_pixel_t image_read_pixel(image_t *img, image_point_t p) {
 	return img->buffer[y * img->width + x];
 }
 
-void image_dump(image_t *img) {
-	printf("P6\n%u %u\n255\n", img->width, img->height);
+void image_dump_as_ppm(image_t *img, FILE *out) {
+	fprintf(out, "P6\n%zu %zu\n255\n", img->width, img->height);
 
 	for (uint32_t y = 0; y < img->height; y++) {
 		for (uint32_t x = 0; x < img->width; x++) {
 			image_pixel_t pix = image_read_pixel(img, POINT(x, y));
-			putchar(PIXEL_GET_R(pix));
-			putchar(PIXEL_GET_G(pix));
-			putchar(PIXEL_GET_B(pix));
+			fputc(PIXEL_GET_R(pix), out);
+			fputc(PIXEL_GET_G(pix), out);
+			fputc(PIXEL_GET_B(pix), out);
 		}
 	}
+}
+
+void image_dump_as_png(image_t *img, FILE *out) {
+#ifdef USE_IMAGE_PNG
+	size_t len;
+	void *png = tdefl_write_image_to_png_file_in_memory(img->buffer, img->width, img->height, 4, &len);
+	if (png) {
+		fwrite(png, 1, len, out);
+		free(png);
+	}
+#endif
+}
+
+void image_dump(image_t *img, FILE *out) {
+#ifdef USE_IMAGE_PNG
+	image_dump_as_png(img, out);
+#else
+	image_dump_as_ppm(img, out);
+#endif
 }
 
 void image_draw_filled_rectangle(image_t *img, image_point_t p, int w, int h, image_pixel_t pix) {
@@ -142,16 +167,12 @@ void image_draw_polygon(image_t *img, int N, image_point_t points[], image_pixel
 void image_draw_filled_ellipse(image_t *img, image_point_t center, int w, int h, image_pixel_t pix) {
 	int cx = POINT_X(center);
 	int cy = POINT_Y(center);
-	float a, b;
 	int x, y;
 
-	a = w / 2.0f;
-	b = h / 2.0f;
-
-	float sx = cx - a;
-	float sy = cy - b;
-	float dx = cx + a;
-	float dy = cy + b;
+	float sx = cx - w;
+	float sy = cy - h;
+	float dx = cx + w;
+	float dy = cy + h;
 
 	for (y = sy; y <= dy; y++) {
 		for (x = sx; x <= dx; x++) {
@@ -160,7 +181,7 @@ void image_draw_filled_ellipse(image_t *img, image_point_t center, int w, int h,
 			tx = x - cx + 0.5f;
 			ty = y - cy + 0.5f;
 
-			if (((tx * tx) / (a * a) + (ty * ty) / (b * b)) < 1.0f) {
+			if (((tx * tx) / (w * w) + (ty * ty) / (h * h)) <= 1.0f) {
 				image_draw_pixel(img, POINT(x, y), pix);
 			}
 		}
@@ -175,25 +196,155 @@ image_extent_t *image_extent_update(image_extent_t *extent, image_extent_t src) 
 	return extent;
 }
 
+image_point_t image_extent_center(image_extent_t *extent) {
+	return POINT((extent->left + extent->right) / 2, (extent->top + extent->bottom) / 2);
+}
+
 void image_extent_dump(image_extent_t *extent) {
 	fprintf(stderr, "[%u %u %u %u]\n", extent->top, extent->right, extent->bottom, extent->left);
 }
 
-image_extent_t image_paint(image_t *img, image_point_t center, image_pixel_t pix) {
-	int cx = POINT_X(center);
-	int cy = POINT_Y(center);
-	image_extent_t extent = {cy, cx, cy, cx};
-
-	image_pixel_t bg = image_read_pixel(img, center);
-	if (bg == pix) return extent;
-
-	image_draw_pixel(img, center, pix);
-
-	if (image_read_pixel(img, POINT(cx + 1, cy)) == bg) image_extent_update(&extent, image_paint(img, POINT(cx + 1, cy), pix));
-	if (image_read_pixel(img, POINT(cx - 1, cy)) == bg) image_extent_update(&extent, image_paint(img, POINT(cx - 1, cy), pix));
-	if (image_read_pixel(img, POINT(cx, cy + 1)) == bg) image_extent_update(&extent, image_paint(img, POINT(cx, cy + 1), pix));
-	if (image_read_pixel(img, POINT(cx, cy - 1)) == bg) image_extent_update(&extent, image_paint(img, POINT(cx, cy - 1), pix));
-
-	return extent;
+static void image_paint_update_result(image_paint_result_t *target, image_paint_result_t result) {
+	if (result.area) {
+		image_extent_update(&target->extent, result.extent);
+		target->area += result.area;
+	}
 }
 
+image_paint_result_t image_paint(image_t *img, image_point_t center, image_pixel_t pix) {
+	int cx = POINT_X(center);
+	int cy = POINT_Y(center);
+	image_paint_result_t result = {
+		{cy, cx, cy, cx},
+		0,
+	};
+
+	if (cx < 0 || cy < 0 || cx >= (int)img->width || cy >= (int)img->height) return result;
+
+	image_pixel_t bg = image_read_pixel(img, center);
+	if (bg == pix) return result;
+
+	int lx, rx;
+	for (lx = cx; lx >= 0 && image_read_pixel(img, POINT(lx, cy)) == bg; lx--) {
+		image_draw_pixel(img, POINT(lx, cy), pix);
+		result.area++;
+		result.extent.left = lx;
+	}
+	for (rx = cx + 1; rx < (int)img->width && image_read_pixel(img, POINT(rx, cy)) == bg; rx++) {
+		image_draw_pixel(img, POINT(rx, cy), pix);
+		result.area++;
+		result.extent.right = rx;
+	}
+
+	for (int x = lx; x < rx; x++) {
+		if (image_read_pixel(img, POINT(x, cy - 1)) == bg) image_paint_update_result(&result, image_paint(img, POINT(x, cy - 1), pix));
+		if (image_read_pixel(img, POINT(x, cy + 1)) == bg) image_paint_update_result(&result, image_paint(img, POINT(x, cy + 1), pix));
+	}
+
+	return result;
+}
+
+double image_point_norm(image_point_t a) {
+	return sqrt((POINT_X(a) * POINT_X(a)) + (POINT_Y(a) * POINT_Y(a)));
+}
+
+void image_draw_extent(image_t *img, image_extent_t extent, image_pixel_t pix, int thickness) {
+	image_point_t points[] = {
+		POINT(extent.left, extent.top),
+		POINT(extent.right, extent.top),
+		POINT(extent.right, extent.bottom),
+		POINT(extent.left, extent.bottom),
+	};
+
+	image_draw_polygon(img, 4, points, pix, thickness);
+}
+
+image_point_t image_point_transform(image_point_t p, image_transform_matrix_t matrix) {
+	float x = matrix.m[0] * POINT_X(p) + matrix.m[1] * POINT_Y(p) + matrix.m[2];
+	float y = matrix.m[3] * POINT_X(p) + matrix.m[4] * POINT_Y(p) + matrix.m[5];
+	float w = matrix.m[6] * POINT_X(p) + matrix.m[7] * POINT_Y(p) + 1.0;
+
+	return POINT((x / w), (y / w));
+}
+
+image_transform_matrix_t create_image_transform_matrix(image_point_t src[4], image_point_t dst[4]) {
+	float src_x0 = POINT_X(src[0]);
+	float src_y0 = POINT_Y(src[0]);
+	float src_x1 = POINT_X(src[1]);
+	float src_y1 = POINT_Y(src[1]);
+	float src_x2 = POINT_X(src[2]);
+	float src_y2 = POINT_Y(src[2]);
+	float src_x3 = POINT_X(src[3]);
+	float src_y3 = POINT_Y(src[3]);
+	float dst_x0 = POINT_X(dst[0]);
+	float dst_y0 = POINT_Y(dst[0]);
+	float dst_x1 = POINT_X(dst[1]);
+	float dst_y1 = POINT_Y(dst[1]);
+	float dst_x2 = POINT_X(dst[2]);
+	float dst_y2 = POINT_Y(dst[2]);
+	float dst_x3 = POINT_X(dst[3]);
+	float dst_y3 = POINT_Y(dst[3]);
+
+	float a[8][8] = {
+		{ src_x0, src_y0, 1, 0, 0, 0, -src_x0 * dst_x0, -src_y0 * dst_x0 },
+		{ 0, 0, 0, src_x0, src_y0, 1, -src_x0 * dst_y0, -src_y0 * dst_y0 },
+		{ src_x1, src_y1, 1, 0, 0, 0, -src_x1 * dst_x1, -src_y1 * dst_x1 },
+		{ 0, 0, 0, src_x1, src_y1, 1, -src_x1 * dst_y1, -src_y1 * dst_y1 },
+		{ src_x2, src_y2, 1, 0, 0, 0, -src_x2 * dst_x2, -src_y2 * dst_x2 },
+		{ 0, 0, 0, src_x2, src_y2, 1, -src_x2 * dst_y2, -src_y2 * dst_y2 },
+		{ src_x3, src_y3, 1, 0, 0, 0, -src_x3 * dst_x3, -src_y3 * dst_x3 },
+		{ 0, 0, 0, src_x3, src_y3, 1, -src_x3 * dst_y3, -src_y3 * dst_y3 },
+	};
+	float b[8] = {
+		dst_x0,
+		dst_y0,
+		dst_x1,
+		dst_y1,
+		dst_x2,
+		dst_y2,
+		dst_x3,
+		dst_y3,
+	};
+
+	// Gauss-Jordan elimination
+	for (int i = 0; i < 8; i++) {
+		int pivot = i;
+		for (int j = i + 1; j < 8; j++) {
+			if (fabs(a[j][i]) > fabs(a[pivot][i])) {
+				pivot = j;
+			}
+		}
+
+		for (int j = 0; j < 8; j++) {
+			float tmp = a[i][j];
+			a[i][j] = a[pivot][j];
+			a[pivot][j] = tmp;
+		}
+		{
+			float tmp = b[i];
+			b[i] = b[pivot];
+			b[pivot] = tmp;
+		}
+
+		for (int j = i + 1; j < 8; j++) {
+			float ratio = a[j][i] / a[i][i];
+			for (int k = i; k < 8; k++) {
+				a[j][k] -= a[i][k] * ratio;
+			}
+			b[j] -= b[i] * ratio;
+		}
+	}
+
+	for (int i = 7; i >= 0; i--) {
+		for (int j = i + 1; j < 8; j++) {
+			b[i] -= a[i][j] * b[j];
+		}
+		b[i] /= a[i][i];
+	}
+
+	image_transform_matrix_t matrix = {
+		.m = { b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7] },
+	};
+
+	return matrix;
+}
