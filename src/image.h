@@ -70,4 +70,7 @@ void image_draw_extent(image_t *img, image_extent_t extent, image_pixel_t pix, i
 image_point_t image_point_transform(image_point_t p, image_transform_matrix_t matrix);
 image_transform_matrix_t create_image_transform_matrix(image_point_t src[4], image_point_t dst[4]);
 
+void image_digitize(image_t *dst, image_t *src, float gamma_value);
+void image_monochrome(image_t *dst, image_t *src, float gamma_value, int hist_result[256]);
+
 #endif

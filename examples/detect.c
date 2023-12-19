@@ -31,7 +31,7 @@ uint32_t H = 0;
 bit_t write_image_pixel(qrmatrix_t *qr, bitpos_t x, bitpos_t y, bitpos_t pos, bit_t value, void *opaque) {
 	qrdetector_perspective_t *warp = (qrdetector_perspective_t *)opaque;
 	// image_draw_pixel(detected, image_point_transform(POINT(x, y), warp->h), value ? PIXEL(255, 0, 0) : PIXEL(0, 255, 0));
-	image_draw_filled_ellipse(detected, image_point_transform(POINT(x, y), warp->h), 2, 2, value ? PIXEL(255, 0, 0) : PIXEL(0, 255, 0));
+	image_draw_filled_ellipse(detected, image_point_transform(POINT(x, y), warp->h), 1, 1, value ? PIXEL(255, 0, 0) : PIXEL(0, 255, 0));
 	return 1;
 }
 #endif
@@ -94,15 +94,38 @@ int tryDecode(image_t *imgsrc, image_point_t src[3]) {
 			if (qrpayload_fix_errors(payload) >= 0) {
 				size_t l = qrpayload_read_string(payload, buf, sizeof(buf));
 				safe_fprintf(stderr, "RECV (len %zu): '%s'\n", l, buf);
+				hexdump(buf, l, 0);
 #ifndef DEBUG_DETECT
 				printf("Found: RECV: '%s'\n", buf);
 #endif
 				qrmatrix_dump(qr);
 
 				found |= 1;
+
+#if 0
+				{
+					char buffer[4096];
+					size_t size = sizeof(buffer);
+					qrdata_t qrdata = create_qrdata_for(qrpayload_get_bitstream_for_data(payload), payload->version);
+
+					for (int i = 0; i < 10; i++) {
+						size_t len = qrdata_parse(&qrdata, buffer, size);
+						if (len >= size) len = size - 1;
+						buffer[len] = 0;
+
+						safe_fprintf(stderr, "RECV %d: '%s'\n", i, buffer);
+					}
+				}
+				{
+					char buffer[4096];
+					bitstream_t bs = qrpayload_get_bitstream_for_data(payload);
+					bitpos_t len = bitstream_read(&bs, buffer, sizeof(buffer), 1);
+					hexdump(buffer, BYTE_SIZE(len), 0);
+				}
+#endif
 			} else {
 #ifdef DEBUG_DETECT
-//				qrmatrix_dump(qr);
+				qrmatrix_dump(qr);
 #endif
 			}
 
@@ -117,8 +140,11 @@ int tryDecode(image_t *imgsrc, image_point_t src[3]) {
 
 
 void done(pngle_t *pngle) {
+	image_t *mono = image_clone(img);
+	image_digitize(mono, img, 1.8);
+
 	int num_candidates;
-	qrdetector_candidate_t *candidates = qrdetector_scan_finder_pattern(img, &num_candidates);
+	qrdetector_candidate_t *candidates = qrdetector_scan_finder_pattern(mono, &num_candidates);
 	int found = 0;
 
 #ifdef DEBUG_DETECT
@@ -141,7 +167,7 @@ void done(pngle_t *pngle) {
 						candidates[idx[l * 3 + 2]].center,
 					};
 
-					found |= tryDecode(img, points);
+					if (!found) found |= tryDecode(mono, points);
 				}
 			}
 		}
@@ -160,14 +186,11 @@ void done(pngle_t *pngle) {
 double gamma_value = 1.8;
 
 void draw_pixel(pngle_t *pngle, uint32_t x, uint32_t y, uint32_t w, uint32_t h, const uint8_t rgba[4]) {
-	uint8_t b = rgba[2];
-	uint8_t g = rgba[1];
 	uint8_t r = rgba[0];
+	uint8_t g = rgba[1];
+	uint8_t b = rgba[2];
 
-	// make it monochrome
-	uint8_t v = pow((0.299 * r + 0.587 * g + 0.114 * b) / 255.0, 1 / gamma_value) * 255.0 < 127 ? 0 : 255;
-
-	image_draw_pixel(img, POINT(x, y), PIXEL(v, v, v));
+	image_draw_pixel(img, POINT(x, y), PIXEL(r, g, b));
 }
 
 void init_screen(pngle_t *pngle, uint32_t w, uint32_t h) {
@@ -176,8 +199,6 @@ void init_screen(pngle_t *pngle, uint32_t w, uint32_t h) {
 	img = new_image(W, H);
 }
 
-// run command like with
-// % convert -resize 640 -auto-threshold otsu -morphology Dilate Square -morphology Erode Square input.png png:- | ./detect
 int main(int argc, char *argv[]) {
 	char buf[1024];
 	size_t remain = 0;

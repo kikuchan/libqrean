@@ -259,6 +259,71 @@ void image_draw_extent(image_t *img, image_extent_t extent, image_pixel_t pix, i
 	image_draw_polygon(img, 4, points, pix, thickness);
 }
 
+void image_monochrome(image_t *dst, image_t *src, float gamma_value, int hist_result[256]) {
+	int hist[256] = { 0 };
+	for (int y = 0; y < (int)src->height; y++) {
+		for (int x = 0; x < (int)src->width; x++) {
+			image_pixel_t pix = image_read_pixel(src, POINT(x, y));
+
+			uint8_t value = pow((0.299 * PIXEL_GET_R(pix) + 0.587 * PIXEL_GET_G(pix) + 0.114 * PIXEL_GET_B(pix)) / 255.0, 1 / gamma_value) * 255;
+			image_draw_pixel(dst, POINT(x, y), PIXEL(value, value, value));
+			hist[value]++;
+		}
+	}
+	if (hist_result) memcpy(hist_result, hist, sizeof(hist));
+}
+
+void image_digitize(image_t *dst, image_t *src, float gamma_value) {
+	// Using otsu method
+	// https://en.wikipedia.org/wiki/Otsu%27s_method
+	int hist[256] = { 0 };
+	int threshold = 0;
+	double max_sigma = 0.0;
+
+	image_monochrome(dst, src, gamma_value, hist);
+
+	for (int t = 0; t < 256; t++) {
+		double w0 = 0.0;
+		double w1 = 0.0;
+		double m0 = 0.0;
+		double m1 = 0.0;
+		double sigma = 0.0;
+
+		for (int i = 0; i < 256; i++) {
+			if (i < t) {
+				w0 += hist[i];
+				m0 += i * hist[i];
+			} else {
+				w1 += hist[i];
+				m1 += i * hist[i];
+			}
+		}
+
+		if (w0 == 0.0 || w1 == 0.0) continue;
+
+		m0 /= w0;
+		m1 /= w1;
+
+		sigma = (w0 * w1) * ((m0 - m1) * (m0 - m1));
+
+		if (sigma > max_sigma) {
+			max_sigma = sigma;
+			threshold = t;
+		}
+	}
+
+	for (int y = 0; y < (int)src->height; y++) {
+		for (int x = 0; x < (int)src->width; x++) {
+			image_pixel_t pix = image_read_pixel(src, POINT(x, y));
+			if (PIXEL_GET_R(pix) < threshold) {
+				image_draw_pixel(dst, POINT(x, y), PIXEL(0, 0, 0));
+			} else {
+				image_draw_pixel(dst, POINT(x, y), PIXEL(255, 255, 255));
+			}
+		}
+	}
+}
+
 image_point_t image_point_transform(image_point_t p, image_transform_matrix_t matrix) {
 	float x = matrix.m[0] * POINT_X(p) + matrix.m[1] * POINT_Y(p) + matrix.m[2];
 	float y = matrix.m[3] * POINT_X(p) + matrix.m[4] * POINT_Y(p) + matrix.m[5];
@@ -276,14 +341,16 @@ image_transform_matrix_t create_image_transform_matrix(image_point_t src[4], ima
 	float src_y2 = POINT_Y(src[2]);
 	float src_x3 = POINT_X(src[3]);
 	float src_y3 = POINT_Y(src[3]);
-	float dst_x0 = POINT_X(dst[0]);
-	float dst_y0 = POINT_Y(dst[0]);
-	float dst_x1 = POINT_X(dst[1]);
-	float dst_y1 = POINT_Y(dst[1]);
-	float dst_x2 = POINT_X(dst[2]);
-	float dst_y2 = POINT_Y(dst[2]);
-	float dst_x3 = POINT_X(dst[3]);
-	float dst_y3 = POINT_Y(dst[3]);
+
+	// XXX: for + 0.5
+	float dst_x0 = POINT_X(dst[0]) + 0.5;
+	float dst_y0 = POINT_Y(dst[0]) + 0.5;
+	float dst_x1 = POINT_X(dst[1]) + 0.5;
+	float dst_y1 = POINT_Y(dst[1]) + 0.5;
+	float dst_x2 = POINT_X(dst[2]) + 0.5;
+	float dst_y2 = POINT_Y(dst[2]) + 0.5;
+	float dst_x3 = POINT_X(dst[3]) + 0.5;
+	float dst_y3 = POINT_Y(dst[3]) + 0.5;
 
 	float a[8][8] = {
 		{ src_x0, src_y0, 1, 0, 0, 0, -src_x0 * dst_x0, -src_y0 * dst_x0 },
