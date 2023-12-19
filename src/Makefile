@@ -44,7 +44,7 @@ CFLAGS += -Wno-misleading-indentation
 #CFLAGS += -D NO_QRMATRIX_BUFFER
 #CFLAGS += -D NO_BARCODE_BUFFER
 
-CFLAGS += -D DEBUG
+#CFLAGS += -D DEBUG
 #CFLAGS += -D DEBUG_QRDATA
 
 all: size
