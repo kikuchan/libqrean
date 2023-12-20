@@ -2,6 +2,7 @@ OBJS += bitstream.o
 OBJS += hexdump.o
 OBJS += utils.o
 OBJS += image.o
+OBJS += debug.o
 
 OBJS += galois.o
 OBJS += qrdata.o
@@ -44,8 +45,8 @@ CFLAGS += -Wno-misleading-indentation
 #CFLAGS += -D NO_QRMATRIX_BUFFER
 #CFLAGS += -D NO_BARCODE_BUFFER
 
-#CFLAGS += -D DEBUG
-#CFLAGS += -D DEBUG_QRDATA
+#CFLAGS += -D NO_DEBUG
+CFLAGS += -D DEBUG_QRDATA
 
 all: size
 

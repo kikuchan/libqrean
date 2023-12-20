@@ -15,6 +15,7 @@
 #include "qrspec.h"
 #include "runlength.h"
 #include "qrdetector.h"
+#include "debug.h"
 
 #include "image.h"
 
@@ -199,10 +200,19 @@ void init_screen(pngle_t *pngle, uint32_t w, uint32_t h) {
 	img = new_image(W, H);
 }
 
+int debug_vprintf(const char *fmt, va_list ap)
+{
+	return vfprintf(stderr, fmt, ap);
+}
+
 int main(int argc, char *argv[]) {
 	char buf[1024];
 	size_t remain = 0;
 	int len;
+
+#ifdef DEBUG_DETECT
+	qrean_on_debug_printf(debug_vprintf);
+#endif
 
 	FILE *fp = stdin;
 

@@ -2,6 +2,7 @@
 #include "qrdata.h"
 #include "bitstream.h"
 #include <string.h>
+#include "debug.h"
 
 qrdata_t create_qrdata_for(bitstream_t bs, qr_version_t version) {
 	qrdata_t data = {
@@ -195,65 +196,65 @@ size_t qrdata_write_string(qrdata_t *data, const char *src, size_t len) {
 	return r;
 }
 
-size_t qrdata_parse(qrdata_t *data, void *buffer, size_t size) {
+size_t qrdata_parse(qrdata_t *data, void (*on_letter_cb)(qr_data_mode_t mode, const uint32_t letter, void *opaque), void *opaque) {
 	bitstream_t *r = &data->bs;
-	bitstream_t bs = create_bitstream(buffer, size * 8, NULL, NULL);
-	bitstream_t *w = &bs;
 	size_t len;
+	size_t wrote = 0;
 
 	while (!bitstream_is_end(r)) {
-		uint8_t ch = bitstream_read_bits(r, 4);
-		switch (ch) {
+		uint8_t mode = bitstream_read_bits(r, 4);
+		switch (mode) {
 		case QR_DATA_MODE_END:
-#ifdef DEBUG_QRDATA
-			bitstream_write_string(w, "[END]");
-#endif
+			on_letter_cb(mode, 0, opaque);
 			goto end;
 
 		case QR_DATA_MODE_NUMERIC:
 			len = bitstream_read_bits(r, LENGTH_BIT_SIZE_FOR_NUMERIC(data->version));
-#ifdef DEBUG_QRDATA
-			bitstream_write_string(w, "[NUM: %u]", len);
-#endif
 			while (len > 0) {
 				uint16_t v = bitstream_read_bits(r, len >= 3 ? 10 : len == 2 ? 7 : 4);
 
 				if (len >= 3) {
-					bitstream_write_bits(w, '0' + v / 100 % 10, 8);
+					if (v / 100 >= 10) {
+						qrean_debug_printf("Warning: out of code founds on NUMERIC %d\n", v);
+					}
+					on_letter_cb(mode, '0' + v / 100 % 10, opaque);
+					wrote++;
 					len--;
 				}
 				if (len >= 2) {
-					bitstream_write_bits(w, '0' + v / 10 % 10, 8);
+					on_letter_cb(mode, '0' + v / 10 % 10, opaque);
+					wrote++;
 					len--;
 				}
-				bitstream_write_bits(w, '0' + v % 10, 8);
+				on_letter_cb(mode, '0' + v % 10, opaque);
+				wrote++;
 				len--;
 			}
 			break;
 
 		case QR_DATA_MODE_ALNUM:
 			len = bitstream_read_bits(r, LENGTH_BIT_SIZE_FOR_ALNUM(data->version));
-#ifdef DEBUG_QRDATA
-			bitstream_write_string(w, "[ALNUM: %u]", len);
-#endif
 			while (len > 0) {
 				uint16_t v = bitstream_read_bits(r, len >= 2 ? 11 : 6);
 				if (len >= 2) {
-					bitstream_write_bits(w, alnum[v / 45 % 45], 8);
+					if (v / 45 >= 45) {
+						qrean_debug_printf("Warning: out of code founds on ALNUM %d\n", v);
+					}
+					on_letter_cb(mode, alnum[v / 45 % 45], opaque);
+					wrote++;
 					if (--len == 0) break;
 				}
-				bitstream_write_bits(w, alnum[v % 45], 8);
+				on_letter_cb(mode, alnum[v % 45], opaque);
+				wrote++;
 				if (--len == 0) break;
 			}
 			break;
 
 		case QR_DATA_MODE_8BIT:
 			len = bitstream_read_bits(r, LENGTH_BIT_SIZE_FOR_8BIT(data->version));
-#ifdef DEBUG_QRDATA
-			bitstream_write_string(w, "[8BIT: %u]", len);
-#endif
 			while (len-- > 0) {
-				bitstream_write_bits(w, bitstream_read_bits(r, 8), 8);
+				on_letter_cb(mode, bitstream_read_bits(r, 8), opaque);
+				wrote++;
 			}
 			break;
 
@@ -274,38 +275,33 @@ size_t qrdata_parse(qrdata_t *data, void *buffer, size_t size) {
 					goto end;
 				}
 
-				bitstream_write_string(w, "[ECI %u]", eci);
+				on_letter_cb(mode, eci, opaque);
+
+				// TODO:
 			}
 			break;
 		case QR_DATA_MODE_KANJI:
 			len = bitstream_read_bits(r, LENGTH_BIT_SIZE_FOR_8BIT(data->version));
-#ifdef DEBUG_QRDATA
-			bitstream_write_string(w, "[KANJI: %u]", len);
-#endif
-			bitstream_write_string(w, "(KANJI Unsupported yet)");
-
 			while (len-- > 0) {
-				bitstream_skip_bits(r, 13);
+				int code = bitstream_read_bits(r, 13);
+				on_letter_cb(mode, code, opaque);
+				wrote++;
 			}
 			break;
 
-		case QR_DATA_MODE_STRUCTURED:
-			bitstream_write_string(w, "[S]");
+		case QR_DATA_MODE_STRUCTURED:;
+			int a = bitstream_read_bits(r, 8);
+			int b = bitstream_read_bits(r, 8);
+			qrean_debug_printf("Warning: structured data %d %d\n", a, b);
 
-			bitstream_read_bits(r, 8);
-			bitstream_read_bits(r, 8);
 			break;
 
 		default:
 			// unknown
-			bitstream_write_string(w, "[??? %u]", ch);
-#ifdef DEBUG_QRDATA
-			bitstream_write_string(w, "[??? %u]", ch);
-#endif
 			goto end;
 		}
 	}
 
 end:;
-	return bitstream_tell(w) / 8;
+	return wrote;
 }

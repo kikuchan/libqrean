@@ -107,7 +107,8 @@ void gf2_poly_divmod(gf2_poly_t *ans_q, gf2_poly_t *ans_r, const gf2_poly_t *a, 
 	// determine 'real' deg of b
 	int real_b_deg = gf2_poly_get_real_degree(b);
 	if (real_b_deg < 0) {
-		fatal("Division by zero poly\n");
+		qrean_error("Division by zero poly\n");
+		return ;
 	}
 	gf2_value_t denominator = GF2_POLY_COEFF(b, real_b_deg);
 
@@ -178,24 +179,24 @@ int gf2_poly_is_zero(const gf2_poly_t *poly) {
 #ifdef DEBUG
 void gf2_print(gf2_value_t a) {
 	if (a == 0)
-		debug_printf("0");
+		qrrean_debug_printf("0");
 	else
-		debug_printf("a^%d", gf2_log_a(a));
+		qrrean_debug_printf("a^%d", gf2_log_a(a));
 }
 
 void gf2_poly_print(const gf2_poly_t *poly) {
 	int i, is_empty = 1;
 	for (i = GF2_POLY_DEGREE(poly); i >= 0; i--) {
 		if (GF2_POLY_COEFF(poly, i)) {
-			if (!is_empty) debug_printf(" + ");
+			if (!is_empty) qrrean_debug_printf(" + ");
 			is_empty = 0;
-			debug_printf("a^%d x^%d", gf2_log_a(GF2_POLY_COEFF(poly, i)), i);
+			qrrean_debug_printf("a^%d x^%d", gf2_log_a(GF2_POLY_COEFF(poly, i)), i);
 		} else {
 			continue;
 		}
 	}
-	if (is_empty) debug_printf("0");
-	debug_printf("\n");
+	if (is_empty) qrrean_debug_printf("0");
+	qrrean_debug_printf("\n");
 }
 
 #endif

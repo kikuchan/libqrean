@@ -7,6 +7,7 @@
 typedef struct {
 	bitstream_t bs;
 	qr_version_t version;
+	int debug;
 } qrdata_t;
 
 typedef enum {
@@ -36,6 +37,6 @@ size_t qrdata_write_string(qrdata_t *data, const char *src, size_t len);
 
 bit_t qrdata_finalize(qrdata_t *data);
 
-size_t qrdata_parse(qrdata_t *data, void *buffer, size_t size);
+size_t qrdata_parse(qrdata_t *data, void (*on_letter_cb)(qr_data_mode_t mode, const uint32_t letter, void *opaque), void *opaque);
 
 #endif /* __QR_QRDATA_H__ */

@@ -120,7 +120,10 @@ void qrdetector_perspective_setup_by_finder_pattern(qrdetector_perspective_t *wa
 	warp->dst[0] = src[0];
 	warp->dst[1] = src[1];
 	warp->dst[2] = src[2];
-	warp->dst[3] = src[0] + (src[1] - src[0]) + (src[2] - src[0]); // XXX: direct xy arithmetic
+	warp->dst[3] = POINT(
+		POINT_X(src[0]) + (POINT_X(src[1]) - POINT_X(src[0])) + (POINT_X(src[2]) - POINT_X(src[0])),
+		POINT_Y(src[0]) + (POINT_Y(src[1]) - POINT_Y(src[0])) + (POINT_Y(src[2]) - POINT_Y(src[0]))
+	);
 
 	warp->h = create_image_transform_matrix(warp->src, warp->dst);
 
@@ -148,10 +151,7 @@ int qrdetector_perspective_fit_by_alignment_pattern(qrdetector_perspective_t *d)
 				image_point_t ring = image_point_transform(POINT(x + 1, y), d->h);
 				if (image_read_pixel(img, p) == 0 && image_read_pixel(img, ring) == PIXEL(255, 255, 255)) {
 					image_paint_result_t result = image_paint(img, ring, PIXEL(255, 0, 0));
-					fprintf(stderr, "area; %d\n", result.area);
 					if (module_size * module_size < result.area && result.area < module_size * module_size * 16) {
-						fprintf(stderr, "  => looks good\n");
-
 						image_point_t new_center = image_extent_center(&result.extent);
 
 						qrdetector_perspective_t backup = *d;

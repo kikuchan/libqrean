@@ -3,17 +3,14 @@
 
 #include <stdio.h>
 
-#ifdef DEBUG
-#define BANNER            "[libqrean] "
-#define debug_printf(...) fprintf(stderr, __VA_ARGS__)
-#else
-#define debug_printf(...)
-#endif
+#define QREAN_BANNER "[libqrean] "
 
-#define fatal(s)                 \
-	do {                         \
-		debug_printf("%s\n", s); \
-		assert(0);               \
-	} while (0)
+int qrean_debug_printf(const char *fmt, ...);
+void qrean_error(const char *fmt, ...);
+
+void qrean_on_debug_printf(int (*func)(const char *fmt, va_list ap));
+void qrean_on_error(void (*func)(const char *message));
+
+const char *qrean_get_last_error();
 
 #endif /* __QR_DEBUG_H__ */

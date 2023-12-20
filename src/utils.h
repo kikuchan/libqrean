@@ -1,6 +1,7 @@
 #ifndef __QR_UTILS_H__
 #define __QR_UTILS_H__
 
+#include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -43,5 +44,7 @@ int safe_fprintf(FILE *fp, const char *fmt, ...);
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
+
+#define UNUSED(x) ((void)(x))
 
 #endif /* __QR_UTILS_H__ */

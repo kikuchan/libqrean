@@ -279,14 +279,14 @@ int qrpayload_fix_errors(qrpayload_t *payload) {
 		int num_errors;
 		switch (num_errors = rs_fix_errors(R, error_words)) {
 		default:
-			debug_printf(BANNER "rsblock #%d: %d error(s) fixed\n", rsblock_num, num_errors);
+			qrean_debug_printf("rsblock #%d: %d error(s) fixed\n", rsblock_num, num_errors);
 			num_errors_total += num_errors;
 			break;
 		case 0:
-			debug_printf(BANNER "rsblock #%d: No error\n", rsblock_num);
+			qrean_debug_printf("rsblock #%d: No error\n", rsblock_num);
 			continue;
 		case -1:
-			debug_printf(BANNER "rsblock #%d: Too much errors\n", rsblock_num);
+			qrean_debug_printf("rsblock #%d: Too much errors\n", rsblock_num);
 			return -1;
 		};
 
@@ -314,9 +314,17 @@ bitstream_t qrpayload_get_bitstream_for_error(qrpayload_t *payload) {
 	return create_bitstream(payload->buffer, payload->total_bits, qrpayload_error_words_iter, payload);
 }
 
+static void qrdata_parse_on_letter(qr_data_mode_t mode, uint32_t letter, void *opaque) {
+	bitstream_t *bs = (bitstream_t *)opaque;
+	if (mode != QR_DATA_MODE_KANJI) {
+		bitstream_write_bits(bs, letter, 8);
+	}
+}
+
 size_t qrpayload_read_string(qrpayload_t *payload, char *buffer, size_t size) {
 	qrdata_t qrdata = create_qrdata_for(qrpayload_get_bitstream_for_data(payload), payload->version);
-	size_t len = qrdata_parse(&qrdata, buffer, size);
+	bitstream_t bs = create_bitstream(buffer, size * 8, NULL, NULL);
+	size_t len = qrdata_parse(&qrdata, qrdata_parse_on_letter, &bs);
 	if (len >= size) len = size - 1;
 	buffer[len] = 0;
 	return len;
