@@ -4,7 +4,9 @@
 #include <stdint.h>
 
 typedef enum {
-	QR_VERSION_INVALID = 0,
+	QR_VERSION_INVALID = -1,
+	QR_VERSION_AUTO = 0,
+
 	QR_VERSION_1,
 	QR_VERSION_2,
 	QR_VERSION_3,
@@ -46,11 +48,15 @@ typedef enum {
 	QR_VERSION_39,
 	QR_VERSION_40,
 
-	QR_VERSION_AUTO,
+	QR_VERSION_M1,
+	QR_VERSION_M2,
+	QR_VERSION_M3,
+	QR_VERSION_M4,
 } qr_version_t;
 
 typedef enum {
 	QR_ERRORLEVEL_INVALID = -1,
+
 	QR_ERRORLEVEL_L,
 	QR_ERRORLEVEL_M,
 	QR_ERRORLEVEL_Q,
@@ -59,6 +65,7 @@ typedef enum {
 
 typedef enum {
 	QR_MASKPATTERN_INVALID = -1,
+
 	QR_MASKPATTERN_0,
 	QR_MASKPATTERN_1,
 	QR_MASKPATTERN_2,
@@ -73,5 +80,9 @@ typedef enum {
 
 	QR_MASKPATTERN_AUTO,
 } qr_maskpattern_t;
+
+#define IS_MQR(version) (QR_VERSION_M1 <= (version) && (version) <= QR_VERSION_M4)
+#define IS_QR(version) (QR_VERSION_1 <= (version) && (version) <= QR_VERSION_40)
+
 
 #endif /* __QR_QRTYPES_H__*/

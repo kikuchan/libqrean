@@ -14,7 +14,7 @@
 #define QRSTREAM_BUFFER_SIZE(payload) (((payload)->total_bits + 7) / 8)
 
 void qrpayload_init(qrpayload_t *payload, qr_version_t version, qr_errorlevel_t level) {
-	assert(QR_VERSION_1 <= version && version <= QR_VERSION_40);
+	assert(IS_QR(version) || IS_MQR(version));
 	assert(QR_ERRORLEVEL_L <= level && level <= QR_ERRORLEVEL_H);
 
 	payload->version = version;

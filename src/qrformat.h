@@ -6,12 +6,13 @@
 typedef struct {
 	qr_maskpattern_t mask;
 	qr_errorlevel_t level;
+	qr_version_t version; // for mQR
 	uint16_t value;
 } qrformat_t;
 
 #define QR_FORMATINFO_SIZE (15)
 
-qrformat_t qrformat_for(qr_errorlevel_t level, qr_maskpattern_t mask);
-qrformat_t qrformat_from(uint16_t value);
+qrformat_t qrformat_for(qr_version_t version, qr_errorlevel_t level, qr_maskpattern_t mask);
+qrformat_t qrformat_from(qr_version_t version, uint16_t value);
 
 #endif /* __QR_FORMATINFO_H__ */

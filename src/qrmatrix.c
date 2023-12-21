@@ -84,7 +84,7 @@ bit_t qrmatrix_set_version(qrmatrix_t *qr, qr_version_t version) {
 		return 0;
 	}
 	qr->version = version;
-	qr->symbol_size = SYMBOL_SIZE_FOR(version == QR_VERSION_AUTO ? MAX_QR_VERSION : version);
+	qr->symbol_size = qrspec_get_symbol_size(version == QR_VERSION_AUTO ? MAX_QR_VERSION : version);
 	qr->width = qr->symbol_size + qr->padding.l + qr->padding.r;
 	qr->height = qr->symbol_size + qr->padding.t + qr->padding.b;
 	return 1;
@@ -180,7 +180,7 @@ bit_t qrmatrix_read_pixel(qrmatrix_t *qr, int x, int y) {
 	return qrmatrix_read_bit_at(NULL, pos, qr);
 }
 
-static bit_t is_mask(int_fast16_t x, int_fast16_t y, int mask) {
+static bit_t qr_is_mask(int_fast16_t x, int_fast16_t y, int mask) {
 	switch (mask) {
 	case QR_MASKPATTERN_0:
 		return (y + x) % 2 == 0;
@@ -207,10 +207,36 @@ static bit_t is_mask(int_fast16_t x, int_fast16_t y, int mask) {
 	}
 }
 
+static bit_t mqr_is_mask(int_fast16_t j, int_fast16_t i, int mask) {
+	switch (mask) {
+	case QR_MASKPATTERN_0:
+		// 1
+		return i % 2 == 0;
+	case QR_MASKPATTERN_1:
+		// 4
+		return (i / 2 + j / 3) % 2 == 0;
+	case QR_MASKPATTERN_2:
+		// 6
+		return (((i * j) % 2) + ((i * j) % 3)) % 2 == 0;
+	case QR_MASKPATTERN_3:
+		// 7
+		return (((i + j) % 2) + ((i + j) % 3)) % 2 == 0;
+
+	case QR_MASKPATTERN_NONE:
+		return 0;
+	case QR_MASKPATTERN_ALL:
+		return 1;
+
+	default:
+		qrean_error("Invalid mask pattern");
+		return 0;
+	}
+}
+
 // iterators
 static bitpos_t version_info_iter(bitstream_t *bs, bitpos_t i, void *opaque) {
 	qrmatrix_t *qr = (qrmatrix_t *)opaque;
-	if (qr->version < 7) return BITPOS_END;
+	if (qr->version < QR_VERSION_7 || IS_MQR(qr->version)) return BITPOS_END;
 
 	uint_fast8_t n = i / QR_VERSIONINFO_SIZE;
 	uint_fast8_t u = i % QR_VERSIONINFO_SIZE;
@@ -224,13 +250,13 @@ static bitpos_t version_info_iter(bitstream_t *bs, bitpos_t i, void *opaque) {
 }
 
 static bit_t is_version_info(qrmatrix_t *qr, int_fast16_t x, int_fast16_t y) {
-	if (qr->version < 7) return 0;
+	if (qr->version < QR_VERSION_7 || IS_MQR(qr->version)) return 0;
 	if (x < 7 && qr->symbol_size - 11 <= y && y <= qr->symbol_size - 9) return 1;
 	if (y < 7 && qr->symbol_size - 11 <= x && x <= qr->symbol_size - 9) return 1;
 	return 0;
 }
 
-static bitpos_t format_info_iter(bitstream_t *bs, bitpos_t i, void *opaque) {
+static bitpos_t qr_format_info_iter(bitstream_t *bs, bitpos_t i, void *opaque) {
 	qrmatrix_t *qr = (qrmatrix_t *)opaque;
 	uint_fast8_t n = i / QR_FORMATINFO_SIZE;
 	uint_fast8_t u = i % QR_FORMATINFO_SIZE;
@@ -243,26 +269,61 @@ static bitpos_t format_info_iter(bitstream_t *bs, bitpos_t i, void *opaque) {
 	return QR_XYV_TO_BITPOS(qr, x, y, (0x5412 & (0x4000 >> u)));
 }
 
+static bitpos_t mqr_format_info_iter(bitstream_t *bs, bitpos_t i, void *opaque) {
+	qrmatrix_t *qr = (qrmatrix_t *)opaque;
+	uint_fast8_t n = i / QR_FORMATINFO_SIZE;
+	uint_fast8_t u = i % QR_FORMATINFO_SIZE;
+
+	if (n >= 1) return BITPOS_END;
+
+	int x = u < 7 ? u + 1 : 8;
+	int y = u < 7 ? 8 : 15 - u;
+
+	return QR_XYV_TO_BITPOS(qr, x, y, (0x4445 & (0x4000 >> u)));
+}
+
 static bit_t is_format_info(qrmatrix_t *qr, int_fast16_t x, int_fast16_t y) {
-	if (y == 8 && ((0 <= x && x <= 8) || (qr->symbol_size - 8 <= x && x < qr->symbol_size))) return 1;
-	if (x == 8 && ((0 <= y && y <= 8) || (qr->symbol_size - 8 <= y && y < qr->symbol_size))) return 1;
+	if (IS_MQR(qr->version)) {
+		if (y == 8 && (0 <= x && x <= 8)) return 1;
+		if (x == 8 && (0 <= y && y <= 8)) return 1;
+	} else {
+		if (y == 8 && ((0 <= x && x <= 8) || (qr->symbol_size - 8 <= x && x < qr->symbol_size))) return 1;
+		if (x == 8 && ((0 <= y && y <= 8) || (qr->symbol_size - 8 <= y && y < qr->symbol_size))) return 1;
+	}
 	return 0;
 }
 
 // XXX: timing bitstream must be even for to easy implementation
-static bitpos_t timing_pattern_iter(bitstream_t *bs, bitpos_t i, void *opaque) {
+static bitpos_t qr_timing_pattern_iter(bitstream_t *bs, bitpos_t i, void *opaque) {
 	qrmatrix_t *qr = (qrmatrix_t *)opaque;
-	int n = i / (SYMBOL_SIZE_FOR(qr->version) - 7 * 2 - 1) % (SYMBOL_SIZE_FOR(qr->version) - 7 * 2 - 1);
-	int u = i % (SYMBOL_SIZE_FOR(qr->version) - 7 * 2 - 1);
+	int n = i / (qr->symbol_size - 7 * 2 - 1) % (qr->symbol_size - 7 * 2 - 1);
+	int u = i % (qr->symbol_size - 7 * 2 - 1);
 
 	if (n >= 2) return BITPOS_END;
-	if (u > qr->symbol_size - 8 * 2) return BITPOS_TRUNC;
 
+	if (u > qr->symbol_size - 8 * 2) return BITPOS_TRUNC;
 	return QR_XYV_TO_BITPOS(qr, n == 0 ? 7 + u : 6, n != 0 ? 7 + u : 6, 0);
 }
 
+static bitpos_t mqr_timing_pattern_iter(bitstream_t *bs, bitpos_t i, void *opaque) {
+	qrmatrix_t *qr = (qrmatrix_t *)opaque;
+	int n = i / (qr->symbol_size - 8 + 1) % (qr->symbol_size - 8 + 1);
+	int u = i % (qr->symbol_size - 8 + 1);
+
+	if (n >= 2) return BITPOS_END;
+
+	if (u > qr->symbol_size - 8) return BITPOS_TRUNC;
+	return QR_XYV_TO_BITPOS(qr, n == 0 ? 7 + u : 0, n != 0 ? 7 + u : 0, 0);
+}
+
 static bit_t is_timing_pattern(qrmatrix_t *qr, int_fast16_t x, int_fast16_t y) {
-	if (y == 6 || x == 6) return 1;
+	if (QR_VERSION_1 <= qr->version && qr->version <= QR_VERSION_40) {
+		if (y == 6 || x == 6) return 1;
+	}
+	if (QR_VERSION_M1 <= qr->version && qr->version <= QR_VERSION_M4) {
+		if (y == 0 || x == 0) return 1;
+	}
+
 	return 0;
 }
 
@@ -270,7 +331,7 @@ static bit_t is_timing_pattern(qrmatrix_t *qr, int_fast16_t x, int_fast16_t y) {
 static bitpos_t finder_pattern_iter(bitstream_t *bs, bitpos_t i, void *opaque) {
 	qrmatrix_t *qr = (qrmatrix_t *)opaque;
 	int n = i / FINDER_PATTERN_SIZE;
-	if (n >= 3) return BITPOS_END;
+	if (n >= (IS_MQR(qr->version) ? 1 : 3)) return BITPOS_END;
 
 	int x = (i % 9) + (n == 1 ? (qr->symbol_size - 8) : -1);
 	int y = (i / 9 % 9) + (n == 2 ? (qr->symbol_size - 8) : -1);
@@ -280,12 +341,17 @@ static bitpos_t finder_pattern_iter(bitstream_t *bs, bitpos_t i, void *opaque) {
 
 static bit_t is_finder_pattern(qrmatrix_t *qr, int_fast16_t x, int_fast16_t y) {
 	if (x < 8 && y < 8) return 1;
-	if (x < 8 && y >= qr->symbol_size - 8) return 1;
-	if (x >= qr->symbol_size - 8 && y < 8) return 1;
+	if (!IS_MQR(qr->version)) {
+		if (x < 8 && y >= qr->symbol_size - 8) return 1;
+		if (x >= qr->symbol_size - 8 && y < 8) return 1;
+	}
 	return 0;
 }
 
 static bit_t is_alignment_pattern(qrmatrix_t *qr, int_fast16_t x, int_fast16_t y) {
+	if (qr->version < QR_VERSION_2 || IS_MQR(qr->version)) {
+		return 0;
+	}
 	uint_fast8_t N = qr->version > 1 ? qr->version / 7 + 2 : 0;
 
 	int_fast8_t xidx = -1, yidx = -1;
@@ -320,7 +386,7 @@ static bitpos_t alignment_pattern_iter(bitstream_t *bs, bitpos_t i, void *opaque
 static bitpos_t composed_data_iter(bitstream_t *bs, bitpos_t i, void *opaque) {
 	qrmatrix_t *qr = (qrmatrix_t *)opaque;
 	bitpos_t n = qr->symbol_size;
-	int_fast16_t x = (n - 1) - (i % 2) - 2 * (i / (2 * n)) - ((i >= (n - 7) * n) ? 1 : 0);
+	int_fast16_t x = (n - 1) - (i % 2) - 2 * (i / (2 * n)) - ((i >= (n - 7) * n) && IS_QR(qr->version) ? 1 : 0);
 	int_fast16_t y = (i % (4 * n) < 2 * n) ? (n - 1) - (i / 2 % (2 * n)) : -n + (i / 2 % (2 * n));
 
 	if (x < 0 || y < 0) return BITPOS_END;
@@ -332,7 +398,7 @@ static bitpos_t composed_data_iter(bitstream_t *bs, bitpos_t i, void *opaque) {
 	if (is_format_info(qr, x, y)) return BITPOS_TRUNC;
 	if (is_version_info(qr, x, y)) return BITPOS_TRUNC;
 
-	bit_t v = is_mask(x, y, qr->mask);
+	bit_t v = (IS_MQR(qr->version) ? mqr_is_mask : qr_is_mask)(x, y, qr->mask);
 
 	return QR_XYV_TO_BITPOS(qr, x, y, v);
 }
@@ -376,7 +442,7 @@ bitstream_t qrmatrix_create_bitstream(qrmatrix_t *qr, bitstream_iterator_t iter)
 }
 
 bitstream_t qrmatrix_create_bitstream_for_composed_data(qrmatrix_t *qr) {
-	assert(QR_VERSION_1 <= qr->version && qr->version <= QR_VERSION_40);
+	assert(IS_MQR(qr->version) || IS_QR(qr->version));
 	assert(QR_MASKPATTERN_0 <= qr->mask && qr->mask <= QR_MASKPATTERN_7);
 
 	return qrmatrix_create_bitstream(qr, composed_data_iter);
@@ -410,21 +476,23 @@ static int calc_pattern_mismatch_error_rate(bitstream_t *bs, const uint8_t *patt
 
 // format info
 void qrmatrix_write_format_info(qrmatrix_t *qr) {
-	bitstream_t bs = qrmatrix_create_bitstream(qr, format_info_iter);
-	qrformat_t fi = qrformat_for(qr->level, qr->mask);
+	bitstream_t bs = qrmatrix_create_bitstream(qr, IS_MQR(qr->version) ? mqr_format_info_iter : qr_format_info_iter);
+	qrformat_t fi = qrformat_for(qr->version, qr->level, qr->mask);
 
 	bitstream_write_bits(&bs, fi.value, QR_FORMATINFO_SIZE);
 	bitstream_write_bits(&bs, fi.value, QR_FORMATINFO_SIZE);
 
 	// XXX: dark module
-	qrmatrix_write_pixel(qr, 8, qr->symbol_size - 8, 1);
+	if (IS_QR(qr->version)) {
+		qrmatrix_write_pixel(qr, 8, qr->symbol_size - 8, 1);
+	}
 }
 
 qrformat_t qrmatrix_read_format_info(qrmatrix_t *qr) {
-	bitstream_t bs = qrmatrix_create_bitstream(qr, format_info_iter);
+	bitstream_t bs = qrmatrix_create_bitstream(qr, IS_MQR(qr->version) ? mqr_format_info_iter : qr_format_info_iter);
 
-	qrformat_t fi1 = qrformat_from(bitstream_read_bits(&bs, QR_FORMATINFO_SIZE));
-	qrformat_t fi2 = qrformat_from(bitstream_read_bits(&bs, QR_FORMATINFO_SIZE));
+	qrformat_t fi1 = qrformat_from(qr->version, bitstream_read_bits(&bs, QR_FORMATINFO_SIZE));
+	qrformat_t fi2 = qrformat_from(qr->version, bitstream_read_bits(&bs, QR_FORMATINFO_SIZE));
 
 	if (fi1.mask != QR_MASKPATTERN_INVALID) return fi1;
 	return fi2;
@@ -433,6 +501,9 @@ qrformat_t qrmatrix_read_format_info(qrmatrix_t *qr) {
 bit_t qrmatrix_set_format_info(qrmatrix_t *qr, qrformat_t fi) {
 	if (fi.level == QR_ERRORLEVEL_INVALID || fi.mask == QR_MASKPATTERN_INVALID) return 0;
 
+	if (IS_MQR(fi.version)) {
+		qrmatrix_set_version(qr, fi.version);
+	}
 	qr->level = fi.level;
 	qr->mask = fi.mask;
 	return 1;
@@ -453,10 +524,9 @@ void qrmatrix_write_version_info(qrmatrix_t *qr) {
 qrversion_t qrmatrix_read_version_info(qrmatrix_t *qr) {
 	bitstream_t bs = qrmatrix_create_bitstream(qr, version_info_iter);
 
-	if (qr->version < 7) {
+	if (IS_MQR(qr->version) || qr->version < QR_VERSION_7) {
 		// XXX: dummy
 		return qrversion_for(qr->version);
-		;
 	}
 
 	qrversion_t vi1 = qrversion_from(bitstream_read_bits(&bs, QR_VERSIONINFO_SIZE));
@@ -473,12 +543,12 @@ qr_version_t qrmatrix_read_version(qrmatrix_t *qr) {
 
 const uint8_t timing_pattern_bits[] = {0x55};
 void qrmatrix_write_timing_pattern(qrmatrix_t *qr) {
-	bitstream_t timing_pattern_bs = qrmatrix_create_bitstream(qr, timing_pattern_iter);
-	bitstream_write(&timing_pattern_bs, timing_pattern_bits, 8, 0);
+	bitstream_t bs = qrmatrix_create_bitstream(qr, IS_MQR(qr->version) ? mqr_timing_pattern_iter : qr_timing_pattern_iter);
+	bitstream_write(&bs, timing_pattern_bits, 8, 0);
 }
 
 int qrmatrix_read_timing_pattern(qrmatrix_t *qr) {
-	bitstream_t bs = qrmatrix_create_bitstream(qr, timing_pattern_iter);
+	bitstream_t bs = qrmatrix_create_bitstream(qr, IS_MQR(qr->version) ? mqr_timing_pattern_iter : qr_timing_pattern_iter);
 	int r = calc_pattern_mismatch_error_rate(&bs, timing_pattern_bits, 8, 0, 0);
 	return r;
 }

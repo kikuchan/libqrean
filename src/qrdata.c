@@ -12,15 +12,23 @@ qrdata_t create_qrdata_for(bitstream_t bs, qr_version_t version) {
 	return data;
 }
 
-#define VERDEPLEN(version, a, b, c) ((version) < QR_VERSION_10 ? (a) : (version) < QR_VERSION_27 ? (b) : (c))
+static const uint8_t length_table[][7] = {
+	{ 10, 12, 14, 3, 4, 5, 6 }, // numeric
+	{  9, 11, 13, 0, 3, 4, 5 }, // alnum
+	{  8, 16, 16, 0, 0, 4, 5 }, // 8bit
+	{  8, 10, 12, 0, 0 ,3, 4 }, // kanji
+};
 
-#define LENGTH_BIT_SIZE_FOR_NUMERIC(version) VERDEPLEN(version, 10, 12, 14)
-#define LENGTH_BIT_SIZE_FOR_ALNUM(version)   VERDEPLEN(version, 9, 11, 13)
-#define LENGTH_BIT_SIZE_FOR_8BIT(version)    VERDEPLEN(version, 8, 16, 16)
-#define LENGTH_BIT_SIZE_FOR_KANJI(version)    VERDEPLEN(version, 8, 10, 12)
+#define VERDEPNUM(version, a, b, c) ((version) < QR_VERSION_10 ? (a) : (version) < QR_VERSION_27 ? (b) : (c))
+
+#define LENGTH_BIT_SIZE_TBL(version, n)      (length_table[(n)][IS_QR((version)) ? VERDEPNUM((version), 0, 1, 2) : (3 + (version) - QR_VERSION_M1)])
+#define LENGTH_BIT_SIZE_FOR_NUMERIC(version) LENGTH_BIT_SIZE_TBL(version, 0)
+#define LENGTH_BIT_SIZE_FOR_ALNUM(version)   LENGTH_BIT_SIZE_TBL(version, 1)
+#define LENGTH_BIT_SIZE_FOR_8BIT(version)    LENGTH_BIT_SIZE_TBL(version, 2)
+#define LENGTH_BIT_SIZE_FOR_KANJI(version)   LENGTH_BIT_SIZE_TBL(version, 3)
 
 #define BITSIZE_FOR_NUMERIC(len) ((len) >= 3 ? 10 : (len) == 2 ? 7 : 4)
-#define BITSIZE_FOR_ALNUM(len)   (11)
+#define BITSIZE_FOR_ALNUM(len)   ((len % 2) ? 6 : 11)
 
 static const char alnum_cmp[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:";
 static const char alnum[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:";
@@ -42,25 +50,16 @@ static size_t measure_alnum(const char *src) {
 #define LEN_NUMERIC(ch)   (measure_numeric(ch))
 #define LEN_ALNUM(ch)     (measure_alnum(ch))
 
-size_t qrdata_write_8bit_string(qrdata_t *data, const char *src, size_t len) {
-	if (len == 0) return 0;
-
-	bitstream_write_bits(&data->bs, QR_DATA_MODE_8BIT, 4);
-	bitstream_write_bits(&data->bs, len, LENGTH_BIT_SIZE_FOR_8BIT(data->version));
-
-	size_t i;
-	for (i = 0; i < len && !bitstream_is_end(&data->bs); i++) {
-		bitstream_write_bits(&data->bs, src[i], 8);
-	}
-	return i;
-}
-
 size_t qrdata_write_numeric_string(qrdata_t *data, const char *src, size_t len) {
 	if (measure_numeric(src) < len) {
 		return 0;
 	}
 
-	bitstream_write_bits(&data->bs, QR_DATA_MODE_NUMERIC, 4);
+	if (IS_MQR(data->version)) {
+		bitstream_write_bits(&data->bs, 1, data->version - QR_VERSION_M1);
+	} else {
+		bitstream_write_bits(&data->bs, QR_DATA_MODE_NUMERIC, 4);
+	}
 	bitstream_write_bits(&data->bs, len, LENGTH_BIT_SIZE_FOR_NUMERIC(data->version));
 
 	size_t i = 0;
@@ -82,7 +81,11 @@ size_t qrdata_write_numeric_string(qrdata_t *data, const char *src, size_t len) 
 size_t qrdata_write_alnum_string(qrdata_t *data, const char *src, size_t len) {
 	if (measure_alnum(src) < len) return 0;
 
-	bitstream_write_bits(&data->bs, QR_DATA_MODE_ALNUM, 4);
+	if (IS_MQR(data->version)) {
+		bitstream_write_bits(&data->bs, 1, data->version - QR_VERSION_M1);
+	} else {
+		bitstream_write_bits(&data->bs, QR_DATA_MODE_ALNUM, 4);
+	}
 	bitstream_write_bits(&data->bs, len, LENGTH_BIT_SIZE_FOR_ALNUM(data->version));
 
 	size_t i = 0;
@@ -101,9 +104,30 @@ size_t qrdata_write_alnum_string(qrdata_t *data, const char *src, size_t len) {
 	return i;
 }
 
-bit_t qrdata_finalize(qrdata_t *data) {
-	if (!bitstream_write_bits(&data->bs, QR_DATA_MODE_END, 4)) return 0;
+size_t qrdata_write_8bit_string(qrdata_t *data, const char *src, size_t len) {
+	if (len == 0) return 0;
 
+	if (IS_MQR(data->version)) {
+		bitstream_write_bits(&data->bs, 2, data->version - QR_VERSION_M1);
+	} else {
+		bitstream_write_bits(&data->bs, QR_DATA_MODE_8BIT, 4);
+	}
+	
+	bitstream_write_bits(&data->bs, len, LENGTH_BIT_SIZE_FOR_8BIT(data->version));
+
+	size_t i;
+	for (i = 0; i < len && !bitstream_is_end(&data->bs); i++) {
+		bitstream_write_bits(&data->bs, src[i], 8);
+	}
+	return i;
+}
+
+bit_t qrdata_finalize(qrdata_t *data) {
+	if (IS_QR(data->version)) {
+		if (!bitstream_write_bits(&data->bs, QR_DATA_MODE_END, 4)) return 0;
+	} else {
+		bitstream_write_bits(&data->bs, 0, 3 + 2 * (data->version - QR_VERSION_M1));
+	}
 	bitstream_write_bits(&data->bs, 0, bitstream_tell(&data->bs) % 8);
 
 	size_t pos = bitstream_tell(&data->bs);
@@ -142,16 +166,16 @@ size_t qrdata_write_string(qrdata_t *data, const char *src, size_t len) {
 	if (LEN_CMP_8BIT(src) > 0) {
 		mode = QR_DATA_MODE_8BIT;
 	} else if ((l = LEN_CMP_ALNUM(src)) > 0) {
-		if (l < VERDEPLEN(v, 6, 7, 8) && l < len) {
+		if (l < VERDEPNUM(v, 6, 7, 8) && l < len) {
 			mode = QR_DATA_MODE_8BIT;
 		} else {
 			mode = QR_DATA_MODE_ALNUM;
 		}
 	} else {
 		l = LEN_NUMERIC(src);
-		if (l < VERDEPLEN(v, 4, 4, 5) && LEN_CMP_8BIT(src + l) > 0) {
+		if (l < VERDEPNUM(v, 4, 4, 5) && LEN_CMP_8BIT(src + l) > 0) {
 			mode = QR_DATA_MODE_8BIT;
-		} else if (l < VERDEPLEN(v, 7, 8, 9) && LEN_CMP_ALNUM(src + l) > 0) {
+		} else if (l < VERDEPNUM(v, 7, 8, 9) && LEN_CMP_ALNUM(src + l) > 0) {
 			mode = QR_DATA_MODE_ALNUM;
 		} else {
 			mode = QR_DATA_MODE_NUMERIC;
@@ -163,15 +187,15 @@ size_t qrdata_write_string(qrdata_t *data, const char *src, size_t len) {
 
 	for (i = 0; i < len; i++) {
 		if (mode == QR_DATA_MODE_8BIT) {
-			if (LEN_NUMERIC(src + i) >= VERDEPLEN(v, 6, 8, 9)) {
+			if (LEN_NUMERIC(src + i) >= VERDEPNUM(v, 6, 8, 9)) {
 				mode = QR_DATA_MODE_NUMERIC;
-			} else if (LEN_ALNUM(src + i) >= VERDEPLEN(v, 11, 15, 16)) {
+			} else if (LEN_ALNUM(src + i) >= VERDEPNUM(v, 11, 15, 16)) {
 				mode = QR_DATA_MODE_ALNUM;
 			}
 		} else if (mode == QR_DATA_MODE_ALNUM) {
 			if (LEN_CMP_8BIT(src + i) > 0) {
 				mode = QR_DATA_MODE_8BIT;
-			} else if (LEN_NUMERIC(src + i) >= VERDEPLEN(v, 13, 15, 17)) {
+			} else if (LEN_NUMERIC(src + i) >= VERDEPNUM(v, 13, 15, 17)) {
 				mode = QR_DATA_MODE_NUMERIC;
 			}
 		} else if (mode == QR_DATA_MODE_NUMERIC) {
@@ -201,15 +225,29 @@ size_t qrdata_parse(qrdata_t *data, void (*on_letter_cb)(qr_data_mode_t mode, co
 	size_t len;
 	size_t wrote = 0;
 
+	uint8_t mode = QR_DATA_MODE_NUMERIC; // for mQR
 	while (!bitstream_is_end(r)) {
-		uint8_t mode = bitstream_read_bits(r, 4);
+		if (IS_MQR(data->version)) {
+			if (data->version != QR_VERSION_M1) {
+				switch (bitstream_read_bits(r, data->version - QR_VERSION_M1)) {
+				case 0: mode = QR_DATA_MODE_NUMERIC; break;
+				case 1: mode = QR_DATA_MODE_ALNUM; break;
+				case 2: mode = QR_DATA_MODE_8BIT; break;
+				case 3: mode = QR_DATA_MODE_KANJI; break;
+				}
+			}
+		} else {
+			mode = bitstream_read_bits(r, 4);
+		}
 		switch (mode) {
 		case QR_DATA_MODE_END:
+mode_end:
 			on_letter_cb(mode, 0, opaque);
 			goto end;
 
 		case QR_DATA_MODE_NUMERIC:
 			len = bitstream_read_bits(r, LENGTH_BIT_SIZE_FOR_NUMERIC(data->version));
+			if (len == 0) goto mode_end;
 			while (len > 0) {
 				uint16_t v = bitstream_read_bits(r, len >= 3 ? 10 : len == 2 ? 7 : 4);
 
@@ -234,6 +272,7 @@ size_t qrdata_parse(qrdata_t *data, void (*on_letter_cb)(qr_data_mode_t mode, co
 
 		case QR_DATA_MODE_ALNUM:
 			len = bitstream_read_bits(r, LENGTH_BIT_SIZE_FOR_ALNUM(data->version));
+			if (len == 0) goto mode_end;
 			while (len > 0) {
 				uint16_t v = bitstream_read_bits(r, len >= 2 ? 11 : 6);
 				if (len >= 2) {
@@ -252,6 +291,7 @@ size_t qrdata_parse(qrdata_t *data, void (*on_letter_cb)(qr_data_mode_t mode, co
 
 		case QR_DATA_MODE_8BIT:
 			len = bitstream_read_bits(r, LENGTH_BIT_SIZE_FOR_8BIT(data->version));
+			if (len == 0) goto mode_end;
 			while (len-- > 0) {
 				on_letter_cb(mode, bitstream_read_bits(r, 8), opaque);
 				wrote++;
@@ -282,6 +322,7 @@ size_t qrdata_parse(qrdata_t *data, void (*on_letter_cb)(qr_data_mode_t mode, co
 			break;
 		case QR_DATA_MODE_KANJI:
 			len = bitstream_read_bits(r, LENGTH_BIT_SIZE_FOR_8BIT(data->version));
+			if (len == 0) goto mode_end;
 			while (len-- > 0) {
 				int code = bitstream_read_bits(r, 13);
 				on_letter_cb(mode, code, opaque);

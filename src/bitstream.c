@@ -110,7 +110,7 @@ bit_t bitstream_read_bit(bitstream_t *bs) {
 uint_fast32_t bitstream_read_bits(bitstream_t *bs, uint_fast8_t num_bits) {
 	uint_fast32_t val = 0;
 
-	assert(1 <= num_bits && num_bits <= 32);
+	assert(0 <= num_bits && num_bits <= 32);
 
 	for (uint_fast8_t i = 0; i < num_bits; i++) {
 		val = (val << 1) | bitstream_read_bit(bs);

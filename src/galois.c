@@ -176,27 +176,24 @@ int gf2_poly_is_zero(const gf2_poly_t *poly) {
 	return 1;
 }
 
-#ifdef DEBUG
 void gf2_print(gf2_value_t a) {
 	if (a == 0)
-		qrrean_debug_printf("0");
+		qrean_debug_printf("0");
 	else
-		qrrean_debug_printf("a^%d", gf2_log_a(a));
+		qrean_debug_printf("a^%d", gf2_log_a(a));
 }
 
 void gf2_poly_print(const gf2_poly_t *poly) {
 	int i, is_empty = 1;
 	for (i = GF2_POLY_DEGREE(poly); i >= 0; i--) {
 		if (GF2_POLY_COEFF(poly, i)) {
-			if (!is_empty) qrrean_debug_printf(" + ");
+			if (!is_empty) qrean_debug_printf(" + ");
 			is_empty = 0;
-			qrrean_debug_printf("a^%d x^%d", gf2_log_a(GF2_POLY_COEFF(poly, i)), i);
+			qrean_debug_printf("a^%d x^%d", gf2_log_a(GF2_POLY_COEFF(poly, i)), i);
 		} else {
 			continue;
 		}
 	}
-	if (is_empty) qrrean_debug_printf("0");
-	qrrean_debug_printf("\n");
+	if (is_empty) qrean_debug_printf("0");
+	qrean_debug_printf("\n");
 }
-
-#endif
