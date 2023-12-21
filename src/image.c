@@ -244,7 +244,7 @@ image_paint_result_t image_paint(image_t *img, image_point_t center, image_pixel
 	return result;
 }
 
-double image_point_norm(image_point_t a) {
+float image_point_norm(image_point_t a) {
 	return sqrt((POINT_X(a) * POINT_X(a)) + (POINT_Y(a) * POINT_Y(a)));
 }
 
@@ -278,16 +278,16 @@ void image_digitize(image_t *dst, image_t *src, float gamma_value) {
 	// https://en.wikipedia.org/wiki/Otsu%27s_method
 	int hist[256] = { 0 };
 	int threshold = 0;
-	double max_sigma = 0.0;
+	float max_sigma = 0.0;
 
 	image_monochrome(dst, src, gamma_value, hist);
 
 	for (int t = 0; t < 256; t++) {
-		double w0 = 0.0;
-		double w1 = 0.0;
-		double m0 = 0.0;
-		double m1 = 0.0;
-		double sigma = 0.0;
+		float w0 = 0.0;
+		float w1 = 0.0;
+		float m0 = 0.0;
+		float m1 = 0.0;
+		float sigma = 0.0;
 
 		for (int i = 0; i < 256; i++) {
 			if (i < t) {

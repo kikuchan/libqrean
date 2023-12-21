@@ -64,7 +64,7 @@ image_point_t image_extent_center(image_extent_t *extent);
 
 void image_extent_dump(image_extent_t *extent);
 image_paint_result_t image_paint(image_t *img, image_point_t p, image_pixel_t pix);
-double image_point_norm(image_point_t a);
+float image_point_norm(image_point_t a);
 void image_draw_extent(image_t *img, image_extent_t extent, image_pixel_t pix, int thickness);
 
 image_point_t image_point_transform(image_point_t p, image_transform_matrix_t matrix);
