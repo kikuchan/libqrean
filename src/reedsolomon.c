@@ -1,5 +1,5 @@
-#include "utils.h"
 #include "galois.h"
+#include "utils.h"
 
 gf2_poly_t *rs_init_generator_polynomial(gf2_poly_t *ans) {
 	int i;

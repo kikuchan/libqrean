@@ -1,20 +1,20 @@
 #ifndef __QR_IMAGE_H__
 #define __QR_IMAGE_H__
 
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 
 typedef uint32_t image_pixel_t;
-#define PIXEL(r, g, b)     ((((uint32_t)(r)) << 16) | ((g) << 8) | ((b) << 0))
-#define PIXEL_GET_R(pix)   (((pix) >> 16) & 0xFF)
-#define PIXEL_GET_G(pix)   (((pix) >> 8) & 0xFF)
-#define PIXEL_GET_B(pix)   (((pix) >> 0) & 0xFF)
+#define PIXEL(r, g, b)   ((((uint32_t)(r)) << 16) | ((g) << 8) | ((b) << 0))
+#define PIXEL_GET_R(pix) (((pix) >> 16) & 0xFF)
+#define PIXEL_GET_G(pix) (((pix) >> 8) & 0xFF)
+#define PIXEL_GET_B(pix) (((pix) >> 0) & 0xFF)
 
 // TODO: signed
 typedef uint32_t image_point_t;
-#define POINT(x, y) ((uint32_t)((((uint32_t)(x) & 0xFFFF) << 16) | (((uint32_t)(y) & 0xFFFF) << 0)))
-#define POINT_X(p) ((int16_t)(((p) >> 16) & 0xFFFF))
-#define POINT_Y(p) ((int16_t)(((p) >>  0) & 0xFFFF))
+#define POINT(x, y)   ((uint32_t)((((uint32_t)(x)&0xFFFF) << 16) | (((uint32_t)(y)&0xFFFF) << 0)))
+#define POINT_X(p)    ((int16_t)(((p) >> 16) & 0xFFFF))
+#define POINT_Y(p)    ((int16_t)(((p) >> 0) & 0xFFFF))
 #define POINT_INVALID ((image_point_t)0x80008000)
 
 typedef struct {

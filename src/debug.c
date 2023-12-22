@@ -1,5 +1,5 @@
-#include <stdio.h>
 #include <stdarg.h>
+#include <stdio.h>
 
 #include "debug.h"
 
@@ -57,7 +57,6 @@ void qrean_on_error(void (*func)(const char *message)) {
 }
 
 /* returns NULL if no error */
-const char *qrean_get_last_error()
-{
+const char *qrean_get_last_error() {
 	return qrean_last_error;
 }

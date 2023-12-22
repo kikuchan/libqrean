@@ -1,9 +1,9 @@
+#include <math.h>
+#include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
-#include <stdarg.h>
-#include <math.h>
+#include <string.h>
 
 #include "image.h"
 
@@ -26,14 +26,12 @@ image_t *new_image(int width, int height) {
 	return img;
 }
 
-void image_free(image_t *img)
-{
+void image_free(image_t *img) {
 	free(img->buffer);
 	free(img);
 }
 
-image_t *image_clone(image_t *img)
-{
+image_t *image_clone(image_t *img) {
 	image_t *clone = new_image(img->width, img->height);
 	if (clone) {
 		memcpy(clone->buffer, img->buffer, img->width * img->height * sizeof(image_pixel_t));
@@ -157,8 +155,7 @@ void image_draw_line(image_t *img, image_point_t s, image_point_t e, image_pixel
 	}
 }
 
-void image_draw_polygon(image_t *img, int N, image_point_t points[], image_pixel_t pixel, int thickness)
-{
+void image_draw_polygon(image_t *img, int N, image_point_t points[], image_pixel_t pixel, int thickness) {
 	for (int i = 0; i < N; i++) {
 		image_draw_line(img, points[i], points[(i + 1) % N], pixel, thickness);
 	}
@@ -260,12 +257,13 @@ void image_draw_extent(image_t *img, image_extent_t extent, image_pixel_t pix, i
 }
 
 void image_monochrome(image_t *dst, image_t *src, float gamma_value, int hist_result[256]) {
-	int hist[256] = { 0 };
+	int hist[256] = {0};
 	for (int y = 0; y < (int)src->height; y++) {
 		for (int x = 0; x < (int)src->width; x++) {
 			image_pixel_t pix = image_read_pixel(src, POINT(x, y));
 
-			uint8_t value = pow((0.299 * PIXEL_GET_R(pix) + 0.587 * PIXEL_GET_G(pix) + 0.114 * PIXEL_GET_B(pix)) / 255.0, 1 / gamma_value) * 255;
+			uint8_t value =
+				pow((0.299 * PIXEL_GET_R(pix) + 0.587 * PIXEL_GET_G(pix) + 0.114 * PIXEL_GET_B(pix)) / 255.0, 1 / gamma_value) * 255;
 			image_draw_pixel(dst, POINT(x, y), PIXEL(value, value, value));
 			hist[value]++;
 		}
@@ -276,8 +274,8 @@ void image_monochrome(image_t *dst, image_t *src, float gamma_value, int hist_re
 void image_digitize(image_t *dst, image_t *src, float gamma_value) {
 	// Using otsu method
 	// https://en.wikipedia.org/wiki/Otsu%27s_method
-	int hist[256] = { 0 };
-	int threshold = 0;
+	int hist[256] = {0};
+	uint8_t threshold = 0;
 	float max_sigma = 0.0;
 
 	image_monochrome(dst, src, gamma_value, hist);
@@ -353,24 +351,17 @@ image_transform_matrix_t create_image_transform_matrix(image_point_t src[4], ima
 	float dst_y3 = POINT_Y(dst[3]) + 0.5;
 
 	float a[8][8] = {
-		{ src_x0, src_y0, 1, 0, 0, 0, -src_x0 * dst_x0, -src_y0 * dst_x0 },
-		{ 0, 0, 0, src_x0, src_y0, 1, -src_x0 * dst_y0, -src_y0 * dst_y0 },
-		{ src_x1, src_y1, 1, 0, 0, 0, -src_x1 * dst_x1, -src_y1 * dst_x1 },
-		{ 0, 0, 0, src_x1, src_y1, 1, -src_x1 * dst_y1, -src_y1 * dst_y1 },
-		{ src_x2, src_y2, 1, 0, 0, 0, -src_x2 * dst_x2, -src_y2 * dst_x2 },
-		{ 0, 0, 0, src_x2, src_y2, 1, -src_x2 * dst_y2, -src_y2 * dst_y2 },
-		{ src_x3, src_y3, 1, 0, 0, 0, -src_x3 * dst_x3, -src_y3 * dst_x3 },
-		{ 0, 0, 0, src_x3, src_y3, 1, -src_x3 * dst_y3, -src_y3 * dst_y3 },
+		{src_x0, src_y0, 1,      0,      0, 0, -src_x0 * dst_x0, -src_y0 * dst_x0},
+        {     0,      0, 0, src_x0, src_y0, 1, -src_x0 * dst_y0, -src_y0 * dst_y0},
+		{src_x1, src_y1, 1,      0,      0, 0, -src_x1 * dst_x1, -src_y1 * dst_x1},
+        {     0,      0, 0, src_x1, src_y1, 1, -src_x1 * dst_y1, -src_y1 * dst_y1},
+		{src_x2, src_y2, 1,      0,      0, 0, -src_x2 * dst_x2, -src_y2 * dst_x2},
+        {     0,      0, 0, src_x2, src_y2, 1, -src_x2 * dst_y2, -src_y2 * dst_y2},
+		{src_x3, src_y3, 1,      0,      0, 0, -src_x3 * dst_x3, -src_y3 * dst_x3},
+        {     0,      0, 0, src_x3, src_y3, 1, -src_x3 * dst_y3, -src_y3 * dst_y3},
 	};
 	float b[8] = {
-		dst_x0,
-		dst_y0,
-		dst_x1,
-		dst_y1,
-		dst_x2,
-		dst_y2,
-		dst_x3,
-		dst_y3,
+		dst_x0, dst_y0, dst_x1, dst_y1, dst_x2, dst_y2, dst_x3, dst_y3,
 	};
 
 	// Gauss-Jordan elimination
@@ -410,7 +401,7 @@ image_transform_matrix_t create_image_transform_matrix(image_point_t src[4], ima
 	}
 
 	image_transform_matrix_t matrix = {
-		.m = { b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7] },
+		.m = {b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7]},
 	};
 
 	return matrix;

@@ -1,8 +1,8 @@
 #ifndef __QR_QRSPEC_H__
 #define __QR_QRSPEC_H__
 
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #include "qrtypes.h"
 

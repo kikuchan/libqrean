@@ -11,9 +11,9 @@
 #include "qrformat.h"
 #include "qrmatrix.h"
 #include "qrpayload.h"
+#include "qrspec.h"
 #include "qrtypes.h"
 #include "qrversion.h"
-#include "qrspec.h"
 #include "runlength.h"
 
 #define QR_XY_TO_BITPOS(qr, x, y) ((y)*QR_BUFFER_SIDE_LENGTH + (x))
@@ -454,7 +454,6 @@ bitstream_t qrmatrix_create_bitstream_for_alignment_pattern(qrmatrix_t *qr, int 
 	return qrmatrix_create_bitstream(qr, alignment_pattern_iter);
 }
 
-
 static int calc_pattern_mismatch_error_rate(bitstream_t *bs, const uint8_t *pattern, bitpos_t size, bitpos_t start_idx, bitpos_t n) {
 	bitpos_t error = 0;
 	bitpos_t total = 0;
@@ -568,12 +567,12 @@ int qrmatrix_read_finder_pattern(qrmatrix_t *qr, int idx) {
 
 static const uint8_t alignment_pattern_bits[] = {
 	/*
-	 * 11111
-	 * 10001
-	 * 10101
-	 * 10001
-	 * 11111
-	 */
+     * 11111
+     * 10001
+     * 10101
+     * 10001
+     * 11111
+     */
 	0b11111100,
 	0b01101011,
 	0b00011111,
@@ -589,7 +588,7 @@ int qrmatrix_read_alignment_pattern(qrmatrix_t *qr, int idx) {
 	bitstream_t bs = qrmatrix_create_bitstream(qr, alignment_pattern_iter);
 	uint_fast8_t n = qrspec_get_alignment_num(qr->version);
 	if (n == 0) return 0;
-	return calc_pattern_mismatch_error_rate(&bs, alignment_pattern_bits, ALIGNMENT_PATTERN_SIZE, idx ? idx : 0, idx ? 1 :  n);
+	return calc_pattern_mismatch_error_rate(&bs, alignment_pattern_bits, ALIGNMENT_PATTERN_SIZE, idx ? idx : 0, idx ? 1 : n);
 }
 
 bitpos_t qrmatrix_write_payload(qrmatrix_t *qr, qrpayload_t *payload) {
@@ -787,12 +786,15 @@ int qrmatrix_fix_errors(qrmatrix_t *qr) {
 }
 
 #ifndef NO_CALLBACK
-void qrmatrix_on_write_pixel(qrmatrix_t *qr, bit_t (*write_pixel)(qrmatrix_t *qr, bitpos_t x, bitpos_t y, bitpos_t pos, bit_t v, void *opaque), void *opaque) {
+void qrmatrix_on_write_pixel(qrmatrix_t *qr,
+                             bit_t (*write_pixel)(qrmatrix_t *qr, bitpos_t x, bitpos_t y, bitpos_t pos, bit_t v, void *opaque),
+                             void *opaque) {
 	qr->write_pixel = write_pixel;
 	qr->opaque_write = opaque;
 }
 
-void qrmatrix_on_read_pixel(qrmatrix_t *qr, bit_t (*read_pixel)(qrmatrix_t *qr, bitpos_t x, bitpos_t y, bitpos_t pos, void *opaque), void *opaque) {
+void qrmatrix_on_read_pixel(qrmatrix_t *qr, bit_t (*read_pixel)(qrmatrix_t *qr, bitpos_t x, bitpos_t y, bitpos_t pos, void *opaque),
+                            void *opaque) {
 	qr->read_pixel = read_pixel;
 	qr->opaque_read = opaque;
 }

@@ -10,7 +10,7 @@
 #include "qrversion.h"
 #include "utils.h"
 
-#define MAX_QR_VERSION (40)
+#define MAX_QR_VERSION (QR_VERSION_40)
 
 #define SYMBOL_SIZE_FOR(version) (17 + (version)*4)
 
@@ -139,8 +139,11 @@ bitstream_t qrmatrix_create_bitstream_for_alignment_pattern(qrmatrix_t *qr, int 
 // --------------------------------------
 
 #ifndef NO_CALLBACK
-void qrmatrix_on_write_pixel(qrmatrix_t *qr, bit_t (*write_pixel)(qrmatrix_t *qr, bitpos_t x, bitpos_t y, bitpos_t pos, bit_t v, void *opaque), void *opaque);
-void qrmatrix_on_read_pixel(qrmatrix_t *qr, bit_t (*read_pixel)(qrmatrix_t *qr, bitpos_t x, bitpos_t y, bitpos_t pos, void *opaque), void *opaque);
+void qrmatrix_on_write_pixel(qrmatrix_t *qr,
+                             bit_t (*write_pixel)(qrmatrix_t *qr, bitpos_t x, bitpos_t y, bitpos_t pos, bit_t v, void *opaque),
+                             void *opaque);
+void qrmatrix_on_read_pixel(qrmatrix_t *qr, bit_t (*read_pixel)(qrmatrix_t *qr, bitpos_t x, bitpos_t y, bitpos_t pos, void *opaque),
+                            void *opaque);
 #endif
 
 #endif /* __QR_MATRIX_H__ */

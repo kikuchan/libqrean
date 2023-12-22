@@ -1,8 +1,8 @@
 #ifndef __QR_UTILS_H__
 #define __QR_UTILS_H__
 
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "bitstream.h"
@@ -36,7 +36,6 @@ int safe_fprintf(FILE *fp, const char *fmt, ...);
 			(buffer)[(pos) / 8] &= ~(0x80 >> ((pos) % 8)); \
 		}                                                  \
 	} while (0)
-
 
 #define error(x) assert(!(x))
 

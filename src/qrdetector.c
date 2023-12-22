@@ -1,8 +1,8 @@
-#include "qrspec.h"
-#include "utils.h"
-#include "image.h"
 #include "qrdetector.h"
+#include "image.h"
+#include "qrspec.h"
 #include "runlength.h"
+#include "utils.h"
 
 qrdetector_candidate_t *qrdetector_scan_finder_pattern(image_t *src, int *found) {
 	static qrdetector_candidate_t candidates[MAX_CANDIDATES];
@@ -112,18 +112,16 @@ static bit_t qrdetector_perspective_read_image_pixel(qrmatrix_t *qr, bitpos_t x,
 }
 
 void qrdetector_perspective_setup_by_finder_pattern(qrdetector_perspective_t *warp, image_point_t src[3]) {
-	warp->src[0] = POINT(3, 3), // 1st keystone
-	warp->src[1] = POINT(warp->qr->symbol_size - 4, 3), // 2nd keystone
-	warp->src[2] = POINT(3, warp->qr->symbol_size - 4), // 3rd keystone
-	warp->src[3] = POINT(warp->qr->symbol_size - 4, warp->qr->symbol_size - 4), // 4th estimated pseudo keystone
+	warp->src[0] = POINT(3, 3),                                                     // 1st keystone
+		warp->src[1] = POINT(warp->qr->symbol_size - 4, 3),                         // 2nd keystone
+		warp->src[2] = POINT(3, warp->qr->symbol_size - 4),                         // 3rd keystone
+		warp->src[3] = POINT(warp->qr->symbol_size - 4, warp->qr->symbol_size - 4), // 4th estimated pseudo keystone
 
-	warp->dst[0] = src[0];
+		warp->dst[0] = src[0];
 	warp->dst[1] = src[1];
 	warp->dst[2] = src[2];
-	warp->dst[3] = POINT(
-		POINT_X(src[0]) + (POINT_X(src[1]) - POINT_X(src[0])) + (POINT_X(src[2]) - POINT_X(src[0])),
-		POINT_Y(src[0]) + (POINT_Y(src[1]) - POINT_Y(src[0])) + (POINT_Y(src[2]) - POINT_Y(src[0]))
-	);
+	warp->dst[3] = POINT(POINT_X(src[0]) + (POINT_X(src[1]) - POINT_X(src[0])) + (POINT_X(src[2]) - POINT_X(src[0])),
+	                     POINT_Y(src[0]) + (POINT_Y(src[1]) - POINT_Y(src[0])) + (POINT_Y(src[2]) - POINT_Y(src[0])));
 
 	warp->h = create_image_transform_matrix(warp->src, warp->dst);
 
@@ -132,11 +130,12 @@ void qrdetector_perspective_setup_by_finder_pattern(qrdetector_perspective_t *wa
 
 int qrdetector_perspective_fit_by_alignment_pattern(qrdetector_perspective_t *d) {
 	image_t *img = image_clone(d->img);
-	//image_t *img = d->img;
+	// image_t *img = d->img;
 	int adjusted = 0;
 
 	int N = qrspec_get_alignment_num(d->qr->version);
-	int i = N - 1; {
+	int i = N - 1;
+	{
 		int cx = qrspec_get_alignment_position_x(d->qr->version, i);
 		int cy = qrspec_get_alignment_position_y(d->qr->version, i);
 
@@ -173,11 +172,11 @@ int qrdetector_perspective_fit_by_alignment_pattern(qrdetector_perspective_t *d)
 				}
 			}
 		}
-		next:;
+	next:;
 	}
 
-//	image_dump(img, stdout);
-//	qrmatrix_dump(qr);
+	//	image_dump(img, stdout);
+	//	qrmatrix_dump(qr);
 
 	return adjusted;
 }

@@ -2,14 +2,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "utils.h"
 #include "bitstream.h"
 #include "debug.h"
 #include "galois.h"
 #include "qrdata.h"
 #include "qrpayload.h"
-#include "reedsolomon.h"
 #include "qrspec.h"
+#include "reedsolomon.h"
+#include "utils.h"
 
 #define QRSTREAM_BUFFER_SIZE(payload) (((payload)->total_bits + 7) / 8)
 

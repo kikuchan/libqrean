@@ -7,25 +7,25 @@
 #include "utils.h"
 
 // BCH (15, 5)
-static const uint16_t bch[] = {
-	0x0000, 0x0537, 0x0A6E, 0x0F59, 0x11EB, 0x14DC, 0x1B85, 0x1EB2,
-	0x23D6, 0x26E1, 0x29B8, 0x2C8F, 0x323D, 0x370A, 0x3853, 0x3D64,
-	0x429B, 0x47AC, 0x48F5, 0x4DC2, 0x5370, 0x5647, 0x591E, 0x5C29,
-	0x614D, 0x647A, 0x6B23, 0x6E14, 0x70A6, 0x7591, 0x7AC8, 0x7FFF,
+#define NUM_BCH (32)
+static const uint16_t bch[NUM_BCH] = {
+	0x0000, 0x0537, 0x0A6E, 0x0F59, 0x11EB, 0x14DC, 0x1B85, 0x1EB2, 0x23D6, 0x26E1, 0x29B8, 0x2C8F, 0x323D, 0x370A, 0x3853, 0x3D64,
+	0x429B, 0x47AC, 0x48F5, 0x4DC2, 0x5370, 0x5647, 0x591E, 0x5C29, 0x614D, 0x647A, 0x6B23, 0x6E14, 0x70A6, 0x7591, 0x7AC8, 0x7FFF,
 };
 
+#define NUM_MAPPINGS (8)
 static const struct {
 	qr_version_t version;
 	qr_errorlevel_t level;
-} mapping[] = {
-	{ QR_VERSION_M1, QR_ERRORLEVEL_L },
-	{ QR_VERSION_M2, QR_ERRORLEVEL_L },
-	{ QR_VERSION_M2, QR_ERRORLEVEL_M },
-	{ QR_VERSION_M3, QR_ERRORLEVEL_L },
-	{ QR_VERSION_M3, QR_ERRORLEVEL_M },
-	{ QR_VERSION_M4, QR_ERRORLEVEL_L },
-	{ QR_VERSION_M4, QR_ERRORLEVEL_M },
-	{ QR_VERSION_M4, QR_ERRORLEVEL_Q },
+} mapping[NUM_MAPPINGS] = {
+	{QR_VERSION_M1, QR_ERRORLEVEL_L},
+    {QR_VERSION_M2, QR_ERRORLEVEL_L},
+    {QR_VERSION_M2, QR_ERRORLEVEL_M},
+    {QR_VERSION_M3, QR_ERRORLEVEL_L},
+	{QR_VERSION_M3, QR_ERRORLEVEL_M},
+    {QR_VERSION_M4, QR_ERRORLEVEL_L},
+    {QR_VERSION_M4, QR_ERRORLEVEL_M},
+    {QR_VERSION_M4, QR_ERRORLEVEL_Q},
 };
 
 qrformat_t qrformat_for(qr_version_t version, qr_errorlevel_t level, qr_maskpattern_t mask) {
@@ -43,7 +43,7 @@ qrformat_t qrformat_for(qr_version_t version, qr_errorlevel_t level, qr_maskpatt
 	if (IS_QR(version)) {
 		idx = ((level ^ 1) * 8) | mask;
 	} else if (IS_MQR(version) && QR_MASKPATTERN_0 <= mask && mask <= QR_MASKPATTERN_3) {
-		for (int i = 0; i < sizeof(mapping) / sizeof(mapping[0]); i++) {
+		for (int i = 0; i < NUM_MAPPINGS; i++) {
 			if (version == mapping[i].version && level == mapping[i].level) {
 				idx = (i << 2) | mask;
 				break;
@@ -51,7 +51,7 @@ qrformat_t qrformat_for(qr_version_t version, qr_errorlevel_t level, qr_maskpatt
 		}
 	}
 
-	if (0 <= idx && idx <= sizeof(bch) / sizeof(bch[0])) {
+	if (0 <= idx && idx <= NUM_BCH) {
 		fi.value = bch[idx];
 		fi.version = version;
 		fi.mask = mask;
@@ -69,7 +69,7 @@ qrformat_t qrformat_from(qr_version_t version, uint16_t value) {
 		.value = value,
 	};
 
-	for (int i = 0; i < sizeof(bch) / sizeof(bch[0]); i++) {
+	for (int i = 0; i < NUM_BCH; i++) {
 		if (hamming_distance(bch[i], value) <= 3) {
 			fi.value = bch[i];
 

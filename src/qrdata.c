@@ -1,8 +1,8 @@
-#include "utils.h"
 #include "qrdata.h"
 #include "bitstream.h"
-#include <string.h>
 #include "debug.h"
+#include "utils.h"
+#include <string.h>
 
 qrdata_t create_qrdata_for(bitstream_t bs, qr_version_t version) {
 	qrdata_t data = {
@@ -13,15 +13,16 @@ qrdata_t create_qrdata_for(bitstream_t bs, qr_version_t version) {
 }
 
 static const uint8_t length_table[][7] = {
-	{ 10, 12, 14, 3, 4, 5, 6 }, // numeric
-	{  9, 11, 13, 0, 3, 4, 5 }, // alnum
-	{  8, 16, 16, 0, 0, 4, 5 }, // 8bit
-	{  8, 10, 12, 0, 0 ,3, 4 }, // kanji
+	{10, 12, 14, 3, 4, 5, 6}, // numeric
+	{ 9, 11, 13, 0, 3, 4, 5}, // alnum
+	{ 8, 16, 16, 0, 0, 4, 5}, // 8bit
+	{ 8, 10, 12, 0, 0, 3, 4}, // kanji
 };
 
 #define VERDEPNUM(version, a, b, c) ((version) < QR_VERSION_10 ? (a) : (version) < QR_VERSION_27 ? (b) : (c))
 
-#define LENGTH_BIT_SIZE_TBL(version, n)      (length_table[(n)][IS_QR((version)) ? VERDEPNUM((version), 0, 1, 2) : (3 + (version) - QR_VERSION_M1)])
+#define LENGTH_BIT_SIZE_TBL(version, n) \
+	(length_table[(n)][IS_QR((version)) ? VERDEPNUM((version), 0, 1, 2) : (3 + (version)-QR_VERSION_M1)])
 #define LENGTH_BIT_SIZE_FOR_NUMERIC(version) LENGTH_BIT_SIZE_TBL(version, 0)
 #define LENGTH_BIT_SIZE_FOR_ALNUM(version)   LENGTH_BIT_SIZE_TBL(version, 1)
 #define LENGTH_BIT_SIZE_FOR_8BIT(version)    LENGTH_BIT_SIZE_TBL(version, 2)
@@ -112,7 +113,7 @@ size_t qrdata_write_8bit_string(qrdata_t *data, const char *src, size_t len) {
 	} else {
 		bitstream_write_bits(&data->bs, QR_DATA_MODE_8BIT, 4);
 	}
-	
+
 	bitstream_write_bits(&data->bs, len, LENGTH_BIT_SIZE_FOR_8BIT(data->version));
 
 	size_t i;
@@ -225,24 +226,32 @@ size_t qrdata_parse(qrdata_t *data, void (*on_letter_cb)(qr_data_mode_t mode, co
 	size_t len;
 	size_t wrote = 0;
 
-	uint8_t mode = QR_DATA_MODE_NUMERIC; // for mQR
+	qr_data_mode_t mode = QR_DATA_MODE_NUMERIC; // for mQR
 	while (!bitstream_is_end(r)) {
 		if (IS_MQR(data->version)) {
 			if (data->version != QR_VERSION_M1) {
 				switch (bitstream_read_bits(r, data->version - QR_VERSION_M1)) {
-				case 0: mode = QR_DATA_MODE_NUMERIC; break;
-				case 1: mode = QR_DATA_MODE_ALNUM; break;
-				case 2: mode = QR_DATA_MODE_8BIT; break;
-				case 3: mode = QR_DATA_MODE_KANJI; break;
+				case 0:
+					mode = QR_DATA_MODE_NUMERIC;
+					break;
+				case 1:
+					mode = QR_DATA_MODE_ALNUM;
+					break;
+				case 2:
+					mode = QR_DATA_MODE_8BIT;
+					break;
+				case 3:
+					mode = QR_DATA_MODE_KANJI;
+					break;
 				}
 			}
 		} else {
-			mode = bitstream_read_bits(r, 4);
+			mode = (qr_data_mode_t)bitstream_read_bits(r, 4);
 		}
 		switch (mode) {
 		case QR_DATA_MODE_END:
-mode_end:
-			on_letter_cb(mode, 0, opaque);
+		mode_end:
+			on_letter_cb(QR_DATA_MODE_END, 0, opaque);
 			goto end;
 
 		case QR_DATA_MODE_NUMERIC:
@@ -330,15 +339,13 @@ mode_end:
 			}
 			break;
 
-		case QR_DATA_MODE_STRUCTURED:;
+		case QR_DATA_MODE_STRUCTURED: {
 			int a = bitstream_read_bits(r, 8);
 			int b = bitstream_read_bits(r, 8);
 			qrean_debug_printf("Warning: structured data %d %d\n", a, b);
-
-			break;
+		} break;
 
 		default:
-			// unknown
 			goto end;
 		}
 	}

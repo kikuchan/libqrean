@@ -82,7 +82,6 @@ typedef enum {
 } qr_maskpattern_t;
 
 #define IS_MQR(version) (QR_VERSION_M1 <= (version) && (version) <= QR_VERSION_M4)
-#define IS_QR(version) (QR_VERSION_1 <= (version) && (version) <= QR_VERSION_40)
-
+#define IS_QR(version)  (QR_VERSION_1 <= (version) && (version) <= QR_VERSION_40)
 
 #endif /* __QR_QRTYPES_H__*/

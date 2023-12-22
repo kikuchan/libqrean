@@ -4,9 +4,9 @@
 #include "qrtypes.h"
 
 typedef struct {
+	qr_version_t version; // for mQR
 	qr_maskpattern_t mask;
 	qr_errorlevel_t level;
-	qr_version_t version; // for mQR
 	uint16_t value;
 } qrformat_t;
 

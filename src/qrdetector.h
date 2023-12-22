@@ -1,8 +1,8 @@
 #ifndef __QR_DETECT_H__
 #define __QR_DETECT_H__
 
-#include "qrmatrix.h"
 #include "image.h"
+#include "qrmatrix.h"
 
 #define MAX_CANDIDATES (10)
 

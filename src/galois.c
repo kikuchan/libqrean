@@ -1,9 +1,9 @@
 #include <assert.h>
 #include <stdint.h>
 
-#include "utils.h"
 #include "debug.h"
 #include "galois.h"
+#include "utils.h"
 
 // GF(2, 8): x^8 + x^4 + x^3 + x^2 + 1
 static const gf2_value_t exp2val[] = {
@@ -108,7 +108,7 @@ void gf2_poly_divmod(gf2_poly_t *ans_q, gf2_poly_t *ans_r, const gf2_poly_t *a, 
 	int real_b_deg = gf2_poly_get_real_degree(b);
 	if (real_b_deg < 0) {
 		qrean_error("Division by zero poly\n");
-		return ;
+		return;
 	}
 	gf2_value_t denominator = GF2_POLY_COEFF(b, real_b_deg);
 

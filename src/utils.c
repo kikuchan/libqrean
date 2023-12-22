@@ -62,10 +62,11 @@ int safe_fprintf(FILE *fp, const char *fmt, ...) {
 	for (size_t i = 0; i < strlen((char *)buf); i++) {
 		char hex[32];
 		snprintf(hex, sizeof(hex), "[%02x]", buf[i]);
-		if (buf[i] == '\r' || buf[i] == '\n' || (0x20 <= buf[i] && buf[i] < 0x7f)) fputc(buf[i], fp);
-		else fputs(hex, fp);
+		if (buf[i] == '\r' || buf[i] == '\n' || (0x20 <= buf[i] && buf[i] < 0x7f))
+			fputc(buf[i], fp);
+		else
+			fputs(hex, fp);
 	}
 
 	return ret;
 }
-

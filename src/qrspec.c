@@ -1,8 +1,8 @@
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 
-#include "qrtypes.h"
 #include "debug.h"
+#include "qrtypes.h"
 
 static const uint8_t QR_ERROR_WORDS_IN_BLOCK[][4] = {
   //  L,  M,  Q,  H
