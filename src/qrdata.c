@@ -129,7 +129,7 @@ bit_t qrdata_finalize(qrdata_t *data) {
 	} else {
 		bitstream_write_bits(&data->bs, 0, 3 + 2 * (data->version - QR_VERSION_M1));
 	}
-	bitstream_write_bits(&data->bs, 0, bitstream_tell(&data->bs) % 8);
+	if (bitstream_tell(&data->bs) % 8) bitstream_write_bits(&data->bs, 0, 8 - (bitstream_tell(&data->bs) % 8));
 
 	size_t pos = bitstream_tell(&data->bs);
 
