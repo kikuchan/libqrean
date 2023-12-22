@@ -21,6 +21,7 @@
 
 image_t *img;
 
+
 #ifdef DEBUG_DETECT
 image_t *detected;
 #endif
@@ -55,51 +56,32 @@ int tryDecode(image_t *imgsrc, image_point_t src[3]) {
 
 		if (qrmatrix_read_finder_pattern(qr, 0) > 10) continue;
 
-		// qrmatrix_set_version(qr, qrmatrix_read_version(qr));
-
-		//qrmatrix_write_finder_pattern(qr);
-		//qrmatrix_write_alignment_pattern(qr);
-		//image_dump(img, stdout);
-
 		if (qrdetector_perspective_fit_by_alignment_pattern(&warp)) {
-			fprintf(stderr, "   ** Ajusted\n");
+			// fprintf(stderr, "   ** Ajusted\n");
 		}
-
-//		qrmatrix_dump(qr);
-
-#ifdef DEBUG_DETECT
-		qrmatrix_write_finder_pattern(qr);
-		qrmatrix_write_alignment_pattern(qr);
-		qrmatrix_write_timing_pattern(qr);
-#endif
-
-		// image_dump(img, stdout);
 
 		if (qrmatrix_set_format_info(qr, qrmatrix_read_format_info(qr))) {
 			char buf[1024];
 
-#ifdef DEBUG_DETECT
-			qrmatrix_write_format_info(qr);
-#endif
-
-			qrformat_t f = qrmatrix_read_format_info(qr);
-			fprintf(stderr, "formatinfo; %d %d %04x\n", f.mask, f.level, f.value);
-
 			qrpayload_t *payload = new_qrpayload(qr->version, qr->level);
 			qrmatrix_read_payload(qr, payload);
 
-#ifdef DEBUG_DETECT
-			qrmatrix_write_payload(qr, payload);
-#endif
-
 			if (qrpayload_fix_errors(payload) >= 0) {
 				size_t l = qrpayload_read_string(payload, buf, sizeof(buf));
-				safe_fprintf(stderr, "RECV (len %zu): '%s'\n", l, buf);
-				hexdump(buf, l, 0);
+
 #ifndef DEBUG_DETECT
+				qrmatrix_dump(qr, stderr);
 				printf("Found: RECV: '%s'\n", buf);
+#else
+				safe_fprintf(stderr, "RECV (len %zu): '%s'\n", l, buf);
+
+				// draw read points on `detected`
+				qrmatrix_write_finder_pattern(qr);
+				qrmatrix_write_alignment_pattern(qr);
+				qrmatrix_write_timing_pattern(qr);
+				qrmatrix_write_format_info(qr);
+				qrmatrix_write_payload(qr, payload);
 #endif
-				qrmatrix_dump(qr);
 
 				found |= 1;
 
@@ -124,10 +106,6 @@ int tryDecode(image_t *imgsrc, image_point_t src[3]) {
 					hexdump(buffer, BYTE_SIZE(len), 0);
 				}
 #endif
-			} else {
-#ifdef DEBUG_DETECT
-				qrmatrix_dump(qr);
-#endif
 			}
 
 			qrpayload_free(payload);
@@ -142,6 +120,7 @@ int tryDecode(image_t *imgsrc, image_point_t src[3]) {
 
 void done(pngle_t *pngle) {
 	image_t *mono = image_clone(img);
+
 	image_digitize(mono, img, 1.8);
 
 	int num_candidates;
@@ -149,7 +128,7 @@ void done(pngle_t *pngle) {
 	int found = 0;
 
 #ifdef DEBUG_DETECT
-	detected = image_clone(img);
+	detected = image_clone(mono);
 	for (int i = 0; i < num_candidates; i++) {
 		image_draw_filled_ellipse(detected, POINT(candidates[i].center_x, candidates[i].center_y), 5, 5, PIXEL(255, 0, 0));
 		image_draw_extent(detected, candidates[i].extent, PIXEL(255, 0, 0), 1);

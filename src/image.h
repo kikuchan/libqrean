@@ -10,13 +10,6 @@ typedef uint32_t image_pixel_t;
 #define PIXEL_GET_G(pix) (((pix) >> 8) & 0xFF)
 #define PIXEL_GET_B(pix) (((pix) >> 0) & 0xFF)
 
-// TODO: signed
-typedef uint32_t image_point_t;
-#define POINT(x, y)   ((uint32_t)((((uint32_t)(x)&0xFFFF) << 16) | (((uint32_t)(y)&0xFFFF) << 0)))
-#define POINT_X(p)    ((int16_t)(((p) >> 16) & 0xFFFF))
-#define POINT_Y(p)    ((int16_t)(((p) >> 0) & 0xFFFF))
-#define POINT_INVALID ((image_point_t)0x80008000)
-
 typedef struct {
 	image_pixel_t *buffer;
 
@@ -48,6 +41,15 @@ typedef struct {
 image_t *new_image(int width, int height);
 void image_free(image_t *img);
 image_t *image_clone(image_t *img);
+
+// image_point_t
+typedef struct { float x; float y; } image_point_t;
+#define POINT(x, y)   create_image_point((x), (y))
+#define POINT_X(p)    p.x
+#define POINT_Y(p)    p.y
+image_point_t create_image_point(float x, float y);
+image_point_t image_point_add(image_point_t a, image_point_t b);
+image_point_t image_point_sub(image_point_t a, image_point_t b);
 
 void image_draw_pixel(image_t *img, image_point_t p, image_pixel_t pixel);
 image_pixel_t image_read_pixel(image_t *img, image_point_t p);

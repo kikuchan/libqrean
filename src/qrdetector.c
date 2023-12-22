@@ -3,6 +3,7 @@
 #include "qrspec.h"
 #include "runlength.h"
 #include "utils.h"
+#include <math.h>
 
 qrdetector_candidate_t *qrdetector_scan_finder_pattern(image_t *src, int *found) {
 	static qrdetector_candidate_t candidates[MAX_CANDIDATES];
@@ -50,6 +51,12 @@ qrdetector_candidate_t *qrdetector_scan_finder_pattern(image_t *src, int *found)
 					}
 				}
 			}
+			if (!found_u && runlength_match_ratio(&rlvu, 4, 3, 2, 2, 0)) {
+				found_u = runlength_sum(&rlvu, 1, 3);
+			}
+			if (!found_d && runlength_match_ratio(&rlvd, 4, 3, 2, 2, 0)) {
+				found_d = runlength_sum(&rlvd, 1, 3);
+			}
 
 			if (found_u && found_d) {
 				image_pixel_t inner_block_color = PIXEL(0, 255, 0);
@@ -60,12 +67,20 @@ qrdetector_candidate_t *qrdetector_scan_finder_pattern(image_t *src, int *found)
 				float modsize_y = (found_u + found_d - 1) / 7.0;
 
 				// let's make sure they are disconnected from the inner most block
-				if (image_read_pixel(img, POINT(lx, cy)) != PIXEL(0, 0, 0)) continue;
-				if (image_read_pixel(img, POINT(rx, cy)) != PIXEL(0, 0, 0)) continue;
+				if (image_read_pixel(img, POINT(lx, cy)) != PIXEL(0, 0, 0)) {
+					continue;
+				}
+				if (image_read_pixel(img, POINT(rx, cy)) != PIXEL(0, 0, 0)) {
+					continue;
+				}
 
 				// let's make sure they are connected
 				image_paint(img, POINT(lx, cy), ring_color);
-				if (image_read_pixel(img, POINT(lx, cy)) != image_read_pixel(img, POINT(rx, cy))) continue;
+				if (image_read_pixel(img, POINT(lx, cy)) != image_read_pixel(img, POINT(rx, cy))) {
+					// paint back ;)
+					image_paint(img, POINT(lx, cy), PIXEL(0, 0, 0));
+					continue;
+				}
 
 				float real_cx = (r.extent.left + r.extent.right) / 2.0f;
 				float real_cy = (r.extent.top + r.extent.bottom) / 2.0f;
@@ -86,7 +101,7 @@ qrdetector_candidate_t *qrdetector_scan_finder_pattern(image_t *src, int *found)
 
 	image_free(img);
 
-	candidates[candidx].center = POINT_INVALID;
+	candidates[candidx].center = POINT(NAN, NAN);
 	candidates[candidx].modsize_x = 0;
 	candidates[candidx].modsize_y = 0;
 
@@ -112,12 +127,12 @@ static bit_t qrdetector_perspective_read_image_pixel(qrmatrix_t *qr, bitpos_t x,
 }
 
 void qrdetector_perspective_setup_by_finder_pattern(qrdetector_perspective_t *warp, image_point_t src[3]) {
-	warp->src[0] = POINT(3, 3),                                                     // 1st keystone
-		warp->src[1] = POINT(warp->qr->symbol_size - 4, 3),                         // 2nd keystone
-		warp->src[2] = POINT(3, warp->qr->symbol_size - 4),                         // 3rd keystone
-		warp->src[3] = POINT(warp->qr->symbol_size - 4, warp->qr->symbol_size - 4), // 4th estimated pseudo keystone
+	warp->src[0] = POINT(3, 3),                                                 // 1st keystone
+	warp->src[1] = POINT(warp->qr->symbol_size - 4, 3),                         // 2nd keystone
+	warp->src[2] = POINT(3, warp->qr->symbol_size - 4),                         // 3rd keystone
+	warp->src[3] = POINT(warp->qr->symbol_size - 4, warp->qr->symbol_size - 4), // 4th estimated pseudo keystone
 
-		warp->dst[0] = src[0];
+	warp->dst[0] = src[0];
 	warp->dst[1] = src[1];
 	warp->dst[2] = src[2];
 	warp->dst[3] = POINT(POINT_X(src[0]) + (POINT_X(src[1]) - POINT_X(src[0])) + (POINT_X(src[2]) - POINT_X(src[0])),
@@ -141,7 +156,7 @@ int qrdetector_perspective_fit_by_alignment_pattern(qrdetector_perspective_t *d)
 
 		image_point_t c = image_point_transform(POINT(cx, cy), d->h);
 		image_point_t next = image_point_transform(POINT(cx + 1, cy), d->h);
-		float module_size = image_point_norm(next - c);
+		float module_size = image_point_norm(image_point_sub(next, c));
 
 		int dist = 5;
 		for (float y = cy - dist; y < cy + dist; y += 0.2) {

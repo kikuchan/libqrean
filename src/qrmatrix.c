@@ -414,7 +414,7 @@ static bitpos_t bitmap_iter(bitstream_t *bs, bitpos_t i, void *opaque) {
 	return QR_XYV_TO_BITPOS(qr, x, y, 0);
 }
 
-void qrmatrix_dump(qrmatrix_t *qr) {
+void qrmatrix_dump(qrmatrix_t *qr, FILE *out) {
 #ifndef NO_PRINTF
 	const char *dots[4] = {"\u2588", "\u2580", "\u2584", " "};
 
@@ -427,9 +427,9 @@ void qrmatrix_dump(qrmatrix_t *qr) {
 			bit_t u = qrmatrix_read_pixel(qr, x, y + 0);
 			bit_t l = y + 1 >= ey ? 1 : qrmatrix_read_pixel(qr, x, y + 1);
 
-			fprintf(stderr, "%s", dots[((u << 1) | l) & 3]);
+			fprintf(out, "%s", dots[((u << 1) | l) & 3]);
 		}
-		fprintf(stderr, "\n");
+		fprintf(out, "\n");
 	}
 #endif
 }

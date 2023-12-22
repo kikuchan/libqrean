@@ -23,7 +23,7 @@ void done(pngle_t *pngle) {
 	fprintf(stderr, "level; %d\n", qr->level);
 	fprintf(stderr, "mask; %d\n", qr->mask);
 
-	qrmatrix_dump(qr);
+	qrmatrix_dump(qr, stderr);
 
 	char buffer[1024];
 	size_t len = qrmatrix_read_string(qr, buffer, sizeof(buffer));

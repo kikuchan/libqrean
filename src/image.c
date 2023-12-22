@@ -39,16 +39,29 @@ image_t *image_clone(image_t *img) {
 	return clone;
 }
 
+image_point_t create_image_point(float x, float y) {
+	image_point_t p = { .x = x, .y = y };
+	return p;
+}
+
+image_point_t image_point_add(image_point_t a, image_point_t b) {
+	return POINT(POINT_X(a) + POINT_X(b), POINT_Y(a) + POINT_Y(b));
+}
+image_point_t image_point_sub(image_point_t a, image_point_t b) {
+	return POINT(POINT_X(a) - POINT_X(b), POINT_Y(a) - POINT_Y(b));
+}
+
+
 void image_draw_pixel(image_t *img, image_point_t p, image_pixel_t pixel) {
-	int x = POINT_X(p);
-	int y = POINT_Y(p);
+	int x = rint(POINT_X(p));
+	int y = rint(POINT_Y(p));
 	if (x < 0 || y < 0 || x >= (int)img->width || y >= (int)img->height) return;
 	img->buffer[y * img->width + x] = pixel;
 }
 
 image_pixel_t image_read_pixel(image_t *img, image_point_t p) {
-	int x = POINT_X(p);
-	int y = POINT_Y(p);
+	int x = rint(POINT_X(p));
+	int y = rint(POINT_Y(p));
 	if (x < 0 || y < 0 || x >= (int)img->width || y >= (int)img->height) return 0;
 	return img->buffer[y * img->width + x];
 }
@@ -86,8 +99,8 @@ void image_dump(image_t *img, FILE *out) {
 }
 
 void image_draw_filled_rectangle(image_t *img, image_point_t p, int w, int h, image_pixel_t pix) {
-	int x = POINT_X(p);
-	int y = POINT_Y(p);
+	int x = rint(POINT_X(p));
+	int y = rint(POINT_Y(p));
 	int ix, iy;
 
 	for (iy = 0; iy < h; iy++) {
@@ -106,10 +119,10 @@ static void swap(int *a, int *b) {
 }
 
 void image_draw_line(image_t *img, image_point_t s, image_point_t e, image_pixel_t pix, int thickness) {
-	int x0 = POINT_X(s);
-	int y0 = POINT_Y(s);
-	int x1 = POINT_X(e);
-	int y1 = POINT_Y(e);
+	int x0 = rint(POINT_X(s));
+	int y0 = rint(POINT_Y(s));
+	int x1 = rint(POINT_X(e));
+	int y1 = rint(POINT_Y(e));
 	int steep = abs(y1 - y0) > abs(x1 - x0);
 	int deltax;
 	int deltay;
@@ -162,8 +175,8 @@ void image_draw_polygon(image_t *img, int N, image_point_t points[], image_pixel
 }
 
 void image_draw_filled_ellipse(image_t *img, image_point_t center, int w, int h, image_pixel_t pix) {
-	int cx = POINT_X(center);
-	int cy = POINT_Y(center);
+	int cx = rint(POINT_X(center));
+	int cy = rint(POINT_Y(center));
 	int x, y;
 
 	float sx = cx - w;
@@ -194,7 +207,7 @@ image_extent_t *image_extent_update(image_extent_t *extent, image_extent_t src) 
 }
 
 image_point_t image_extent_center(image_extent_t *extent) {
-	return POINT((extent->left + extent->right) / 2, (extent->top + extent->bottom) / 2);
+	return POINT((extent->left + extent->right) / 2.0, (extent->top + extent->bottom) / 2.0);
 }
 
 void image_extent_dump(image_extent_t *extent) {
@@ -340,15 +353,14 @@ image_transform_matrix_t create_image_transform_matrix(image_point_t src[4], ima
 	float src_x3 = POINT_X(src[3]);
 	float src_y3 = POINT_Y(src[3]);
 
-	// XXX: for + 0.5
-	float dst_x0 = POINT_X(dst[0]) + 0.5;
-	float dst_y0 = POINT_Y(dst[0]) + 0.5;
-	float dst_x1 = POINT_X(dst[1]) + 0.5;
-	float dst_y1 = POINT_Y(dst[1]) + 0.5;
-	float dst_x2 = POINT_X(dst[2]) + 0.5;
-	float dst_y2 = POINT_Y(dst[2]) + 0.5;
-	float dst_x3 = POINT_X(dst[3]) + 0.5;
-	float dst_y3 = POINT_Y(dst[3]) + 0.5;
+	float dst_x0 = POINT_X(dst[0]);
+	float dst_y0 = POINT_Y(dst[0]);
+	float dst_x1 = POINT_X(dst[1]);
+	float dst_y1 = POINT_Y(dst[1]);
+	float dst_x2 = POINT_X(dst[2]);
+	float dst_y2 = POINT_Y(dst[2]);
+	float dst_x3 = POINT_X(dst[3]);
+	float dst_y3 = POINT_Y(dst[3]);
 
 	float a[8][8] = {
 		{src_x0, src_y0, 1,      0,      0, 0, -src_x0 * dst_x0, -src_y0 * dst_x0},

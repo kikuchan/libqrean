@@ -1,6 +1,7 @@
 #ifndef __QR_QRMATRIX_H__
 #define __QR_QRMATRIX_H__
 
+#include <stdio.h>
 #include <stdint.h>
 
 #include "bitstream.h"
@@ -83,7 +84,7 @@ int qrmatrix_fix_errors(qrmatrix_t *qr);
 
 unsigned int qrmatrix_score(qrmatrix_t *qr);
 
-void qrmatrix_dump(qrmatrix_t *qr);
+void qrmatrix_dump(qrmatrix_t *qr, FILE *out);
 
 void qrmatrix_fill(qrmatrix_t *qr, bit_t v);
 

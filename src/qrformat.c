@@ -75,7 +75,7 @@ qrformat_t qrformat_from(qr_version_t version, uint16_t value) {
 
 			if (IS_QR(version)) {
 				fi.mask = (qr_maskpattern_t)(i % 8 + QR_MASKPATTERN_0);
-				fi.level = (qr_errorlevel_t)(i / 8 + QR_ERRORLEVEL_L);
+				fi.level = (qr_errorlevel_t)((i / 8 + QR_ERRORLEVEL_L) ^ 1);
 			} else {
 				fi.mask = (qr_maskpattern_t)(i % 4 + QR_MASKPATTERN_0);
 				fi.version = mapping[i / 4].version;
