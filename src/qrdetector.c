@@ -5,8 +5,8 @@
 #include "utils.h"
 #include <math.h>
 
-qrdetector_candidate_t *qrdetector_scan_finder_pattern(image_t *src, int *found) {
-	static qrdetector_candidate_t candidates[MAX_CANDIDATES];
+qrdetector_finder_candidate_t *qrdetector_scan_finder_pattern(image_t *src, int *found) {
+	static qrdetector_finder_candidate_t candidates[MAX_CANDIDATES];
 	int candidx = 0;
 
 	image_t *img = image_clone(src);
@@ -87,22 +87,21 @@ qrdetector_candidate_t *qrdetector_scan_finder_pattern(image_t *src, int *found)
 				int w = ring.extent.right - ring.extent.left;
 				int h = ring.extent.bottom - ring.extent.top;
 				int cidx = 0;
-				float corners[4];
-				for (int r = rint(sqrt(w*w+h*h)); r > 0 && cidx < 4; r--) {
+				float corners[4] = {NAN, NAN, NAN, NAN};
+
+				for (float r = sqrt(w*w+h*h) * 1.1; r > 0 && cidx < 4; r -= 0.2) {
 					for (float theta = 0; theta < 2*M_PI && cidx < 4; theta += 1.0/r) {
-						int x = rint(cx + r * cos(theta));
-						int y = rint(cy - r * sin(theta));
+						float x = floor(cx + r * sin(theta));
+						float y = floor(cy - r * cos(theta));
 
 						if (image_read_pixel(img, POINT(x, y)) == ring_color) {
-							int i;
-							for (i = 0; i < cidx; i++) {
-								double delta = fabs(corners[i] - theta);
-								while (delta > M_PI) delta -= 2*M_PI;
-								if (fabs(delta) < M_PI_4) break;
-							}
-							if (i >= cidx) {
-								candidates[candidx].corners[cidx] = POINT(x, y);
-								corners[cidx++] = theta;
+							int slot = !cidx ? 0 : floor(fmod(theta + 2 * M_PI + M_PI_4 - corners[0], 2*M_PI) / M_PI_2);
+							assert(0 <= slot && slot < 4);
+
+							if (isnan(corners[slot])) {
+								candidates[candidx].corners[slot] = POINT(x, y);
+								corners[slot] = theta;
+								cidx++;
 							}
 						}
 					}
@@ -148,17 +147,33 @@ static bit_t qrdetector_perspective_read_image_pixel(qrmatrix_t *qr, bitpos_t x,
 	return pix == 0 ? 1 : 0;
 }
 
-void qrdetector_perspective_setup_by_finder_pattern(qrdetector_perspective_t *warp, image_point_t src[3]) {
-	warp->src[0] = POINT(3, 3),                                                 // 1st keystone
-	warp->src[1] = POINT(warp->qr->symbol_size - 4, 3),                         // 2nd keystone
-	warp->src[2] = POINT(3, warp->qr->symbol_size - 4),                         // 3rd keystone
-	warp->src[3] = POINT(warp->qr->symbol_size - 4, warp->qr->symbol_size - 4), // 4th estimated pseudo keystone
+void qrdetector_perspective_setup_by_finder_pattern_qr(qrdetector_perspective_t *warp, image_point_t src[3]) {
+	warp->src[0] = POINT(3, 3),                                                 // center of the 1st keystone
+	warp->src[1] = POINT(warp->qr->symbol_size - 4, 3),                         // center of the 2nd keystone
+	warp->src[2] = POINT(3, warp->qr->symbol_size - 4),                         // center of the 3rd keystone
+	warp->src[3] = POINT(warp->qr->symbol_size - 4, warp->qr->symbol_size - 4), // center of the 4th estimated pseudo keystone
 
 	warp->dst[0] = src[0];
 	warp->dst[1] = src[1];
 	warp->dst[2] = src[2];
 	warp->dst[3] = POINT(POINT_X(src[0]) + (POINT_X(src[1]) - POINT_X(src[0])) + (POINT_X(src[2]) - POINT_X(src[0])),
 	                     POINT_Y(src[0]) + (POINT_Y(src[1]) - POINT_Y(src[0])) + (POINT_Y(src[2]) - POINT_Y(src[0])));
+
+	warp->h = create_image_transform_matrix(warp->src, warp->dst);
+
+	qrmatrix_on_read_pixel(warp->qr, qrdetector_perspective_read_image_pixel, warp);
+}
+
+void qrdetector_perspective_setup_by_finder_pattern_mqr(qrdetector_perspective_t *warp, image_point_t ring[3], int offset) {
+	warp->src[0] = POINT(-0.5, -0.5), // left--top of the ring
+	warp->src[1] = POINT(6.5, -0.5),  // right-top of the ring
+	warp->src[2] = POINT(6.5, 6.5),   // right-bottom of the ring
+	warp->src[3] = POINT(-0.5, 6.5),  // left--bottom of the ring
+
+	warp->dst[0] = ring[(0 + offset) % 4];
+	warp->dst[1] = ring[(1 + offset) % 4];
+	warp->dst[2] = ring[(2 + offset) % 4];
+	warp->dst[3] = ring[(3 + offset) % 4];
 
 	warp->h = create_image_transform_matrix(warp->src, warp->dst);
 

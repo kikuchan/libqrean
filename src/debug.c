@@ -57,7 +57,7 @@ int qrean_debug_printf(const char *fmt, ...) {
 	return retval;
 }
 
-void qrean_on_debug_printf(int (*vfprintf_like)(void *opaque, const char *fmt, va_list ap), void *opaque) {
+void qrean_on_debug_vprintf(int (*vfprintf_like)(void *opaque, const char *fmt, va_list ap), void *opaque) {
 #ifndef NO_DEBUG
 	qrean_debug_vprintf_cb = vfprintf_like;
 	qrean_debug_vprintf_opaque = opaque;

@@ -13,7 +13,7 @@ typedef struct {
 	image_point_t corners[4];
 
 	int area;
-} qrdetector_candidate_t;
+} qrdetector_finder_candidate_t;
 
 typedef struct {
 	qrmatrix_t *qr;
@@ -24,10 +24,13 @@ typedef struct {
 	image_transform_matrix_t h;
 } qrdetector_perspective_t;
 
-qrdetector_candidate_t *qrdetector_scan_finder_pattern(image_t *src, int *num_founds);
+qrdetector_finder_candidate_t *qrdetector_scan_finder_pattern(image_t *src, int *num_founds);
 
 qrdetector_perspective_t create_qrdetector_perspective(qrmatrix_t *qr, image_t *img);
-void qrdetector_perspective_setup_by_finder_pattern(qrdetector_perspective_t *warp, image_point_t src[3]);
+
+void qrdetector_perspective_setup_by_finder_pattern_qr(qrdetector_perspective_t *warp, image_point_t src[3]);
+void qrdetector_perspective_setup_by_finder_pattern_mqr(qrdetector_perspective_t *warp, image_point_t ring[3], int offset);
+
 int qrdetector_perspective_fit_by_alignment_pattern(qrdetector_perspective_t *d);
 
 #endif /* __QR_DETECT_H__ */

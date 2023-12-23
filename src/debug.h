@@ -8,7 +8,7 @@
 int qrean_debug_printf(const char *fmt, ...);
 void qrean_error(const char *message);
 
-void qrean_on_debug_printf(int (*vprintf_like)(), void *opaque);
+void qrean_on_debug_vprintf(int (*vprintf_like)(), void *opaque);
 void qrean_on_error(void (*func)(const char *message));
 
 const char *qrean_get_last_error();

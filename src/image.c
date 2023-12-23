@@ -11,6 +11,10 @@
 #include "miniz.h"
 #endif
 
+#define RINT(x) rint((x))
+//#define RINT(x) (x)
+//#define RINT(x) round(x)
+
 image_t *new_image(int width, int height) {
 	image_t *img = (image_t *)malloc(sizeof(image_t));
 	if (!img) return NULL;
@@ -53,15 +57,15 @@ image_point_t image_point_sub(image_point_t a, image_point_t b) {
 
 
 void image_draw_pixel(image_t *img, image_point_t p, image_pixel_t pixel) {
-	int x = rint(POINT_X(p));
-	int y = rint(POINT_Y(p));
+	int x = RINT(POINT_X(p));
+	int y = RINT(POINT_Y(p));
 	if (x < 0 || y < 0 || x >= (int)img->width || y >= (int)img->height) return;
 	img->buffer[y * img->width + x] = pixel;
 }
 
 image_pixel_t image_read_pixel(image_t *img, image_point_t p) {
-	int x = rint(POINT_X(p));
-	int y = rint(POINT_Y(p));
+	int x = RINT(POINT_X(p));
+	int y = RINT(POINT_Y(p));
 	if (x < 0 || y < 0 || x >= (int)img->width || y >= (int)img->height) return 0;
 	return img->buffer[y * img->width + x];
 }
@@ -99,8 +103,8 @@ void image_dump(image_t *img, FILE *out) {
 }
 
 void image_draw_filled_rectangle(image_t *img, image_point_t p, int w, int h, image_pixel_t pix) {
-	int x = rint(POINT_X(p));
-	int y = rint(POINT_Y(p));
+	int x = RINT(POINT_X(p));
+	int y = RINT(POINT_Y(p));
 	int ix, iy;
 
 	for (iy = 0; iy < h; iy++) {
@@ -119,10 +123,10 @@ static void swap(int *a, int *b) {
 }
 
 void image_draw_line(image_t *img, image_point_t s, image_point_t e, image_pixel_t pix, int thickness) {
-	int x0 = rint(POINT_X(s));
-	int y0 = rint(POINT_Y(s));
-	int x1 = rint(POINT_X(e));
-	int y1 = rint(POINT_Y(e));
+	int x0 = RINT(POINT_X(s));
+	int y0 = RINT(POINT_Y(s));
+	int x1 = RINT(POINT_X(e));
+	int y1 = RINT(POINT_Y(e));
 	int steep = abs(y1 - y0) > abs(x1 - x0);
 	int deltax;
 	int deltay;

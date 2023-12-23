@@ -27,6 +27,8 @@ runlength_count_t runlength_latest_count(runlength_t *rl);
 runlength_count_t runlength_sum(runlength_t *rl, runlength_size_t s, runlength_size_t e);
 
 void runlength_next(runlength_t *rl);
+
+// returns 1 if value changed
 int runlength_push_value(runlength_t *rl, uint32_t value);
 
 void runlength_count(runlength_t *rl);

@@ -21,6 +21,8 @@
 image_t *img;
 
 
+//#define DEBUG_DETECT
+
 #ifdef DEBUG_DETECT
 image_t *detected;
 #endif
@@ -47,7 +49,7 @@ int tryDecode(image_t *imgsrc, image_point_t src[3]) {
 		qrmatrix_set_version(qr, version);
 
 		qrdetector_perspective_t warp = create_qrdetector_perspective(qr, img);
-		qrdetector_perspective_setup_by_finder_pattern(&warp, src);
+		qrdetector_perspective_setup_by_finder_pattern_qr(&warp, src);
 
 #ifdef DEBUG_DETECT
 		qrmatrix_on_write_pixel(qr, write_image_pixel, &warp);
@@ -62,60 +64,32 @@ int tryDecode(image_t *imgsrc, image_point_t src[3]) {
 		if (qrmatrix_set_format_info(qr, qrmatrix_read_format_info(qr))) {
 			char buf[1024];
 
-			qrpayload_t *payload = new_qrpayload(qr->version, qr->level);
-			qrmatrix_read_payload(qr, payload);
-
-			qrpayload_dump(payload, stderr);
-			qrpayload_set_error_words(payload);
-			qrpayload_dump(payload, stderr);
-
-			if (qrpayload_fix_errors(payload) >= 0) {
-				size_t l = qrpayload_read_string(payload, buf, sizeof(buf));
-
+			if (qrmatrix_fix_errors(qr) >= 0) {
+				size_t l = qrmatrix_read_string(qr, buf, sizeof(buf));
 #ifndef DEBUG_DETECT
 				qrmatrix_dump(qr, stderr);
-				printf("Found: RECV: '%s'\n", buf);
+				printf("Found: RECV(%zu): '%s'\n", l, buf);
 #else
-				safe_fprintf(stderr, "RECV (len %zu): '%s'\n", l, buf);
+				safe_fprintf(stderr, "RECV(%zu): '%s'\n", l, buf);
 
-				// draw read points on `detected`
+				// draw read points on `detected` image for debug
 				qrmatrix_write_finder_pattern(qr);
 				qrmatrix_write_alignment_pattern(qr);
 				qrmatrix_write_timing_pattern(qr);
 				qrmatrix_write_format_info(qr);
+
+				qrpayload_t *payload = new_qrpayload(qr->version, qr->level);
+				qrmatrix_read_payload(qr, payload);
 				qrmatrix_write_payload(qr, payload);
+				qrpayload_free(payload);
 #endif
 
-				found |= 1;
-
-#if 0
-				{
-					char buffer[4096];
-					size_t size = sizeof(buffer);
-					qrdata_t qrdata = create_qrdata_for(qrpayload_get_bitstream_for_data(payload), payload->version);
-
-					for (int i = 0; i < 10; i++) {
-						size_t len = qrdata_parse(&qrdata, buffer, size);
-						if (len >= size) len = size - 1;
-						buffer[len] = 0;
-
-						safe_fprintf(stderr, "RECV %d: '%s'\n", i, buffer);
-					}
-				}
-				{
-					char buffer[4096];
-					bitstream_t bs = qrpayload_get_bitstream_for_data(payload);
-					bitpos_t len = bitstream_read(&bs, buffer, sizeof(buffer), 1);
-					hexdump(buffer, BYTE_SIZE(len), 0);
-				}
-#endif
+				found = 1;
 			}
-
-			qrpayload_free(payload);
 		}
-
-//		qrmatrix_dump(qr);
 	}
+
+	qrmatrix_free(qr);
 
 	return found;
 }
@@ -127,13 +101,13 @@ void done(pngle_t *pngle) {
 	image_digitize(mono, img, 1.8);
 
 	int num_candidates;
-	qrdetector_candidate_t *candidates = qrdetector_scan_finder_pattern(mono, &num_candidates);
+	qrdetector_finder_candidate_t *candidates = qrdetector_scan_finder_pattern(mono, &num_candidates);
 	int found = 0;
 
 #ifdef DEBUG_DETECT
 	detected = image_clone(mono);
 	for (int i = 0; i < num_candidates; i++) {
-		image_draw_filled_ellipse(detected, POINT(candidates[i].center_x, candidates[i].center_y), 5, 5, PIXEL(255, 0, 0));
+		image_draw_filled_ellipse(detected, candidates[i].center, 5, 5, PIXEL(255, 0, 0));
 		image_draw_extent(detected, candidates[i].extent, PIXEL(255, 0, 0), 1);
 	}
 #endif
@@ -150,7 +124,7 @@ void done(pngle_t *pngle) {
 						candidates[idx[l * 3 + 2]].center,
 					};
 
-					if (!found) found |= tryDecode(mono, points);
+					found += tryDecode(mono, points);
 				}
 			}
 		}
@@ -182,18 +156,13 @@ void init_screen(pngle_t *pngle, uint32_t w, uint32_t h) {
 	img = new_image(W, H);
 }
 
-int debug_vprintf(const char *fmt, va_list ap)
-{
-	return vfprintf(stderr, fmt, ap);
-}
-
 int main(int argc, char *argv[]) {
 	char buf[1024];
 	size_t remain = 0;
 	int len;
 
 #ifdef DEBUG_DETECT
-	qrean_on_debug_printf(debug_vprintf);
+	qrean_on_debug_vprintf(vfprintf, stderr);
 #endif
 
 	FILE *fp = stdin;

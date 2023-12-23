@@ -10,7 +10,11 @@ int main() {
 	qrean_on_debug_vprintf(vfprintf, stderr);
 
 	qrmatrix_t qr = create_qrmatrix();
-	qrmatrix_write_string(&qr, "Hello, world");
+	qrmatrix_set_version(&qr, QR_VERSION_M4);
+	qrmatrix_set_errorlevel(&qr, QR_ERRORLEVEL_M);
+	qrmatrix_set_maskpattern(&qr, QR_MASKPATTERN_0);
+
+	qrmatrix_write_string_8bit(&qr, "Hello!");
 
 #if 0
 	qrmatrix_dump(&qr, stderr);
