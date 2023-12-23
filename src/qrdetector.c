@@ -191,7 +191,7 @@ int qrdetector_perspective_fit_by_alignment_pattern(qrdetector_perspective_t *d)
 
 	int N = qrspec_get_alignment_num(d->qr->version);
 	int i = N - 1;
-	{
+	if (i >= 0) {
 		int cx = qrspec_get_alignment_position_x(d->qr->version, i);
 		int cy = qrspec_get_alignment_position_y(d->qr->version, i);
 
