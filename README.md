@@ -3,7 +3,7 @@ QR and Barcode library `libqrean`
 
 # What's this?
 
-A portable QR and Barcode manipulation library with a small footprint.
+A portable QR and Barcode manipulation library with a small footprint written in C.
 
 ![animation](https://github.com/kikuchan/libqrean/assets/445223/1fdf9b2f-df63-4c0e-8cd6-a72633f2abc3)
 
@@ -53,6 +53,7 @@ You can also configure a callback to draw a pixel directly on a screen for examp
 | type                | encode | decode | detect
 |---------------------|--------|--------|-----------
 | QR                  | ✓      | ✓      | ✓ (See [examples/detect.c](examples/detect.c))
+| mQR                 | ✓      | ✓      | ✓ (See [examples/detect-mqr.c](examples/detect-mqr.c))
 | UPCA / EAN13 / EAN8 | ✓      | -      | -
 | CODE39              | ✓      | -      | -
 | CODE93              | ✓      | -      | -
