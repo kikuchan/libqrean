@@ -9,7 +9,6 @@
 // https://github.com/kikuchan/pngle
 #include "pngle.h"
 
-#include "hexdump.h"
 #include "qrmatrix.h"
 #include "qrpayload.h"
 #include "qrspec.h"
@@ -65,6 +64,10 @@ int tryDecode(image_t *imgsrc, image_point_t src[3]) {
 
 			qrpayload_t *payload = new_qrpayload(qr->version, qr->level);
 			qrmatrix_read_payload(qr, payload);
+
+			qrpayload_dump(payload, stderr);
+			qrpayload_set_error_words(payload);
+			qrpayload_dump(payload, stderr);
 
 			if (qrpayload_fix_errors(payload) >= 0) {
 				size_t l = qrpayload_read_string(payload, buf, sizeof(buf));

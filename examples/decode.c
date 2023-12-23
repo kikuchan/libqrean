@@ -9,7 +9,6 @@
 // https://github.com/kikuchan/pngle
 #include "pngle.h"
 
-#include "hexdump.h"
 #include "qrmatrix.h"
 
 qrmatrix_t *qr;
@@ -26,9 +25,8 @@ void done(pngle_t *pngle) {
 	qrmatrix_dump(qr, stderr);
 
 	char buffer[1024];
-	size_t len = qrmatrix_read_string(qr, buffer, sizeof(buffer));
+	qrmatrix_read_string(qr, buffer, sizeof(buffer));
 
-	hexdump(buffer, len, 0);
 	printf("RECV: %s\n", buffer);
 }
 

@@ -27,7 +27,6 @@ qrdetector_candidate_t *qrdetector_scan_finder_pattern(image_t *src, int *found)
 			int lx = x - runlength_sum(&rl, 0, 6) + runlength_get_count(&rl, 5) / 2; // dark module on the left ring
 			int rx = x - runlength_sum(&rl, 0, 2) + runlength_get_count(&rl, 1) / 2; // dark module on the right ring
 			int len = runlength_sum(&rl, 1, 5);
-			float modsize_x = len / 7.0;
 			int cy = y;
 
 			// not a dark module
@@ -58,13 +57,12 @@ qrdetector_candidate_t *qrdetector_scan_finder_pattern(image_t *src, int *found)
 				found_d = runlength_sum(&rlvd, 1, 3);
 			}
 
-			if (found_u && found_d) {
+			if (candidx < MAX_CANDIDATES && found_u && found_d) {
 				image_pixel_t inner_block_color = PIXEL(0, 255, 0);
 				image_pixel_t ring_color = PIXEL(255, 0, 0);
 
 				// mark visit flag by painting inner most block
-				image_paint_result_t r = image_paint(img, POINT(cx, cy), inner_block_color);
-				float modsize_y = (found_u + found_d - 1) / 7.0;
+				image_paint_result_t inner_block = image_paint(img, POINT(cx, cy), inner_block_color);
 
 				// let's make sure they are disconnected from the inner most block
 				if (image_read_pixel(img, POINT(lx, cy)) != PIXEL(0, 0, 0)) {
@@ -75,35 +73,59 @@ qrdetector_candidate_t *qrdetector_scan_finder_pattern(image_t *src, int *found)
 				}
 
 				// let's make sure they are connected
-				image_paint(img, POINT(lx, cy), ring_color);
+				image_paint_result_t ring = image_paint(img, POINT(lx, cy), ring_color);
 				if (image_read_pixel(img, POINT(lx, cy)) != image_read_pixel(img, POINT(rx, cy))) {
-					// paint back ;)
+					// paint it back ;)
 					image_paint(img, POINT(lx, cy), PIXEL(0, 0, 0));
 					continue;
 				}
 
-				float real_cx = (r.extent.left + r.extent.right) / 2.0f;
-				float real_cy = (r.extent.top + r.extent.bottom) / 2.0f;
+				float real_cx = (ring.extent.left + ring.extent.right) / 2.0f;
+				float real_cy = (ring.extent.top + ring.extent.bottom) / 2.0f;
 
-				if (candidx < MAX_CANDIDATES) {
-					candidates[candidx].center = POINT(real_cx, real_cy);
-					candidates[candidx].extent = r.extent;
-					candidates[candidx].area = r.area;
-					candidates[candidx].center_x = real_cx;
-					candidates[candidx].center_y = real_cy;
-					candidates[candidx].modsize_x = modsize_x;
-					candidates[candidx].modsize_y = modsize_y;
-					candidx++;
+				// find ring corners
+				int w = ring.extent.right - ring.extent.left;
+				int h = ring.extent.bottom - ring.extent.top;
+				int cidx = 0;
+				float corners[4];
+				for (int r = rint(sqrt(w*w+h*h)); r > 0 && cidx < 4; r--) {
+					for (float theta = 0; theta < 2*M_PI && cidx < 4; theta += 1.0/r) {
+						int x = rint(cx + r * cos(theta));
+						int y = rint(cy - r * sin(theta));
+
+						if (image_read_pixel(img, POINT(x, y)) == ring_color) {
+							int i;
+							for (i = 0; i < cidx; i++) {
+								double delta = fabs(corners[i] - theta);
+								while (delta > M_PI) delta -= 2*M_PI;
+								if (fabs(delta) < M_PI_4) break;
+							}
+							if (i >= cidx) {
+								candidates[candidx].corners[cidx] = POINT(x, y);
+								corners[cidx++] = theta;
+							}
+						}
+					}
 				}
+
+				if (cidx < 4) {
+					// No corners... paint it back
+					image_paint(img, POINT(lx, cy), PIXEL(0, 0, 0));
+					continue;
+				}
+
+				candidates[candidx].center = POINT(real_cx, real_cy);
+				candidates[candidx].extent = ring.extent;
+				candidates[candidx].area = inner_block.area;
+				candidx++;
 			}
 		}
 	}
 
 	image_free(img);
 
+	// guardian
 	candidates[candidx].center = POINT(NAN, NAN);
-	candidates[candidx].modsize_x = 0;
-	candidates[candidx].modsize_y = 0;
 
 	if (found) *found = candidx;
 

@@ -6,7 +6,6 @@
 #include <string.h>
 
 #include "bitstream.h"
-#include "hexdump.h"
 #include "utils.h"
 
 void bitstream_init(bitstream_t *bs, void *src, bitpos_t len, bitstream_iterator_t iter, void *opaque) {
@@ -186,9 +185,48 @@ bitpos_t bitstream_read(bitstream_t *src, void *buffer, bitpos_t size, bitpos_t 
 	return bitstream_copy(&dst, src, size, n);
 }
 
-void bitstream_dump(bitstream_t *bs) {
+void bitstream_dump(bitstream_t *src, bitpos_t len, FILE *out) {
 #ifndef NO_PRINTF
-	hexdump(bs->bits, BYTE_SIZE(bs->size), 0);
+#ifndef HEXDUMP_PRINTF
+#define HEXDUMP_PRINTF(...) fprintf(out, __VA_ARGS__)
+#endif
+	size_t start_addr = 0;
+	const int fold_size = 16;
+	const int flag_print_chars = 1;
+
+	size_t remain = len ? len : (16 * 8);
+
+	while ((!len || remain > 0) && !bitstream_is_end(src)) {
+		uint8_t buf[16];
+		int n = bitstream_read(src, buf, MIN(remain, 16 * 8), 1);
+		if (len) remain -= n;
+
+		HEXDUMP_PRINTF("%08lx: ", start_addr);
+		start_addr = (start_addr / fold_size) * fold_size;
+		for (size_t i = 0; i < fold_size; i++) {
+			if (i % 8 == 0) HEXDUMP_PRINTF(" ");
+
+			if (i < BYTE_SIZE(n)) {
+				HEXDUMP_PRINTF("%02x ", buf[i]);
+			} else {
+				HEXDUMP_PRINTF("   ");
+			}
+		}
+		if (flag_print_chars) {
+			HEXDUMP_PRINTF(" |");
+			for (size_t i = 0; i < fold_size; i++) {
+				if (i < BYTE_SIZE(n)) {
+					HEXDUMP_PRINTF("%c", buf[i] >= 0x20 && buf[i] < 0x7f ? buf[i] : '.');
+				} else {
+					HEXDUMP_PRINTF(" ");
+				}
+			}
+			HEXDUMP_PRINTF("|");
+		}
+		HEXDUMP_PRINTF("\n");
+		start_addr += fold_size;
+	}
+#undef HEXDUMP_PRINTF
 #endif
 }
 

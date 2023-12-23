@@ -1,5 +1,4 @@
 OBJS += bitstream.o
-OBJS += hexdump.o
 OBJS += utils.o
 OBJS += image.o
 OBJS += debug.o

@@ -175,8 +175,8 @@ void image_draw_polygon(image_t *img, int N, image_point_t points[], image_pixel
 }
 
 void image_draw_filled_ellipse(image_t *img, image_point_t center, int w, int h, image_pixel_t pix) {
-	int cx = rint(POINT_X(center));
-	int cy = rint(POINT_Y(center));
+	float cx = POINT_X(center);
+	float cy = POINT_Y(center);
 	int x, y;
 
 	float sx = cx - w;
@@ -188,8 +188,8 @@ void image_draw_filled_ellipse(image_t *img, image_point_t center, int w, int h,
 		for (x = sx; x <= dx; x++) {
 			float tx, ty;
 
-			tx = x - cx + 0.5f;
-			ty = y - cy + 0.5f;
+			tx = x - cx;
+			ty = y - cy;
 
 			if (((tx * tx) / (w * w) + (ty * ty) / (h * h)) <= 1.0f) {
 				image_draw_pixel(img, POINT(x, y), pix);

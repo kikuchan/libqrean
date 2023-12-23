@@ -183,17 +183,19 @@ void gf2_print(gf2_value_t a) {
 		qrean_debug_printf("a^%d", gf2_log_a(a));
 }
 
-void gf2_poly_print(const gf2_poly_t *poly) {
+void gf2_poly_dump(const gf2_poly_t *poly, FILE *out) {
+#ifndef NO_PRINTF
 	int i, is_empty = 1;
 	for (i = GF2_POLY_DEGREE(poly); i >= 0; i--) {
 		if (GF2_POLY_COEFF(poly, i)) {
-			if (!is_empty) qrean_debug_printf(" + ");
+			if (!is_empty) fprintf(out, " + ");
 			is_empty = 0;
-			qrean_debug_printf("a^%d x^%d", gf2_log_a(GF2_POLY_COEFF(poly, i)), i);
+			fprintf(out, "a^%d x^%d", gf2_log_a(GF2_POLY_COEFF(poly, i)), i);
 		} else {
 			continue;
 		}
 	}
-	if (is_empty) qrean_debug_printf("0");
-	qrean_debug_printf("\n");
+	if (is_empty) fprintf(out, "0");
+	fprintf(out, "\n");
+#endif
 }

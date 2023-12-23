@@ -10,11 +10,9 @@ typedef struct {
 	image_point_t center;
 	image_extent_t extent;
 
-	float center_x;
-	float center_y;
+	image_point_t corners[4];
+
 	int area;
-	float modsize_x;
-	float modsize_y;
 } qrdetector_candidate_t;
 
 typedef struct {

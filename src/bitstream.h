@@ -44,7 +44,7 @@ void bitstream_fill(bitstream_t *bs, bit_t v);
 
 bitpos_t bitstream_length(bitstream_t *bs);
 
-void bitstream_dump(bitstream_t *bs);
+void bitstream_dump(bitstream_t *bs, bitpos_t len, FILE *out);
 
 bit_t bitstream_read_bit(bitstream_t *bs);
 uint_fast32_t bitstream_read_bits(bitstream_t *bs, uint_fast8_t num_bits);

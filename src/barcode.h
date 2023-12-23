@@ -59,7 +59,7 @@ barcode_t *new_barcode_with_string(barcode_type_t type, const char *src);
 
 bitpos_t barcode_write_string(barcode_t *code, barcode_type_t type, const char *src);
 
-void barcode_dump(barcode_t *code);
+void barcode_dump(barcode_t *code, FILE *out);
 
 // ----
 

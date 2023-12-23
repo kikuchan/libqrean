@@ -233,3 +233,16 @@ bit_t qrpayload_write_string(qrpayload_t *payload, const char *src, size_t len, 
 	}
 	return 0;
 }
+
+void qrpayload_dump(qrpayload_t *payload, FILE *out) {
+	bitstream_t bs = qrpayload_get_bitstream(payload);
+	bitstream_dump(&bs, 0, out);
+}
+void qrpayload_dump_for_data(qrpayload_t *payload, FILE *out) {
+	bitstream_t bs = qrpayload_get_bitstream_for_data(payload);
+	bitstream_dump(&bs, 0, out);
+}
+void qrpayload_dump_for_error(qrpayload_t *payload, FILE *out) {
+	bitstream_t bs = qrpayload_get_bitstream_for_error(payload);
+	bitstream_dump(&bs, 0, out);
+}

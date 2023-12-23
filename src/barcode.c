@@ -166,7 +166,7 @@ bitstream_t barcode_create_bitstream(barcode_t *code, bitstream_iterator_t iter)
 	return bs;
 }
 
-void barcode_dump(barcode_t *code) {
+void barcode_dump(barcode_t *code, FILE *out) {
 #ifndef NO_PRINTF
 	const char *dots[4] = {"\u2588", "\u2580", "\u2584", " "};
 
@@ -179,9 +179,9 @@ void barcode_dump(barcode_t *code) {
 			bit_t u = barcode_read_pixel(code, x, y + 0);
 			bit_t l = y + 1 >= ey ? 1 : barcode_read_pixel(code, x, y + 1);
 
-			fprintf(stderr, "%s", dots[((u << 1) | l) & 3]);
+			fprintf(out, "%s", dots[((u << 1) | l) & 3]);
 		}
-		fprintf(stderr, "\n");
+		fprintf(out, "\n");
 	}
 #endif
 }

@@ -62,4 +62,8 @@ int qrpayload_fix_errors(qrpayload_t *qrs);
 size_t qrpayload_read_string(qrpayload_t *payload, char *buffer, size_t size);
 bit_t qrpayload_write_string(qrpayload_t *payload, const char *src, size_t len, qrdata_writer_t writer);
 
+void qrpayload_dump(qrpayload_t *payload, FILE *out);
+void qrpayload_dump_for_data(qrpayload_t *payload, FILE *out);
+void qrpayload_dump_for_error(qrpayload_t *payload, FILE *out);
+
 #endif /* __QR_QRPAYLOAD_H__ */
