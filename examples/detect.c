@@ -20,7 +20,6 @@
 
 image_t *img;
 
-
 //#define DEBUG_DETECT
 
 #ifdef DEBUG_DETECT

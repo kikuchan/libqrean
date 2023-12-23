@@ -178,10 +178,10 @@ int qrpayload_fix_errors(qrpayload_t *payload) {
 			num_errors_total += num_errors;
 			break;
 		case 0:
-			qrean_debug_printf("rsblock #%d: No error\n", rsblock_num);
+			qrean_debug_printf("rsblock #%d: No errors\n", rsblock_num);
 			continue;
 		case -1:
-			qrean_debug_printf("rsblock #%d: Too much errors\n", rsblock_num);
+			qrean_debug_printf("rsblock #%d: Too many errors\n", rsblock_num);
 			return -1;
 		};
 

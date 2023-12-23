@@ -23,9 +23,10 @@ qrdetector_finder_candidate_t *qrdetector_scan_finder_pattern(image_t *src, int 
 
 			// assert almost [n, n, 3n, n, n, 1]
 
-			int cx = x - runlength_sum(&rl, 0, 4) + runlength_get_count(&rl, 3) / 2; // dark module on the center
-			int lx = x - runlength_sum(&rl, 0, 6) + runlength_get_count(&rl, 5) / 2; // dark module on the left ring
-			int rx = x - runlength_sum(&rl, 0, 2) + runlength_get_count(&rl, 1) / 2; // dark module on the right ring
+			int cx = x - runlength_sum(&rl, 1, 3) + runlength_get_count(&rl, 3) / 2; // dark module on the center
+			int lx = x - runlength_sum(&rl, 1, 5) + runlength_get_count(&rl, 5) / 2; // dark module on the left ring
+			int rx = x - runlength_sum(&rl, 1, 1) + runlength_get_count(&rl, 1) / 2; // dark module on the right ring
+
 			int len = runlength_sum(&rl, 1, 5);
 			int cy = y;
 
@@ -164,11 +165,14 @@ void qrdetector_perspective_setup_by_finder_pattern_qr(qrdetector_perspective_t 
 	qrmatrix_on_read_pixel(warp->qr, qrdetector_perspective_read_image_pixel, warp);
 }
 
-void qrdetector_perspective_setup_by_finder_pattern_mqr(qrdetector_perspective_t *warp, image_point_t ring[3], int offset) {
-	warp->src[0] = POINT(-0.5, -0.5), // left--top of the ring
-	warp->src[1] = POINT(6.5, -0.5),  // right-top of the ring
-	warp->src[2] = POINT(6.5, 6.5),   // right-bottom of the ring
-	warp->src[3] = POINT(-0.5, 6.5),  // left--bottom of the ring
+void qrdetector_perspective_setup_by_finder_pattern_mqr(qrdetector_perspective_t *warp, image_point_t ring[4], int offset) {
+	float modsize = image_point_distance(ring[(0 + offset) % 4], ring[(1 + offset) % 4]) / 7.0;
+	float d = 0.5 / modsize;
+
+	warp->src[0] = POINT(-0.5 + d, -0.5 + d), // left--top of the ring
+	warp->src[1] = POINT(6.5 - d, -0.5 + d),  // right-top of the ring
+	warp->src[2] = POINT(6.5 - d, 6.5 - d),   // right-bottom of the ring
+	warp->src[3] = POINT(-0.5 + d, 6.5 - d),  // left--bottom of the ring
 
 	warp->dst[0] = ring[(0 + offset) % 4];
 	warp->dst[1] = ring[(1 + offset) % 4];
@@ -193,7 +197,7 @@ int qrdetector_perspective_fit_by_alignment_pattern(qrdetector_perspective_t *d)
 
 		image_point_t c = image_point_transform(POINT(cx, cy), d->h);
 		image_point_t next = image_point_transform(POINT(cx + 1, cy), d->h);
-		float module_size = image_point_norm(image_point_sub(next, c));
+		float module_size = image_point_distance(next, c);
 
 		int dist = 5;
 		for (float y = cy - dist; y < cy + dist; y += 0.2) {

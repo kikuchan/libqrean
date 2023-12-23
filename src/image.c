@@ -262,6 +262,11 @@ float image_point_norm(image_point_t a) {
 	return sqrt((POINT_X(a) * POINT_X(a)) + (POINT_Y(a) * POINT_Y(a)));
 }
 
+float image_point_distance(image_point_t a, image_point_t b) {
+	return image_point_norm(image_point_sub(a, b));
+	//return sqrt((POINT_X(a) - POINT_X(b)) * (POINT_X(a) - POINT_X(b)) + (POINT_Y(a) - POINT_Y(b)) * (POINT_Y(a) - POINT_Y(b)));
+}
+
 void image_draw_extent(image_t *img, image_extent_t extent, image_pixel_t pix, int thickness) {
 	image_point_t points[] = {
 		POINT(extent.left, extent.top),
