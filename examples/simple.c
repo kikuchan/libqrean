@@ -10,11 +10,11 @@ int main() {
 	qrean_on_debug_vprintf(vfprintf, stderr);
 
 	qrmatrix_t qr = create_qrmatrix();
-	qrmatrix_set_version(&qr, QR_VERSION_8);
+	qrmatrix_set_version(&qr, QR_VERSION_AUTO);
 
-	qrmatrix_write_string(&qr, "Hello, world");
+	qrmatrix_write_string_8bit(&qr, "https://github.com/kikuchan/libqrean");
 
-#if 1
+#if 0
 	qrmatrix_dump(&qr, stderr);
 #else
 	size_t width = qr.symbol_width + qr.padding.l + qr.padding.r;

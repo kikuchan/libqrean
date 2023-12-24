@@ -14,9 +14,9 @@ int main() {
 	qrmatrix_set_errorlevel(&qr, QR_ERRORLEVEL_M);
 	qrmatrix_set_maskpattern(&qr, QR_MASKPATTERN_0);
 
-	qrmatrix_write_string_8bit(&qr, "Hello!");
+	qrmatrix_write_string_8bit(&qr, "libqrean");
 
-#if 1
+#if 0
 	qrmatrix_dump(&qr, stderr);
 #else
 	size_t width = qr.symbol_width + qr.padding.l + qr.padding.r;

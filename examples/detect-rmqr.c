@@ -12,6 +12,7 @@
 #include "qrmatrix.h"
 #include "qrpayload.h"
 #include "qrspec.h"
+#include "qrtypes.h"
 #include "runlength.h"
 #include "qrdetector.h"
 #include "debug.h"
@@ -67,30 +68,17 @@ void done(pngle_t *pngle) {
 		for (int c = 0; c < 4; c++) {
 			fprintf(stderr, "--------------\n");
 			qrmatrix_t *qr = new_qrmatrix();
-			qrmatrix_set_version(qr, QR_VERSION_R15x43);
-			qrmatrix_set_maskpattern(qr, QR_MASKPATTERN_0);
+			qrmatrix_set_version(qr, QR_VERSION_R17x139);
 			qrdetector_perspective_t warp = create_qrdetector_perspective(qr, mono);
 			qrdetector_perspective_setup_by_finder_pattern_mqr(&warp, candidates[i].corners, c);
 
 #ifdef DEBUG_DETECT
 			qrmatrix_on_write_pixel(qr, write_image_pixel, &warp);
 #endif
-			qrmatrix_set_format_info(qr, qrmatrix_read_format_info(qr));
 
-			qrpayload_t *payload = new_qrpayload(qr->version, qr->level);
-			qrmatrix_read_payload(qr, payload);
+			if (!qrmatrix_set_format_info(qr, qrmatrix_read_format_info(qr))) continue;
 
 			if (qrmatrix_fix_errors(qr) >= 0) {
-				qrmatrix_write_all(qr, payload);
-
-				qrpayload_dump(payload, stderr);
-				qrpayload_dump_data(payload, stderr);
-				qrpayload_dump_error(payload, stderr);
-
-				qrmatrix_read_payload(qr, payload);
-				qrpayload_dump_data(payload, stderr);
-				qrpayload_dump_error(payload, stderr);
-
 				fprintf(stderr, "Timing pattern error rate: %d\n", qrmatrix_read_timing_pattern(qr));
 
 				char buf[1024];
@@ -98,12 +86,9 @@ void done(pngle_t *pngle) {
 				fprintf(stderr, "recv; %s\n", buf);
 
 #ifdef DEBUG_DETECT
-/*
 				qrpayload_t *payload = new_qrpayload(qr->version, qr->level);
 				qrmatrix_read_payload(qr, payload);
 				qrmatrix_write_all(qr, payload);
-				qrpayload_dump(payload, stderr);
-*/
 #endif
 			}
 		}
