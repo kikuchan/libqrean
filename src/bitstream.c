@@ -198,10 +198,10 @@ void bitstream_dump(bitstream_t *src, bitpos_t len, FILE *out) {
 
 	while ((!len || remain > 0) && !bitstream_is_end(src)) {
 		uint8_t buf[16];
-		int n = bitstream_read(src, buf, MIN(remain, 16 * 8), 1);
+		size_t n = bitstream_read(src, buf, MIN(remain, 16 * 8), 1);
 		if (len) remain -= n;
 
-		HEXDUMP_PRINTF("%08lx: ", start_addr);
+		HEXDUMP_PRINTF("%08zx: ", start_addr);
 		start_addr = (start_addr / fold_size) * fold_size;
 		for (size_t i = 0; i < fold_size; i++) {
 			if (i % 8 == 0) HEXDUMP_PRINTF(" ");

@@ -91,7 +91,7 @@ bit_t qrmatrix_set_version(qrmatrix_t *qr, qr_version_t version) {
 	return 1;
 }
 
-static bit_t qr_is_mask(int_fast16_t x, int_fast16_t y, int mask) {
+static bit_t qr_is_mask(int_fast16_t x, int_fast16_t y, qr_maskpattern_t mask) {
 	switch (mask) {
 	case QR_MASKPATTERN_0:
 		return (y + x) % 2 == 0;
@@ -118,7 +118,7 @@ static bit_t qr_is_mask(int_fast16_t x, int_fast16_t y, int mask) {
 	}
 }
 
-static bit_t mqr_is_mask(int_fast16_t j, int_fast16_t i, int mask) {
+static bit_t mqr_is_mask(int_fast16_t j, int_fast16_t i, qr_maskpattern_t mask) {
 	switch (mask) {
 	case QR_MASKPATTERN_0:
 		// 1
@@ -144,7 +144,7 @@ static bit_t mqr_is_mask(int_fast16_t j, int_fast16_t i, int mask) {
 	}
 }
 
-static bit_t rmqr_is_mask(int_fast16_t j, int_fast16_t i, int mask) {
+static bit_t rmqr_is_mask(int_fast16_t j, int_fast16_t i, qr_maskpattern_t mask) {
 	switch (mask) {
 	case QR_MASKPATTERN_0:
 		return (i / 2 + j / 3) % 2 == 0;
@@ -386,8 +386,8 @@ static bit_t is_format_info(qrmatrix_t *qr, int_fast16_t x, int_fast16_t y) {
 		if (8 <= x && x <= 10 && y <= 5) return 1;
 		if (x == 11 && 0 <= y && y <= 3) return 1;
 
-		size_t w = qr->symbol_width;
-		size_t h = qr->symbol_height;
+		int w = qr->symbol_width;
+		int h = qr->symbol_height;
 		if (h - 6 <= y && y < h && w - 8 <= x && x < w - 8 + 3) return 1;
 		if (h - 6 == y && w - 8 + 3 <= x && x < w - 8 + 6) return 1;
 	}
@@ -445,17 +445,17 @@ static bitpos_t mqr_timing_pattern_iter(bitstream_t *bs, bitpos_t i, void *opaqu
 static bitpos_t rmqr_timing_pattern_iter(bitstream_t *bs, bitpos_t i, void *opaque) {
 	qrmatrix_t *qr = (qrmatrix_t *)opaque;
 
-	size_t num_aligns_x = qrspec_get_alignment_num(qr->version) / 2; // XXX:
+	int num_aligns_x = qrspec_get_alignment_num(qr->version) / 2; // XXX:
 
 	// top
-	if (i < qr->symbol_width - 8 - 3)
+	if (i < (size_t)qr->symbol_width - 8 - 3)
 		return QR_XYV_TO_BITPOS(qr, i + 8, 0, is_vertical_timing_pattern(qr, i + 8, 0) // timing pattern dark module
 		);
 	i -= qr->symbol_width - 8 - 3;
 
 	// bottom
 	bitpos_t ox = qr->symbol_height > 2 + 5 ? 2 : 8;
-	if (i < qr->symbol_width - ox - 5)
+	if (i < (size_t)qr->symbol_width - ox - 5)
 		return QR_XYV_TO_BITPOS(qr, i + ox, qr->symbol_height - 1,
 		                        is_vertical_timing_pattern(qr, i + ox, qr->symbol_height - 1) // timing pattern dark module
 		);
@@ -463,13 +463,13 @@ static bitpos_t rmqr_timing_pattern_iter(bitstream_t *bs, bitpos_t i, void *opaq
 
 	// left
 	if (qr->symbol_height > 8 + 3) {
-		if (i < qr->symbol_height - 8 - 3) return QR_XYV_TO_BITPOS(qr, 0, i + 8, 0);
+		if (i < (size_t)qr->symbol_height - 8 - 3) return QR_XYV_TO_BITPOS(qr, 0, i + 8, 0);
 		i -= qr->symbol_height - 8 - 3;
 	}
 
 	// right
 	if (qr->symbol_height > 2 + 5) {
-		if (i < qr->symbol_height - 2 - 5) return QR_XYV_TO_BITPOS(qr, qr->symbol_width - 1, i + 2, 0);
+		if (i < (size_t)qr->symbol_height - 2 - 5) return QR_XYV_TO_BITPOS(qr, qr->symbol_width - 1, i + 2, 0);
 		i -= qr->symbol_height - 2 - 5;
 	}
 
@@ -667,7 +667,7 @@ bitstream_t qrmatrix_create_bitstream_for_alignment_pattern(qrmatrix_t *qr, int 
 	return qrmatrix_create_bitstream(qr, IS_RMQR(qr->version) ? rmqr_alignment_pattern_iter : alignment_pattern_iter);
 }
 
-static int calc_pattern_mismatch_error_rate(bitstream_t *bs, const uint8_t *pattern, bitpos_t size, bitpos_t start_idx, bitpos_t n) {
+static int calc_pattern_mismatch_error_rate(bitstream_t *bs, const void *pattern, bitpos_t size, bitpos_t start_idx, bitpos_t n) {
 	bitpos_t error = 0;
 	bitpos_t total = 0;
 
@@ -678,7 +678,7 @@ static int calc_pattern_mismatch_error_rate(bitstream_t *bs, const uint8_t *patt
 	for (bitpos_t i = 0; !bitstream_is_end(bs) && (!n || i < e); i++) {
 		bitpos_t l = bitstream_read(bs, buf, size, 1);
 		if (!n || (start_idx <= i && i < e)) {
-			error += hamming_distance_mem(buf, pattern, l);
+			error += hamming_distance_mem((const uint8_t *)buf, (const uint8_t *)pattern, l);
 			total += l;
 		}
 	}
@@ -688,7 +688,7 @@ static int calc_pattern_mismatch_error_rate(bitstream_t *bs, const uint8_t *patt
 
 // format info
 void qrmatrix_write_format_info(qrmatrix_t *qr) {
-	bitpos_t (*iter)() = IS_RMQR(qr->version) ? rmqr_format_info_iter : IS_MQR(qr->version) ? mqr_format_info_iter : qr_format_info_iter;
+	bitstream_iterator_t iter = IS_RMQR(qr->version) ? rmqr_format_info_iter : IS_MQR(qr->version) ? mqr_format_info_iter : qr_format_info_iter;
 	bitstream_t bs = qrmatrix_create_bitstream(qr, iter);
 	qrformat_t fi = qrformat_for(qr->version, qr->level, qr->mask);
 
@@ -702,7 +702,7 @@ void qrmatrix_write_format_info(qrmatrix_t *qr) {
 }
 
 qrformat_t qrmatrix_read_format_info(qrmatrix_t *qr) {
-	bitpos_t (*iter)() = IS_RMQR(qr->version) ? rmqr_format_info_iter : IS_MQR(qr->version) ? mqr_format_info_iter : qr_format_info_iter;
+	bitstream_iterator_t iter = IS_RMQR(qr->version) ? rmqr_format_info_iter : IS_MQR(qr->version) ? mqr_format_info_iter : qr_format_info_iter;
 	bitstream_t bs = qrmatrix_create_bitstream(qr, iter);
 
 	qrformat_t fi1 = qrformat_from(qr->version, bitstream_read_bits(&bs, IS_RMQR(qr->version) ? RMQR_FORMATINFO_SIZE : QR_FORMATINFO_SIZE));
@@ -757,7 +757,7 @@ qr_version_t qrmatrix_read_version(qrmatrix_t *qr) {
 
 const uint8_t timing_pattern_bits[] = {0xAA};
 void qrmatrix_write_timing_pattern(qrmatrix_t *qr) {
-	bitpos_t (*iter)() = IS_MQR(qr->version)    ? mqr_timing_pattern_iter
+	bitstream_iterator_t iter = IS_MQR(qr->version)    ? mqr_timing_pattern_iter
 	                     : IS_RMQR(qr->version) ? rmqr_timing_pattern_iter
 	                                            : qr_timing_pattern_iter;
 	bitstream_t bs = qrmatrix_create_bitstream(qr, iter);
@@ -765,7 +765,7 @@ void qrmatrix_write_timing_pattern(qrmatrix_t *qr) {
 }
 
 int qrmatrix_read_timing_pattern(qrmatrix_t *qr) {
-	bitpos_t (*iter)() = IS_MQR(qr->version)    ? mqr_timing_pattern_iter
+	bitstream_iterator_t iter = IS_MQR(qr->version)    ? mqr_timing_pattern_iter
 	                     : IS_RMQR(qr->version) ? rmqr_timing_pattern_iter
 	                                            : qr_timing_pattern_iter;
 	bitstream_t bs = qrmatrix_create_bitstream(qr, iter);

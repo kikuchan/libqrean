@@ -73,7 +73,7 @@ qrformat_t qrformat_from(qr_version_t version, uint32_t value) {
 			fi.value = qrbch_18_6_value(i);
 
 			fi.mask = QR_MASKPATTERN_0;
-			fi.version = (i & 0b11111) + QR_VERSION_R7x43;
+			fi.version = (qr_version_t)((i & 0b11111) + QR_VERSION_R7x43);
 			fi.level = i & (1 << 5) ? QR_ERRORLEVEL_H : QR_ERRORLEVEL_M;
 		}
 	} else {
