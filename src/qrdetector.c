@@ -165,7 +165,7 @@ void qrdetector_perspective_setup_by_finder_pattern_qr(qrdetector_perspective_t 
 	qrmatrix_on_read_pixel(warp->qr, qrdetector_perspective_read_image_pixel, warp);
 }
 
-void qrdetector_perspective_setup_by_finder_pattern_mqr(qrdetector_perspective_t *warp, image_point_t ring[4], int offset) {
+void qrdetector_perspective_setup_by_finder_pattern_ring_corners(qrdetector_perspective_t *warp, image_point_t ring[4], int offset) {
 	float modsize = image_point_distance(ring[(0 + offset) % 4], ring[(1 + offset) % 4]) / 7.0;
 	float d = 0.5 / modsize;
 

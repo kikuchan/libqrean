@@ -70,7 +70,7 @@ void done(pngle_t *pngle) {
 			qrmatrix_t *qr = new_qrmatrix();
 			qrmatrix_set_version(qr, QR_VERSION_M4);
 			qrdetector_perspective_t warp = create_qrdetector_perspective(qr, mono);
-			qrdetector_perspective_setup_by_finder_pattern_mqr(&warp, candidates[i].corners, c);
+			qrdetector_perspective_setup_by_finder_pattern_ring_corners(&warp, candidates[i].corners, c);
 
 #ifdef DEBUG_DETECT
 			qrmatrix_on_write_pixel(qr, write_image_pixel, &warp);
