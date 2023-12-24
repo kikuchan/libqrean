@@ -454,11 +454,12 @@ static bitpos_t rmqr_timing_pattern_iter(bitstream_t *bs, bitpos_t i, void *opaq
 	i -= qr->symbol_width - 8 - 3;
 
 	// bottom
-	if (i < qr->symbol_width - 2 - 5)
-		return QR_XYV_TO_BITPOS(qr, i + 2, qr->symbol_height - 1,
-		                        is_vertical_timing_pattern(qr, i + 2, qr->symbol_height - 1) // timing pattern dark module
+	bitpos_t ox = qr->symbol_height > 2 + 5 ? 2 : 8;
+	if (i < qr->symbol_width - ox - 5)
+		return QR_XYV_TO_BITPOS(qr, i + ox, qr->symbol_height - 1,
+		                        is_vertical_timing_pattern(qr, i + ox, qr->symbol_height - 1) // timing pattern dark module
 		);
-	i -= qr->symbol_width - 2 - 5;
+	i -= qr->symbol_width - ox - 5;
 
 	// left
 	if (qr->symbol_height > 8 + 3) {
@@ -535,6 +536,7 @@ static bitpos_t corner_finder_pattern_iter(bitstream_t *bs, bitpos_t i, void *op
 	qrmatrix_t *qr = (qrmatrix_t *)opaque;
 	int n = i / CORNER_FINDER_PATTERN_SIZE;
 	int u = i % CORNER_FINDER_PATTERN_SIZE;
+	int flip = 0;
 
 	if (n >= (IS_RMQR(qr->version) ? 2 : 0)) return BITPOS_END;
 
@@ -542,12 +544,13 @@ static bitpos_t corner_finder_pattern_iter(bitstream_t *bs, bitpos_t i, void *op
 	if (n == 0) {
 		x = u < 3 ? 0 : u < 5 ? 1 : 2;
 		y = qr->symbol_height - 1 - (u < 3 ? u : u < 5 ? u - 3 : 0);
+		if (y == 7 && x == 0) flip = 1; // finder pattern white module
 	} else {
 		x = qr->symbol_width - 1 - (u < 3 ? u : u < 5 ? u - 3 : 0);
 		y = u < 3 ? 0 : u < 5 ? 1 : 2;
 	}
 
-	return QR_XYV_TO_BITPOS(qr, x, y, 0);
+	return QR_XYV_TO_BITPOS(qr, x, y, flip);
 }
 
 static bit_t is_alignment_pattern(qrmatrix_t *qr, int_fast16_t x, int_fast16_t y) {
