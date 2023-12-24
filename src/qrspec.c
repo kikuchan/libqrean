@@ -403,17 +403,17 @@ size_t qrspec_get_available_bits(qr_version_t version) {
 #endif
 #ifndef NO_RMQR
 	} else if (IS_RMQR(version)) {
-		size_t finder_pattern = 8 * 8 * 1;
+		size_t finder_pattern = 8 * 7 + (symbol_height > 7 ? 8 : 0);
 		size_t finder_sub_pattern = 5 * 5 * 1;
 		size_t format_info = 18 * 2;
-		size_t corner_finder_pattern = 6 * 2;
+		size_t corner_finder_pattern = (symbol_height >= 8 + 3 ? 6 * 2 : symbol_height > 8 ? 3 + 6 : 5);
 
 		size_t num_aligns_x = RMQR_ALIGNMENT_NUMS[RMQR_SYMBOL_X_INDEX(version)];
 		size_t timing_pattern_t = symbol_width - 8 - 3 * num_aligns_x - 3;
-		size_t timing_pattern_b = symbol_width - 3 - 3 * num_aligns_x - 5;
+		size_t timing_pattern_b = symbol_width - (symbol_height > 8 ? 3 : 8) - 3 * num_aligns_x - 5;
 		size_t timing_pattern_r = symbol_height > 8 ? symbol_height - 3 - 5 : 0;
 		size_t timing_pattern_l = symbol_height > 8 + 3 ? symbol_height - 8 - 3 : 0;
-		size_t timing_pattern_v = (symbol_height - 3 - 3) * num_aligns_x;
+		size_t timing_pattern_v = symbol_height > 6 ? (symbol_height - 3 - 3) * num_aligns_x : 0;
 		size_t timing_pattern = timing_pattern_t + timing_pattern_b + timing_pattern_r + timing_pattern_l + timing_pattern_v;
 		size_t alignment_pattern = (3 * 3) * 2 * num_aligns_x;
 
