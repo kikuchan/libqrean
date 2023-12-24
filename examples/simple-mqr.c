@@ -16,11 +16,11 @@ int main() {
 
 	qrmatrix_write_string_8bit(&qr, "Hello!");
 
-#if 0
+#if 1
 	qrmatrix_dump(&qr, stderr);
 #else
-	size_t width = qr.symbol_size + qr.padding.l + qr.padding.r;
-	size_t height = qr.symbol_size + qr.padding.t + qr.padding.b;
+	size_t width = qr.symbol_width + qr.padding.l + qr.padding.r;
+	size_t height = qr.symbol_height + qr.padding.t + qr.padding.b;
 	image_t *img = new_image(width, height);
 	qrmatrix_read_bitmap(&qr, img->buffer, width * height * 4, 32);
 

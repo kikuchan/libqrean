@@ -90,13 +90,13 @@ qrdetector_finder_candidate_t *qrdetector_scan_finder_pattern(image_t *src, int 
 				int cidx = 0;
 				float corners[4] = {NAN, NAN, NAN, NAN};
 
-				for (float r = sqrt(w*w+h*h) * 1.1; r > 0 && cidx < 4; r -= 0.2) {
-					for (float theta = 0; theta < 2*M_PI && cidx < 4; theta += 1.0/r) {
+				for (float r = sqrt(w * w + h * h) * 1.1; r > 0 && cidx < 4; r -= 0.2) {
+					for (float theta = 0; theta < 2 * M_PI && cidx < 4; theta += 1.0 / r) {
 						float x = floor(cx + r * sin(theta));
 						float y = floor(cy - r * cos(theta));
 
 						if (image_read_pixel(img, POINT(x, y)) == ring_color) {
-							int slot = !cidx ? 0 : floor(fmod(theta + 2 * M_PI + M_PI_4 - corners[0], 2*M_PI) / M_PI_2);
+							int slot = !cidx ? 0 : floor(fmod(theta + 2 * M_PI + M_PI_4 - corners[0], 2 * M_PI) / M_PI_2);
 							assert(0 <= slot && slot < 4);
 
 							if (isnan(corners[slot])) {
@@ -149,10 +149,10 @@ static bit_t qrdetector_perspective_read_image_pixel(qrmatrix_t *qr, bitpos_t x,
 }
 
 void qrdetector_perspective_setup_by_finder_pattern_qr(qrdetector_perspective_t *warp, image_point_t src[3]) {
-	warp->src[0] = POINT(3, 3),                                                 // center of the 1st keystone
-	warp->src[1] = POINT(warp->qr->symbol_size - 4, 3),                         // center of the 2nd keystone
-	warp->src[2] = POINT(3, warp->qr->symbol_size - 4),                         // center of the 3rd keystone
-	warp->src[3] = POINT(warp->qr->symbol_size - 4, warp->qr->symbol_size - 4), // center of the 4th estimated pseudo keystone
+	warp->src[0] = POINT(3, 3);                                                    // center of the 1st keystone
+	warp->src[1] = POINT(warp->qr->symbol_width - 4, 3);                           // center of the 2nd keystone
+	warp->src[2] = POINT(3, warp->qr->symbol_height - 4);                          // center of the 3rd keystone
+	warp->src[3] = POINT(warp->qr->symbol_width - 4, warp->qr->symbol_height - 4); // center of the 4th estimated pseudo keystone
 
 	warp->dst[0] = src[0];
 	warp->dst[1] = src[1];
@@ -169,10 +169,10 @@ void qrdetector_perspective_setup_by_finder_pattern_mqr(qrdetector_perspective_t
 	float modsize = image_point_distance(ring[(0 + offset) % 4], ring[(1 + offset) % 4]) / 7.0;
 	float d = 0.5 / modsize;
 
-	warp->src[0] = POINT(-0.5 + d, -0.5 + d), // left--top of the ring
-	warp->src[1] = POINT(6.5 - d, -0.5 + d),  // right-top of the ring
-	warp->src[2] = POINT(6.5 - d, 6.5 - d),   // right-bottom of the ring
-	warp->src[3] = POINT(-0.5 + d, 6.5 - d),  // left--bottom of the ring
+	warp->src[0] = POINT(-0.5 + d, -0.5 + d); // left--top of the ring
+	warp->src[1] = POINT(6.5 - d, -0.5 + d);  // right-top of the ring
+	warp->src[2] = POINT(6.5 - d, 6.5 - d);   // right-bottom of the ring
+	warp->src[3] = POINT(-0.5 + d, 6.5 - d);  // left--bottom of the ring
 
 	warp->dst[0] = ring[(0 + offset) % 4];
 	warp->dst[1] = ring[(1 + offset) % 4];

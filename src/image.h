@@ -43,10 +43,13 @@ void image_free(image_t *img);
 image_t *image_clone(image_t *img);
 
 // image_point_t
-typedef struct { float x; float y; } image_point_t;
-#define POINT(x, y)   create_image_point((x), (y))
-#define POINT_X(p)    p.x
-#define POINT_Y(p)    p.y
+typedef struct {
+	float x;
+	float y;
+} image_point_t;
+#define POINT(x, y) create_image_point((x), (y))
+#define POINT_X(p)  p.x
+#define POINT_Y(p)  p.y
 image_point_t create_image_point(float x, float y);
 image_point_t image_point_add(image_point_t a, image_point_t b);
 image_point_t image_point_sub(image_point_t a, image_point_t b);

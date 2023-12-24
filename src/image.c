@@ -12,8 +12,8 @@
 #endif
 
 #define RINT(x) rint((x))
-//#define RINT(x) (x)
-//#define RINT(x) round(x)
+// #define RINT(x) (x)
+// #define RINT(x) round(x)
 
 image_t *new_image(int width, int height) {
 	image_t *img = (image_t *)malloc(sizeof(image_t));
@@ -44,7 +44,7 @@ image_t *image_clone(image_t *img) {
 }
 
 image_point_t create_image_point(float x, float y) {
-	image_point_t p = { .x = x, .y = y };
+	image_point_t p = {.x = x, .y = y};
 	return p;
 }
 
@@ -54,7 +54,6 @@ image_point_t image_point_add(image_point_t a, image_point_t b) {
 image_point_t image_point_sub(image_point_t a, image_point_t b) {
 	return POINT(POINT_X(a) - POINT_X(b), POINT_Y(a) - POINT_Y(b));
 }
-
 
 void image_draw_pixel(image_t *img, image_point_t p, image_pixel_t pixel) {
 	int x = RINT(POINT_X(p));
@@ -264,7 +263,7 @@ float image_point_norm(image_point_t a) {
 
 float image_point_distance(image_point_t a, image_point_t b) {
 	return image_point_norm(image_point_sub(a, b));
-	//return sqrt((POINT_X(a) - POINT_X(b)) * (POINT_X(a) - POINT_X(b)) + (POINT_Y(a) - POINT_Y(b)) * (POINT_Y(a) - POINT_Y(b)));
+	// return sqrt((POINT_X(a) - POINT_X(b)) * (POINT_X(a) - POINT_X(b)) + (POINT_Y(a) - POINT_Y(b)) * (POINT_Y(a) - POINT_Y(b)));
 }
 
 void image_draw_extent(image_t *img, image_extent_t extent, image_pixel_t pix, int thickness) {

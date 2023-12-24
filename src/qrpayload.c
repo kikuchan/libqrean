@@ -14,7 +14,7 @@
 #define QRSTREAM_BUFFER_SIZE(payload) (((payload)->total_bits + 7) / 8)
 
 void qrpayload_init(qrpayload_t *payload, qr_version_t version, qr_errorlevel_t level) {
-	assert(IS_QR(version) || IS_MQR(version));
+	assert(IS_QR(version) || IS_MQR(version) || IS_RMQR(version));
 	assert(QR_ERRORLEVEL_L <= level && level <= QR_ERRORLEVEL_H);
 
 	payload->version = version;
@@ -30,13 +30,13 @@ void qrpayload_init(qrpayload_t *payload, qr_version_t version, qr_errorlevel_t 
 	payload->error_words = payload->error_words_in_block * payload->total_blocks;
 	payload->data_words = payload->total_words - payload->error_words;
 
+	assert(payload->total_words != 0);
+
 	payload->large_blocks = payload->data_words % payload->total_blocks;
 	payload->small_blocks = payload->total_blocks - payload->large_blocks;
 
 	payload->data_words_in_small_block = payload->data_words / payload->total_blocks;
 	payload->data_words_in_large_block = payload->data_words_in_small_block + 1;
-
-	payload->error_words_in_block = payload->error_words / payload->total_blocks;
 
 	payload->total_words_in_small_block = payload->data_words_in_small_block + payload->error_words_in_block;
 	payload->total_words_in_large_block = payload->data_words_in_large_block + payload->error_words_in_block;

@@ -13,6 +13,7 @@ OBJS += reedsolomon.o
 OBJS += runlength.o
 OBJS += qrdetector.o
 OBJS += qrspec.o
+OBJS += qrbch.o
 
 OBJS += barcode.o
 OBJS += barcode_code39.o
@@ -43,6 +44,9 @@ CFLAGS += -Wno-misleading-indentation
 #CFLAGS += -D NO_CALLBACK
 #CFLAGS += -D NO_QRMATRIX_BUFFER
 #CFLAGS += -D NO_BARCODE_BUFFER
+
+#CFLAGS += -D NO_MQR
+#CFLAGS += -D NO_RMQR
 
 #CFLAGS += -D NO_DEBUG
 CFLAGS += -D DEBUG_QRDATA

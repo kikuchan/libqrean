@@ -1,8 +1,8 @@
 #ifndef __QR_QRMATRIX_H__
 #define __QR_QRMATRIX_H__
 
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #include "bitstream.h"
 #include "qrformat.h"
@@ -24,7 +24,8 @@ struct _qrmatrix_t {
 	qr_version_t version;
 	qr_errorlevel_t level;
 	qr_maskpattern_t mask;
-	uint8_t symbol_size;
+	uint8_t symbol_width;
+	uint8_t symbol_height;
 
 	uint8_t width;
 	uint8_t height;
@@ -45,6 +46,7 @@ struct _qrmatrix_t {
 	bit_t (*read_pixel)(qrmatrix_t *qr, bitpos_t x, bitpos_t y, bitpos_t pos, void *opaque);
 	void *opaque_read;
 #endif
+	bit_t (*mask_func)(int_fast16_t x, int_fast16_t y, qr_maskpattern_t mask);
 };
 
 bit_t qrmatrix_init(qrmatrix_t *qr);
@@ -111,6 +113,12 @@ size_t qrmatrix_read_bitmap(qrmatrix_t *qr, void *src, size_t len, bitpos_t bpp)
 
 void qrmatrix_write_finder_pattern(qrmatrix_t *qr);
 int qrmatrix_read_finder_pattern(qrmatrix_t *qr, int idx);
+
+void qrmatrix_write_finder_sub_pattern(qrmatrix_t *qr);
+int qrmatrix_read_finder_sub_pattern(qrmatrix_t *qr, int idx);
+
+void qrmatrix_write_corner_finder_pattern(qrmatrix_t *qr);
+int qrmatrix_read_corner_finder_pattern(qrmatrix_t *qr, int idx);
 
 void qrmatrix_write_alignment_pattern(qrmatrix_t *qr);
 int qrmatrix_read_alignment_pattern(qrmatrix_t *qr, int idx);
