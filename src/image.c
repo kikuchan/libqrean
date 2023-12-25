@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 
 #include "image.h"
 
@@ -12,7 +11,7 @@
 #include "miniz.h"
 #endif
 
-//#define RINT(x) rint((x))
+// #define RINT(x) rint((x))
 // #define RINT(x) (x)
 #define RINT(x) round(x)
 

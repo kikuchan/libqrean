@@ -688,7 +688,9 @@ static int calc_pattern_mismatch_error_rate(bitstream_t *bs, const void *pattern
 
 // format info
 void qrmatrix_write_format_info(qrmatrix_t *qr) {
-	bitstream_iterator_t iter = IS_RMQR(qr->version) ? rmqr_format_info_iter : IS_MQR(qr->version) ? mqr_format_info_iter : qr_format_info_iter;
+	bitstream_iterator_t iter = IS_RMQR(qr->version)  ? rmqr_format_info_iter
+	                            : IS_MQR(qr->version) ? mqr_format_info_iter
+	                                                  : qr_format_info_iter;
 	bitstream_t bs = qrmatrix_create_bitstream(qr, iter);
 	qrformat_t fi = qrformat_for(qr->version, qr->level, qr->mask);
 
@@ -702,7 +704,9 @@ void qrmatrix_write_format_info(qrmatrix_t *qr) {
 }
 
 qrformat_t qrmatrix_read_format_info(qrmatrix_t *qr) {
-	bitstream_iterator_t iter = IS_RMQR(qr->version) ? rmqr_format_info_iter : IS_MQR(qr->version) ? mqr_format_info_iter : qr_format_info_iter;
+	bitstream_iterator_t iter = IS_RMQR(qr->version)  ? rmqr_format_info_iter
+	                            : IS_MQR(qr->version) ? mqr_format_info_iter
+	                                                  : qr_format_info_iter;
 	bitstream_t bs = qrmatrix_create_bitstream(qr, iter);
 
 	qrformat_t fi1 = qrformat_from(qr->version, bitstream_read_bits(&bs, IS_RMQR(qr->version) ? RMQR_FORMATINFO_SIZE : QR_FORMATINFO_SIZE));
@@ -758,16 +762,16 @@ qr_version_t qrmatrix_read_version(qrmatrix_t *qr) {
 const uint8_t timing_pattern_bits[] = {0xAA};
 void qrmatrix_write_timing_pattern(qrmatrix_t *qr) {
 	bitstream_iterator_t iter = IS_MQR(qr->version)    ? mqr_timing_pattern_iter
-	                     : IS_RMQR(qr->version) ? rmqr_timing_pattern_iter
-	                                            : qr_timing_pattern_iter;
+	                            : IS_RMQR(qr->version) ? rmqr_timing_pattern_iter
+	                                                   : qr_timing_pattern_iter;
 	bitstream_t bs = qrmatrix_create_bitstream(qr, iter);
 	bitstream_write(&bs, timing_pattern_bits, 8, 0);
 }
 
 int qrmatrix_read_timing_pattern(qrmatrix_t *qr) {
 	bitstream_iterator_t iter = IS_MQR(qr->version)    ? mqr_timing_pattern_iter
-	                     : IS_RMQR(qr->version) ? rmqr_timing_pattern_iter
-	                                            : qr_timing_pattern_iter;
+	                            : IS_RMQR(qr->version) ? rmqr_timing_pattern_iter
+	                                                   : qr_timing_pattern_iter;
 	bitstream_t bs = qrmatrix_create_bitstream(qr, iter);
 	int r = calc_pattern_mismatch_error_rate(&bs, timing_pattern_bits, 8, 0, 0);
 	return r;

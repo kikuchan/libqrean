@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "debug.h"
 #include "qrtypes.h"
@@ -434,4 +435,107 @@ uint_fast8_t qrspec_get_total_blocks(qr_version_t version, qr_errorlevel_t level
 
 uint_fast8_t qrspec_get_error_words_in_block(qr_version_t version, qr_errorlevel_t level) {
 	return QR_ERROR_WORDS_IN_BLOCK[version - QR_VERSION_1][level - QR_ERRORLEVEL_L];
+}
+
+// XXX: must be the same order of the enum
+static const char *qr_version_string[] = {
+	"AUTO",
+
+	// QR
+	"1",
+	"2",
+	"3",
+	"4",
+	"5",
+	"6",
+	"7",
+	"8",
+	"9",
+	"10",
+	"11",
+	"12",
+	"13",
+	"14",
+	"15",
+	"16",
+	"17",
+	"18",
+	"19",
+	"20",
+	"21",
+	"22",
+	"23",
+	"24",
+	"25",
+	"26",
+	"27",
+	"28",
+	"29",
+	"30",
+	"31",
+	"32",
+	"33",
+	"34",
+	"35",
+	"36",
+	"37",
+	"38",
+	"39",
+	"40",
+
+	// mQR
+	"M1",
+	"M2",
+	"M3",
+	"M4",
+
+	// rMQR
+	"R7x43",
+	"R7x59",
+	"R7x77",
+	"R7x99",
+	"R7x139",
+
+	"R9x43",
+	"R9x59",
+	"R9x77",
+	"R9x99",
+	"R9x139",
+
+	"R11x27",
+	"R11x43",
+	"R11x59",
+	"R11x77",
+	"R11x99",
+	"R11x139",
+
+	"R13x27",
+	"R13x43",
+	"R13x59",
+	"R13x77",
+	"R13x99",
+	"R13x139",
+
+	"R15x43",
+	"R15x59",
+	"R15x77",
+	"R15x99",
+	"R15x139",
+
+	"R17x43",
+	"R17x59",
+	"R17x77",
+	"R17x99",
+	"R17x139",
+};
+
+const char *qrspec_get_version_string(qr_version_t version) {
+	return qr_version_string[version];
+}
+
+qr_version_t qrspec_get_version_by_string(const char *version) {
+	for (int i = 0; i < sizeof(qr_version_string) / sizeof(const char *); i++) {
+		if (!strcasecmp(qr_version_string[i], version)) return (qr_version_t)i;
+	}
+	return QR_VERSION_INVALID;
 }
