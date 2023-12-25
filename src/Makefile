@@ -22,10 +22,6 @@ OBJS += barcode_ean.o
 OBJS += barcode_itf.o
 OBJS += barcode_nw7.o
 
-
-#CFLAGS += -D USE_IMAGE_PNG
-#OBJS += miniz.o
-
 #CC=avr-gcc -mmcu=atmega32u4
 #CC=clang
 #CC=c++

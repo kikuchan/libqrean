@@ -7,10 +7,6 @@
 
 #include "image.h"
 
-#ifdef USE_IMAGE_PNG
-#include "miniz.h"
-#endif
-
 // #define RINT(x) rint((x))
 // #define RINT(x) (x)
 #define RINT(x) round(x)
@@ -69,7 +65,7 @@ image_pixel_t image_read_pixel(image_t *img, image_point_t p) {
 	return img->buffer[y * img->width + x];
 }
 
-void image_dump_as_ppm(image_t *img, FILE *out) {
+void image_save_as_ppm(image_t *img, FILE *out) {
 	fprintf(out, "P6\n%zu %zu\n255\n", img->width, img->height);
 
 	for (uint32_t y = 0; y < img->height; y++) {
@@ -82,23 +78,8 @@ void image_dump_as_ppm(image_t *img, FILE *out) {
 	}
 }
 
-void image_dump_as_png(image_t *img, FILE *out) {
-#ifdef USE_IMAGE_PNG
-	size_t len;
-	void *png = tdefl_write_image_to_png_file_in_memory(img->buffer, img->width, img->height, 4, &len);
-	if (png) {
-		fwrite(png, 1, len, out);
-		free(png);
-	}
-#endif
-}
-
 void image_dump(image_t *img, FILE *out) {
-#ifdef USE_IMAGE_PNG
-	image_dump_as_png(img, out);
-#else
-	image_dump_as_ppm(img, out);
-#endif
+	image_save_as_ppm(img, out);
 }
 
 void image_draw_filled_rectangle(image_t *img, image_point_t p, int w, int h, image_pixel_t pix) {

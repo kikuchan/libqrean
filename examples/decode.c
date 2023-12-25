@@ -36,7 +36,7 @@ void draw_pixel(pngle_t *pngle, uint32_t x, uint32_t y, uint32_t w, uint32_t h, 
 
 void init_screen(pngle_t *pngle, uint32_t x, uint32_t y) {
 	qrmatrix_set_version(qr, (x - 17 - PADDING * 2) / 4);
-	qrmatrix_set_padding(qr, create_padding1(PADDING));
+	qrmatrix_set_bitmap_padding(qr, create_padding1(PADDING));
 }
 
 // % qrencode -s 1 -m 2 -o - 'Hello' | ./decode

@@ -534,7 +534,7 @@ const char *qrspec_get_version_string(qr_version_t version) {
 }
 
 qr_version_t qrspec_get_version_by_string(const char *version) {
-	for (int i = 0; i < sizeof(qr_version_string) / sizeof(const char *); i++) {
+	for (size_t i = 0; i < sizeof(qr_version_string) / sizeof(qr_version_string[0]); i++) {
 		if (!strcasecmp(qr_version_string[i], version)) return (qr_version_t)i;
 	}
 	return QR_VERSION_INVALID;

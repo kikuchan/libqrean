@@ -1,16 +1,16 @@
-.PHONY: all clean examples
+.PHONY: all clean examples cli
 
-all: src
-	make -C src
+all: src cli
+
+src: 
+	@make -C src
+
+cli: src
+	@make -C cli
+
+install: cli
+	@make -C cli install
 
 clean:
-	make -C src clean
-
-examples:
-	make -C examples
-
-install-examples:
-	make -C examples install
-
-clean-examples:
-	make -C examples clean
+	@make -C src clean
+	@make -C cli clean

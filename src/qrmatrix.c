@@ -27,7 +27,8 @@ bit_t qrmatrix_init(qrmatrix_t *qr) {
 	qrmatrix_set_errorlevel(qr, QR_ERRORLEVEL_M);
 	qrmatrix_set_maskpattern(qr, QR_MASKPATTERN_AUTO);
 
-	qrmatrix_set_padding(qr, create_padding1(2));
+	qrmatrix_set_bitmap_padding(qr, create_padding1(2));
+	qrmatrix_set_bitmap_scale(qr, 4);
 
 #ifndef NO_QRMATRIX_BUFFER
 #if defined(USE_MALLOC_BUFFER) && !defined(NO_MALLOC)
@@ -171,7 +172,7 @@ bit_t qrmatrix_set_errorlevel(qrmatrix_t *qr, qr_errorlevel_t level) {
 	return 1;
 }
 
-bit_t qrmatrix_set_padding(qrmatrix_t *qr, padding_t padding) {
+bit_t qrmatrix_set_bitmap_padding(qrmatrix_t *qr, padding_t padding) {
 	// TODO:
 	qr->padding = padding;
 	qr->width = qr->padding.l + qr->symbol_width + qr->padding.r;
@@ -179,15 +180,25 @@ bit_t qrmatrix_set_padding(qrmatrix_t *qr, padding_t padding) {
 	return 1;
 }
 
-uint_fast8_t qrmatrix_get_width(qrmatrix_t *qr) {
-	return qr->width;
+padding_t qrmatrix_get_bitmap_padding(qrmatrix_t *qr) {
+	return qr->padding;
 }
-uint_fast8_t qrmatrix_get_height(qrmatrix_t *qr) {
+
+bit_t qrmatrix_set_bitmap_scale(qrmatrix_t *qr, uint8_t scale) {
+	qr->scale = scale;
+	return 1;
+}
+
+uint8_t qrmatrix_get_bitmap_scale(qrmatrix_t *qr) {
+	return qr->scale;
+}
+
+uint_fast8_t qrmatrix_get_bitmap_width(qrmatrix_t *qr) {
 	return qr->width;
 }
 
-padding_t qrmatrix_get_padding(qrmatrix_t *qr) {
-	return qr->padding;
+uint_fast8_t qrmatrix_get_bitmap_height(qrmatrix_t *qr) {
+	return qr->width;
 }
 
 void qrmatrix_fill(qrmatrix_t *qr, bit_t v) {
@@ -620,10 +631,10 @@ static bitpos_t composed_data_iter(bitstream_t *bs, bitpos_t i, void *opaque) {
 static bitpos_t bitmap_iter(bitstream_t *bs, bitpos_t i, void *opaque) {
 	qrmatrix_t *qr = (qrmatrix_t *)opaque;
 
-	if (i >= qr->width * qr->height) return BITPOS_END;
+	if (i >= qr->width * qr->height * qr->scale * qr->scale) return BITPOS_END;
 
-	int_fast32_t x = (int_fast32_t)(i % qr->width) - qr->padding.l;
-	int_fast32_t y = (int_fast32_t)(i / qr->width) - qr->padding.t;
+	int_fast32_t x = (int_fast32_t)(i / qr->scale % qr->width) - qr->padding.l;
+	int_fast32_t y = (int_fast32_t)(i / qr->scale / qr->width / qr->scale) - qr->padding.t;
 
 	return QR_XYV_TO_BITPOS(qr, x, y, 0);
 }

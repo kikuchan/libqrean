@@ -30,6 +30,7 @@ struct _qrmatrix_t {
 	uint8_t width;
 	uint8_t height;
 	padding_t padding;
+	uint8_t scale;
 
 #if defined(USE_MALLOC_BUFFER) && defined(NO_MALLOC)
 #error "Specify both of USE_MALLOC_BUFFER and NO_MALLOC doesn't make sense"
@@ -75,11 +76,14 @@ qr_version_t qrmatrix_get_version(qrmatrix_t *qr);
 bit_t qrmatrix_set_version_info(qrmatrix_t *qr, qrversion_t vi);
 bit_t qrmatrix_set_format_info(qrmatrix_t *qr, qrformat_t fi);
 
-bit_t qrmatrix_set_padding(qrmatrix_t *qr, padding_t padding);
-padding_t qrmatrix_get_padding(qrmatrix_t *qr);
+bit_t qrmatrix_set_bitmap_padding(qrmatrix_t *qr, padding_t padding);
+padding_t qrmatrix_get_bitmap_padding(qrmatrix_t *qr);
 
-uint_fast8_t qrmatrix_get_width(qrmatrix_t *qr);
-uint_fast8_t qrmatrix_get_height(qrmatrix_t *qr);
+bit_t qrmatrix_set_bitmap_scale(qrmatrix_t *qr, uint8_t scale);
+uint8_t qrmatrix_get_bitmap_scale(qrmatrix_t *qr);
+
+uint_fast8_t qrmatrix_get_bitmap_width(qrmatrix_t *qr);
+uint_fast8_t qrmatrix_get_bitmap_height(qrmatrix_t *qr);
 // --------------------------------------
 
 int qrmatrix_fix_errors(qrmatrix_t *qr);
