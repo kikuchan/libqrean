@@ -1,7 +1,8 @@
 #include "galois.h"
 #include "utils.h"
 
-gf2_poly_t *rs_init_generator_polynomial(gf2_poly_t *ans) {
+gf2_poly_t *rs_init_generator_polynomial(gf2_poly_t *ans)
+{
 	int i;
 
 	CREATE_GF2_POLY(a, GF2_POLY_DEGREE(ans));
@@ -20,7 +21,8 @@ gf2_poly_t *rs_init_generator_polynomial(gf2_poly_t *ans) {
 	return ans;
 }
 
-static void rs_solve_key_equation(gf2_poly_t *sigma, gf2_poly_t *omega, const gf2_poly_t *a, const gf2_poly_t *b) {
+static void rs_solve_key_equation(gf2_poly_t *sigma, gf2_poly_t *omega, const gf2_poly_t *a, const gf2_poly_t *b)
+{
 	int maxdegree = MAX(gf2_poly_get_real_degree(a), gf2_poly_get_real_degree(b));
 	CREATE_GF2_POLY(m, maxdegree);
 	CREATE_GF2_POLY(n, maxdegree);
@@ -61,11 +63,13 @@ static void rs_solve_key_equation(gf2_poly_t *sigma, gf2_poly_t *omega, const gf
 	if (omega) gf2_poly_div(omega, n, h);
 }
 
-gf2_poly_t *rs_calc_parity(gf2_poly_t *ans, const gf2_poly_t *I, const gf2_poly_t *g) {
+gf2_poly_t *rs_calc_parity(gf2_poly_t *ans, const gf2_poly_t *I, const gf2_poly_t *g)
+{
 	return gf2_poly_mod(ans, I, g);
 }
 
-int rs_fix_errors(gf2_poly_t *R, int error_words) {
+int rs_fix_errors(gf2_poly_t *R, int error_words)
+{
 	// syndrome
 	CREATE_GF2_POLY(S, error_words - 1);
 	for (int i = 0; i < error_words; i++) {
@@ -100,8 +104,8 @@ int rs_fix_errors(gf2_poly_t *R, int error_words) {
 		// Forney algorithm:
 		//   error_value = Omega(a^i) / (a^i * Sigma'(a^i));
 		//               = Omega(a^i) / Denom(a^i)
-		GF2_POLY_COEFF(R, pos) = gf2_add(GF2_POLY_COEFF(R, pos), gf2_div(gf2_poly_calc(omega, gf2_pow_a(GF2_MAX_EXP - pos)),
-		                                                                 gf2_poly_calc(Denom, gf2_pow_a(GF2_MAX_EXP - pos))));
+		GF2_POLY_COEFF(R, pos) = gf2_add(GF2_POLY_COEFF(R, pos),
+			gf2_div(gf2_poly_calc(omega, gf2_pow_a(GF2_MAX_EXP - pos)), gf2_poly_calc(Denom, gf2_pow_a(GF2_MAX_EXP - pos))));
 		num_errors++;
 	}
 

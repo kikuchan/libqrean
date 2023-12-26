@@ -2,7 +2,7 @@
 #define __QR_DETECT_H__
 
 #include "image.h"
-#include "qrmatrix.h"
+#include "qrean.h"
 
 #define MAX_CANDIDATES (10)
 
@@ -16,7 +16,7 @@ typedef struct {
 } qrdetector_finder_candidate_t;
 
 typedef struct {
-	qrmatrix_t *qr;
+	qrean_t *qrean;
 	image_t *img;
 
 	image_point_t src[4];
@@ -26,7 +26,7 @@ typedef struct {
 
 qrdetector_finder_candidate_t *qrdetector_scan_finder_pattern(image_t *src, int *num_founds);
 
-qrdetector_perspective_t create_qrdetector_perspective(qrmatrix_t *qr, image_t *img);
+qrdetector_perspective_t create_qrdetector_perspective(qrean_t *qrean, image_t *img);
 
 void qrdetector_perspective_setup_by_finder_pattern_qr(qrdetector_perspective_t *warp, image_point_t src[3]);
 void qrdetector_perspective_setup_by_finder_pattern_ring_corners(qrdetector_perspective_t *warp, image_point_t ring[4], int offset);

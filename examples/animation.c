@@ -1,8 +1,8 @@
 #include <stdio.h>
 
-#include "qrmatrix.h"
+#include "qrean.h"
 
-void dump(qrmatrix_t *qr) {
+void dump(qrean_t *qrean) {
 	static int image = 0;
 	char fname[128];
 	FILE *fp;
@@ -11,36 +11,42 @@ void dump(qrmatrix_t *qr) {
 	fp = fopen(fname, "wb");
 
 	if (fp) {
-		char buf[1024];
 		size_t len;
 
-		len = qrmatrix_read_bitmap(qr, buf, sizeof(buf), 8);
+		size_t width = qrean_get_bitmap_width(qrean);
+		size_t height = qrean_get_bitmap_height(qrean);
 
-		fprintf(fp, "P5\n%u %u\n255\n", qr->width, qr->height);
+		char *buf = malloc(width * height);
+
+		len = qrean_read_bitmap(qrean, buf, width * height, 8);
+
+		fprintf(fp, "P5\n%zu %zu\n255\n", width, height);
 		fwrite(buf, 1, len, fp);
 
 		fclose(fp);
+
+		free(buf);
 	}
 }
 
-bit_t write_pixel(qrmatrix_t *qr, bitpos_t x, bitpos_t y, bitpos_t pos, bit_t v, void *opaque) {
-	dump(qr);
+bit_t write_pixel(qrean_t *qrean, bitpos_t x, bitpos_t y, bitpos_t pos, bit_t v, void *opaque) {
+	dump(qrean);
 
 	return 0; // indicates let the library draw the pixel. Skip drawing otherwise.
 }
 
 int main() {
-	qrmatrix_t *qr = new_qrmatrix();
+	qrean_t *qrean = new_qrean(QREAN_CODE_TYPE_EAN13);
 
 	// This is needed to avoid auto detection also writes pixels internally
-	qrmatrix_set_maskpattern(qr, QR_MASKPATTERN_0);
+	qrean_set_qr_maskpattern(qrean, QR_MASKPATTERN_0);
 
 	// Setup callbacks
-	qrmatrix_on_write_pixel(qr, write_pixel, NULL);
+	qrean_on_write_pixel(qrean, write_pixel, NULL);
 
 	// Start drawing
-	qrmatrix_write_string(qr, "Hello, world");
+	qrean_write_string(qrean, "123456789012", QREAN_DATA_TYPE_AUTO);
 
 	// Flush for the final dot (NB; `write_pixel` is called everytime *before* the pixel draw)
-	dump(qr);
+	dump(qrean);
 }

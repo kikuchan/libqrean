@@ -9,7 +9,7 @@
 // https://github.com/kikuchan/pngle
 #include "pngle.h"
 
-#include "qrmatrix.h"
+#include "qrean.h"
 #include "qrpayload.h"
 #include "qrspec.h"
 #include "runlength.h"
@@ -20,7 +20,7 @@
 
 image_t *img;
 
-//#define DEBUG_DETECT
+// #define DEBUG_DETECT
 
 #ifdef DEBUG_DETECT
 image_t *detected;
@@ -30,7 +30,7 @@ uint32_t W = 0;
 uint32_t H = 0;
 
 #ifdef DEBUG_DETECT
-bit_t write_image_pixel(qrmatrix_t *qr, bitpos_t x, bitpos_t y, bitpos_t pos, bit_t value, void *opaque) {
+bit_t write_image_pixel(qrean_t *qrean, bitpos_t x, bitpos_t y, bitpos_t pos, bit_t value, void *opaque) {
 	qrdetector_perspective_t *warp = (qrdetector_perspective_t *)opaque;
 	image_draw_pixel(detected, image_point_transform(POINT(x, y), warp->h), value ? PIXEL(255, 0, 0) : PIXEL(0, 255, 0));
 	//image_draw_filled_ellipse(detected, image_point_transform(POINT(x, y), warp->h), 1, 1, value ? PIXEL(255, 0, 0) : PIXEL(0, 255, 0));
@@ -41,45 +41,45 @@ bit_t write_image_pixel(qrmatrix_t *qr, bitpos_t x, bitpos_t y, bitpos_t pos, bi
 
 int tryDecode(image_t *imgsrc, image_point_t src[3]) {
 	image_t *img = image_clone(imgsrc);
-	qrmatrix_t *qr = new_qrmatrix();
+	qrean_t *qrean = new_qrean(QREAN_CODE_TYPE_QR);
 	int found = 0;
 
-	for (int version = 1; version <= 40 && !found; version++) {
-		qrmatrix_set_version(qr, version);
+	for (int version = QR_VERSION_1; version <= QR_VERSION_40 && !found; version++) {
+		qrean_set_qr_version(qrean, version);
 
-		qrdetector_perspective_t warp = create_qrdetector_perspective(qr, img);
+		qrdetector_perspective_t warp = create_qrdetector_perspective(qrean, img);
 		qrdetector_perspective_setup_by_finder_pattern_qr(&warp, src);
 
 #ifdef DEBUG_DETECT
-		qrmatrix_on_write_pixel(qr, write_image_pixel, &warp);
+		qrean_on_write_pixel(qrean, write_image_pixel, &warp);
 #endif
 
-		if (qrmatrix_read_finder_pattern(qr, 0) > 10) continue;
+		if (qrean_read_qr_finder_pattern(qrean, 0) > 10) continue;
 
 		if (qrdetector_perspective_fit_by_alignment_pattern(&warp)) {
-			// fprintf(stderr, "   ** Ajusted\n");
+			fprintf(stderr, "   ** Ajusted\n");
 		}
 
-		if (qrmatrix_set_format_info(qr, qrmatrix_read_format_info(qr))) {
+		if (qrean_set_qr_format_info(qrean, qrean_read_qr_format_info(qrean))) {
 			char buf[1024];
 
-			if (qrmatrix_fix_errors(qr) >= 0) {
-				size_t l = qrmatrix_read_string(qr, buf, sizeof(buf));
+			if (qrean_fix_errors(qrean) >= 0) {
+				size_t l = qrean_read_string(qrean, buf, sizeof(buf));
 #ifndef DEBUG_DETECT
-				qrmatrix_dump(qr, stderr);
+				qrean_dump(qrean, stderr);
 				printf("Found: RECV(%zu): '%s'\n", l, buf);
 #else
 				safe_fprintf(stderr, "RECV(%zu): '%s'\n", l, buf);
 
 				// draw read points on `detected` image for debug
-				qrmatrix_write_finder_pattern(qr);
-				qrmatrix_write_alignment_pattern(qr);
-				qrmatrix_write_timing_pattern(qr);
-				qrmatrix_write_format_info(qr);
+				qrean_write_qr_finder_pattern(qrean);
+				qrean_write_qr_alignment_pattern(qrean);
+				qrean_write_qr_timing_pattern(qrean);
+				qrean_write_qr_format_info(qrean);
 
-				qrpayload_t *payload = new_qrpayload(qr->version, qr->level);
-				qrmatrix_read_payload(qr, payload);
-				qrmatrix_write_payload(qr, payload);
+				qrpayload_t *payload = new_qrpayload(qrean->qr.version, qrean->qr.level);
+				qrean_read_qr_payload(qrean, payload);
+				qrean_write_qr_payload(qrean, payload);
 				qrpayload_free(payload);
 #endif
 
@@ -88,7 +88,7 @@ int tryDecode(image_t *imgsrc, image_point_t src[3]) {
 		}
 	}
 
-	qrmatrix_free(qr);
+	qrean_free(qrean);
 
 	return found;
 }

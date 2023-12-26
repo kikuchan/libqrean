@@ -17,7 +17,7 @@ typedef uint8_t gf2_value_t;
 #define CREATE_GF2_POLY(name, degree)          \
 	gf2_value_t name[GF2_POLY_SIZE((degree))]; \
 	memset(name, 0, sizeof(name));             \
-	name[0] = (degree);
+	GF2_POLY_DEGREE(name) = (degree);
 
 typedef gf2_value_t gf2_poly_t;
 

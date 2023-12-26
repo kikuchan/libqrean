@@ -13,16 +13,17 @@ static const struct {
 	qr_errorlevel_t level;
 } mqr_mapping[NUM_MAPPINGS] = {
 	{QR_VERSION_M1, QR_ERRORLEVEL_L},
-    {QR_VERSION_M2, QR_ERRORLEVEL_L},
-    {QR_VERSION_M2, QR_ERRORLEVEL_M},
-    {QR_VERSION_M3, QR_ERRORLEVEL_L},
+	{QR_VERSION_M2, QR_ERRORLEVEL_L},
+	{QR_VERSION_M2, QR_ERRORLEVEL_M},
+	{QR_VERSION_M3, QR_ERRORLEVEL_L},
 	{QR_VERSION_M3, QR_ERRORLEVEL_M},
-    {QR_VERSION_M4, QR_ERRORLEVEL_L},
-    {QR_VERSION_M4, QR_ERRORLEVEL_M},
-    {QR_VERSION_M4, QR_ERRORLEVEL_Q},
+	{QR_VERSION_M4, QR_ERRORLEVEL_L},
+	{QR_VERSION_M4, QR_ERRORLEVEL_M},
+	{QR_VERSION_M4, QR_ERRORLEVEL_Q},
 };
 
-qrformat_t qrformat_for(qr_version_t version, qr_errorlevel_t level, qr_maskpattern_t mask) {
+qrformat_t qrformat_for(qr_version_t version, qr_errorlevel_t level, qr_maskpattern_t mask)
+{
 	assert(QR_ERRORLEVEL_L <= level && level <= QR_ERRORLEVEL_H);
 	assert(QR_MASKPATTERN_0 <= mask && mask <= QR_MASKPATTERN_7);
 
@@ -59,7 +60,8 @@ qrformat_t qrformat_for(qr_version_t version, qr_errorlevel_t level, qr_maskpatt
 	return fi;
 }
 
-qrformat_t qrformat_from(qr_version_t version, uint32_t value) {
+qrformat_t qrformat_from(qr_version_t version, uint32_t value)
+{
 	qrformat_t fi = {
 		.version = QR_VERSION_INVALID,
 		.mask = QR_MASKPATTERN_INVALID,

@@ -1,29 +1,22 @@
 #include <stdio.h>
 
-#include "qrmatrix.h"
-#include "qrtypes.h"
+#include "qrean.h"
 #include "debug.h"
-#include "qrspec.h"
 #include "image.h"
 
 int main() {
 	qrean_on_debug_vprintf(vfprintf, stderr);
 
-	qrmatrix_t qr = create_qrmatrix();
-	qrmatrix_set_version(&qr, QR_VERSION_R7x139);
-
-	qrmatrix_set_errorlevel(&qr, QR_ERRORLEVEL_M);
-	qrmatrix_set_maskpattern(&qr, QR_MASKPATTERN_0);
-
-	qrmatrix_write_string_8bit(&qr, "https://github.com/kikuchan/libqrean");
+	qrean_t qrean = create_qrean(QREAN_CODE_TYPE_RMQR);
+	qrean_write_string(&qrean, "https://github.com/kikuchan/libqrean", QREAN_DATA_TYPE_AUTO);
 
 #if 0
-	qrmatrix_dump(&qr, stderr);
+	qrean_dump(&qr, stderr);
 #else
-	size_t width = qr.symbol_width + qr.padding.l + qr.padding.r;
-	size_t height = qr.symbol_height + qr.padding.t + qr.padding.b;
+	size_t width = qrean_get_bitmap_width(&qrean);
+	size_t height = qrean_get_bitmap_height(&qrean);
 	image_t *img = new_image(width, height);
-	qrmatrix_read_bitmap(&qr, img->buffer, width * height * 4, 32);
+	qrean_read_bitmap(&qrean, img->buffer, width * height * 4, 32);
 
 	image_dump(img, stdout);
 #endif

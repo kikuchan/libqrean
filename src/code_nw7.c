@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "barcode.h"
 #include "bitstream.h"
+#include "qrean.h"
 
 static const struct {
 	uint32_t v;
@@ -35,35 +35,47 @@ static const struct {
 
 static const char *symbol_lookup = "0123456789-$./:+";
 
-bitpos_t barcode_write_nw7_string(barcode_t *code, const char *src) {
-	char tmp[strlen(src) + 1];
-	char *p = tmp;
+bitpos_t qrean_write_nw7_string(qrean_t *qrean, const void *buf, size_t len, qrean_data_type_t data_type)
+{
+	const char *src = (const char *)buf;
 	int start_code, stop_code;
+	int bitlen = 0;
 
 	// check first letter
-	if (*p == 'A' || *p == 'B' || *p == 'C' || *p == 'D') {
-		start_code = *p++ - 'A' + 16;
+	if (*src == 'A' || *src == 'B' || *src == 'C' || *src == 'D') {
+		start_code = *src++ - 'A' + 16;
 	} else {
 		start_code = 16; // default to 'A'
 	}
 
 	// check last letter
-	int len = strlen(p);
-	if (p[len - 1] == 'A' || p[len - 1] == 'B' || p[len - 1] == 'C' || p[len - 1] == 'D') {
-		stop_code = p[len - 1] - 'A' + 16;
-		p[len - 1] = '\0'; // terminate
+	if (src[len - 1] == 'A' || src[len - 1] == 'B' || src[len - 1] == 'C' || src[len - 1] == 'D') {
+		stop_code = src[len - 1] - 'A' + 16;
+		len--;
 	} else {
 		stop_code = 16; // default to 'A'
 	}
 
-	bitstream_t bs = barcode_create_bitstream(code, NULL);
+	bitstream_t bs = qrean_create_bitstream(qrean, NULL);
+
+	// --- for animation, symbol size should be determined first
+	for (const char *p = src; p - src < len; p++) {
+		const char *q = strchr(symbol_lookup, *p);
+		if (!q) return 0;
+
+		int n = q - symbol_lookup;
+		bitlen += symbol[n].w + 1;
+	}
+	uint8_t symbol_width = symbol[start_code].w + 1 + bitlen + symbol[stop_code].w;
+	qrean_set_symbol_width(qrean, symbol_width);
+	// ---
 
 	bitstream_write_bits(&bs, symbol[start_code].v, symbol[start_code].w); // start symbol
 	bitstream_write_bits(&bs, 0, 1);
 
-	for (; *p; p++) {
+	for (const char *p = src; p - src < len; p++) {
 		const char *q = strchr(symbol_lookup, *p);
-		if (!q) continue;
+		if (!q) return 0;
 
 		int n = q - symbol_lookup;
 		bitstream_write_bits(&bs, symbol[n].v, symbol[n].w);
@@ -72,6 +84,13 @@ bitpos_t barcode_write_nw7_string(barcode_t *code, const char *src) {
 
 	bitstream_write_bits(&bs, symbol[stop_code].v, symbol[stop_code].w); // stop symbol
 
-	barcode_set_size(code, bitstream_tell(&bs));
-	return code->size;
+	return symbol_width;
 }
+
+qrean_code_t qrean_code_nw7 = {
+	.type = QREAN_CODE_TYPE_NW7,
+
+	.write_data = qrean_write_nw7_string,
+
+	.init = NULL,
+};

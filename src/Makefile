@@ -4,23 +4,27 @@ OBJS += image.o
 OBJS += debug.o
 
 OBJS += galois.o
-OBJS += qrdata.o
-OBJS += qrformat.o
-OBJS += qrmatrix.o
-OBJS += qrpayload.o
-OBJS += qrversion.o
 OBJS += reedsolomon.o
 OBJS += runlength.o
 OBJS += qrdetector.o
 OBJS += qrspec.o
 OBJS += qrbch.o
+OBJS += qrdata.o
+OBJS += qrformat.o
+OBJS += qrpayload.o
+OBJS += qrversion.o
 
-OBJS += barcode.o
-OBJS += barcode_code39.o
-OBJS += barcode_code93.o
-OBJS += barcode_ean.o
-OBJS += barcode_itf.o
-OBJS += barcode_nw7.o
+OBJS += qrean.o
+
+OBJS += code_qr.o
+OBJS += code_mqr.o
+OBJS += code_rmqr.o
+
+OBJS += code_ean.o
+OBJS += code_code39.o
+OBJS += code_code93.o
+OBJS += code_itf.o
+OBJS += code_nw7.o
 
 #CC=avr-gcc -mmcu=atmega32u4
 #CC=clang

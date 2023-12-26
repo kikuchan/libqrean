@@ -38,7 +38,7 @@ typedef struct {
 	float m[8];
 } image_transform_matrix_t;
 
-image_t *new_image(int width, int height);
+image_t *new_image(size_t width, size_t height);
 void image_free(image_t *img);
 image_t *image_clone(image_t *img);
 

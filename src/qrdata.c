@@ -5,7 +5,8 @@
 #include "utils.h"
 #include <string.h>
 
-qrdata_t create_qrdata_for(bitstream_t bs, qr_version_t version) {
+qrdata_t create_qrdata_for(bitstream_t bs, qr_version_t version)
+{
 	qrdata_t data = {
 		.bs = bs,
 		.version = version,
@@ -29,14 +30,16 @@ static const char alnum_cmp[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:";
 static const char alnum[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:";
 
 #define IS_NUMERIC(ch) ('0' <= (ch) && (ch) <= '9')
-static size_t measure_numeric(const char *src) {
+static size_t measure_numeric(const char *src)
+{
 	int len;
 	for (len = 0; src[len] && IS_NUMERIC(src[len]); len++) /* COUNT */
 		;
 	return len;
 }
 
-static size_t measure_alnum(const char *src) {
+static size_t measure_alnum(const char *src)
+{
 	return strspn(src, alnum);
 }
 
@@ -51,13 +54,14 @@ static size_t measure_alnum(const char *src) {
 #define RMQR_DATA_MODE_8BIT    (3)
 #define RMQR_DATA_MODE_KANJI   (4)
 
-size_t qrdata_write_numeric_string(qrdata_t *data, const char *src, size_t len) {
+size_t qrdata_write_numeric_string(qrdata_t *data, const char *src, size_t len)
+{
 	if (measure_numeric(src) < len) {
 		return 0;
 	}
 
 	if (IS_MQR(data->version)) {
-		bitstream_write_bits(&data->bs, 1, data->version - QR_VERSION_M1);
+		bitstream_write_bits(&data->bs, 0, data->version - QR_VERSION_M1);
 	} else if (IS_RMQR(data->version)) {
 		bitstream_write_bits(&data->bs, RMQR_DATA_MODE_NUMERIC, 3);
 	} else {
@@ -81,10 +85,12 @@ size_t qrdata_write_numeric_string(qrdata_t *data, const char *src, size_t len) 
 	return i;
 }
 
-size_t qrdata_write_alnum_string(qrdata_t *data, const char *src, size_t len) {
+size_t qrdata_write_alnum_string(qrdata_t *data, const char *src, size_t len)
+{
 	if (measure_alnum(src) < len) return 0;
 
 	if (IS_MQR(data->version)) {
+		if (data->version == QR_VERSION_M1) return 0;
 		bitstream_write_bits(&data->bs, 1, data->version - QR_VERSION_M1);
 	} else if (IS_RMQR(data->version)) {
 		bitstream_write_bits(&data->bs, RMQR_DATA_MODE_ALNUM, 3);
@@ -109,10 +115,12 @@ size_t qrdata_write_alnum_string(qrdata_t *data, const char *src, size_t len) {
 	return i;
 }
 
-size_t qrdata_write_8bit_string(qrdata_t *data, const char *src, size_t len) {
+size_t qrdata_write_8bit_string(qrdata_t *data, const char *src, size_t len)
+{
 	if (len == 0) return 0;
 
 	if (IS_MQR(data->version)) {
+		if (data->version <= QR_VERSION_M2) return 0;
 		bitstream_write_bits(&data->bs, 2, data->version - QR_VERSION_M1);
 	} else if (IS_RMQR(data->version)) {
 		bitstream_write_bits(&data->bs, RMQR_DATA_MODE_8BIT, 3);
@@ -129,13 +137,14 @@ size_t qrdata_write_8bit_string(qrdata_t *data, const char *src, size_t len) {
 	return i;
 }
 
-bit_t qrdata_finalize(qrdata_t *data) {
-	if (IS_QR(data->version)) {
-		if (!bitstream_write_bits(&data->bs, QR_DATA_MODE_END, 4)) return 0;
-	} else if (IS_MQR(data->version)) {
-		bitstream_write_bits(&data->bs, 0, 3 + 2 * (data->version - QR_VERSION_M1));
+bit_t qrdata_finalize(qrdata_t *data)
+{
+	if (IS_MQR(data->version)) {
+		if (!bitstream_write_bits(&data->bs, 0, 3 + 2 * (data->version - QR_VERSION_M1))) return 0;
 	} else if (IS_RMQR(data->version)) {
-		bitstream_write_bits(&data->bs, RMQR_DATA_MODE_END, 3);
+		if (!bitstream_write_bits(&data->bs, RMQR_DATA_MODE_END, 3)) return 0;
+	} else {
+		if (!bitstream_write_bits(&data->bs, QR_DATA_MODE_END, 4)) return 0;
 	}
 	if (bitstream_tell(&data->bs) % 8) bitstream_write_bits(&data->bs, 0, 8 - (bitstream_tell(&data->bs) % 8));
 
@@ -149,7 +158,8 @@ bit_t qrdata_finalize(qrdata_t *data) {
 	return 1;
 }
 
-static size_t qrdata_flush(qrdata_t *data, qr_data_mode_t mode, const char *src, size_t len) {
+static size_t qrdata_flush(qrdata_t *data, qr_data_mode_t mode, const char *src, size_t len)
+{
 	switch (mode) {
 	case QR_DATA_MODE_NUMERIC:
 		return qrdata_write_numeric_string(data, src, len);
@@ -165,7 +175,8 @@ static size_t qrdata_flush(qrdata_t *data, qr_data_mode_t mode, const char *src,
 	}
 }
 
-size_t qrdata_write_string(qrdata_t *data, const char *src, size_t len) {
+size_t qrdata_write_string(qrdata_t *data, const char *src, size_t len)
+{
 	uint8_t v = data->version;
 
 	size_t i, l;
@@ -229,7 +240,8 @@ size_t qrdata_write_string(qrdata_t *data, const char *src, size_t len) {
 	return r;
 }
 
-size_t qrdata_parse(qrdata_t *data, void (*on_letter_cb)(qr_data_mode_t mode, const uint32_t letter, void *opaque), void *opaque) {
+size_t qrdata_parse(qrdata_t *data, void (*on_letter_cb)(qr_data_mode_t mode, const uint32_t letter, void *opaque), void *opaque)
+{
 	bitstream_t *r = &data->bs;
 	size_t len;
 	size_t wrote = 0;

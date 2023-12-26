@@ -13,7 +13,8 @@ static void (*qrean_error_cb)(const char *message);
 
 const char *qrean_last_error = NULL;
 
-int safe_vfprintf(FILE *fp, const char *fmt, va_list ap) {
+int safe_vfprintf(FILE *fp, const char *fmt, va_list ap)
+{
 	int retval = 0;
 
 #ifndef NO_PRINTF
@@ -33,7 +34,8 @@ int safe_vfprintf(FILE *fp, const char *fmt, va_list ap) {
 	return retval;
 }
 
-int safe_fprintf(FILE *fp, const char *fmt, ...) {
+int safe_fprintf(FILE *fp, const char *fmt, ...)
+{
 	va_list ap;
 	int retval;
 	va_start(ap, fmt);
@@ -42,7 +44,8 @@ int safe_fprintf(FILE *fp, const char *fmt, ...) {
 	return retval;
 }
 
-int qrean_debug_printf(const char *fmt, ...) {
+int qrean_debug_printf(const char *fmt, ...)
+{
 	va_list ap;
 	int retval = 0;
 
@@ -57,14 +60,16 @@ int qrean_debug_printf(const char *fmt, ...) {
 	return retval;
 }
 
-void qrean_on_debug_vprintf(int (*vfprintf_like)(void *opaque, const char *fmt, va_list ap), void *opaque) {
+void qrean_on_debug_vprintf(int (*vfprintf_like)(void *opaque, const char *fmt, va_list ap), void *opaque)
+{
 #ifndef NO_DEBUG
 	qrean_debug_vprintf_cb = vfprintf_like;
 	qrean_debug_vprintf_opaque = opaque;
 #endif
 }
 
-void qrean_error(const char *message) {
+void qrean_error(const char *message)
+{
 	if (qrean_error_cb) {
 		if (qrean_error_cb) qrean_error_cb(message);
 	} else {
@@ -74,13 +79,15 @@ void qrean_error(const char *message) {
 	qrean_last_error = message;
 }
 
-void qrean_on_error(void (*func)(const char *message)) {
+void qrean_on_error(void (*func)(const char *message))
+{
 #ifndef NO_DEBUG
 	qrean_error_cb = func;
 #endif
 }
 
 /* returns NULL if no error */
-const char *qrean_get_last_error() {
+const char *qrean_get_last_error()
+{
 	return qrean_last_error;
 }

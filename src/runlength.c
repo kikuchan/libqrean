@@ -6,28 +6,33 @@
 #include "bitstream.h"
 #include "runlength.h"
 
-runlength_t create_runlength() {
+runlength_t create_runlength()
+{
 	runlength_t rl = {};
 	runlength_init(&rl);
 	return rl;
 }
 
-void runlength_init(runlength_t *rl) {
+void runlength_init(runlength_t *rl)
+{
 	// 0 never matches
 	runlength_next(rl);
 	runlength_next(rl);
 }
 
-runlength_count_t runlength_get_count(runlength_t *rl, runlength_size_t back) {
+runlength_count_t runlength_get_count(runlength_t *rl, runlength_size_t back)
+{
 	assert(back < MAX_RUNLENGTH);
 	return rl->ringbuf[(rl->idx - back + MAX_RUNLENGTH) % MAX_RUNLENGTH];
 }
 
-runlength_count_t runlength_latest_count(runlength_t *rl) {
+runlength_count_t runlength_latest_count(runlength_t *rl)
+{
 	return runlength_get_count(rl, 0);
 }
 
-runlength_count_t runlength_sum(runlength_t *rl, runlength_size_t s, runlength_size_t n) {
+runlength_count_t runlength_sum(runlength_t *rl, runlength_size_t s, runlength_size_t n)
+{
 	runlength_count_t sum = 0;
 	for (runlength_size_t i = 0; i < n; i++) {
 		sum += runlength_get_count(rl, s + i);
@@ -35,12 +40,14 @@ runlength_count_t runlength_sum(runlength_t *rl, runlength_size_t s, runlength_s
 	return sum;
 }
 
-void runlength_next(runlength_t *rl) {
+void runlength_next(runlength_t *rl)
+{
 	rl->idx = (rl->idx + 1) % MAX_RUNLENGTH;
 	rl->ringbuf[rl->idx] = 0;
 }
 
-int runlength_push_value(runlength_t *rl, uint32_t value) {
+int runlength_push_value(runlength_t *rl, uint32_t value)
+{
 	if (rl->last_value != value) {
 		rl->last_value = value;
 		runlength_next_and_count(rl);
@@ -50,26 +57,31 @@ int runlength_push_value(runlength_t *rl, uint32_t value) {
 	return 0;
 }
 
-void runlength_count_add(runlength_t *rl, runlength_count_t n) {
+void runlength_count_add(runlength_t *rl, runlength_count_t n)
+{
 	rl->ringbuf[rl->idx] += n;
 }
 
-void runlength_count(runlength_t *rl) {
+void runlength_count(runlength_t *rl)
+{
 	runlength_count_add(rl, 1);
 }
 
-void runlength_next_and_count(runlength_t *rl) {
+void runlength_next_and_count(runlength_t *rl)
+{
 	runlength_next(rl);
 	runlength_count(rl);
 }
 
-void runlength_next_and_count_add(runlength_t *rl, runlength_count_t n) {
+void runlength_next_and_count_add(runlength_t *rl, runlength_count_t n)
+{
 	runlength_next(rl);
 	runlength_count_add(rl, n);
 }
 
 // eg; 1 2 0 2 1 matches 1 2 X 2 1
-int runlength_match_exact(runlength_t *rl, runlength_size_t N, ...) {
+int runlength_match_exact(runlength_t *rl, runlength_size_t N, ...)
+{
 	va_list ap;
 
 	assert(0 < N && N <= MAX_RUNLENGTH);
@@ -89,7 +101,8 @@ int runlength_match_exact(runlength_t *rl, runlength_size_t N, ...) {
 }
 
 // eg; 2 0 1 3 1 matches 4 X 2 6 2
-int runlength_match_ratio(runlength_t *rl, runlength_size_t N, ...) {
+int runlength_match_ratio(runlength_t *rl, runlength_size_t N, ...)
+{
 	va_list ap;
 
 	assert(0 < N && N <= MAX_RUNLENGTH);
@@ -126,7 +139,8 @@ int runlength_match_ratio(runlength_t *rl, runlength_size_t N, ...) {
 	return 1;
 }
 
-void runlength_dump(runlength_t *rl, runlength_size_t N) {
+void runlength_dump(runlength_t *rl, runlength_size_t N)
+{
 	for (runlength_size_t i = 0; i < N; i++) {
 		fprintf(stderr, "%2d ", runlength_get_count(rl, N - i - 1));
 	}

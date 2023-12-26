@@ -23,4 +23,6 @@ uint_fast8_t qrspec_get_data_bitlength_for(qr_version_t version, int mode);
 const char *qrspec_get_version_string(qr_version_t version);
 qr_version_t qrspec_get_version_by_string(const char *version);
 
+int qrspec_is_valid_combination(qr_version_t version, qr_errorlevel_t level, qr_maskpattern_t mask);
+
 #endif /* __QR_QRSPEC_H__ */

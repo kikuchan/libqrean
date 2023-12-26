@@ -10,14 +10,13 @@ int main() {
 	qrean_t qrean = create_qrean(QREAN_CODE_TYPE_QR);
 	qrean_write_string(&qrean, "https://github.com/kikuchan/libqrean", QREAN_DATA_TYPE_AUTO);
 
-#if 0
-	qrean_dump(&qrean, stderr);
-#else
-	size_t width = qrean_get_bitmap_width(&qrean);
-	size_t height = qrean_get_bitmap_height(&qrean);
-	image_t *img = new_image(width, height);
-	qrean_read_bitmap(&qrean, img->buffer, width * height * 4, 32);
+	// inject noise at the bottom right
+	qrean_write_pixel(&qrean, qrean.canvas.symbol_width - 1, qrean.canvas.symbol_height - 1, 1);
 
-	image_dump(img, stdout);
-#endif
+	// fix errors
+	qrean_fix_errors(&qrean);
+
+	char buffer[1024];
+	qrean_read_string(&qrean, buffer, sizeof(buffer));
+	printf("%s\n", buffer);
 }

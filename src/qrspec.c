@@ -6,6 +6,7 @@
 #include "qrtypes.h"
 
 static const uint8_t QR_ERROR_WORDS_IN_BLOCK[][4] = {
+  // QR
   //  L,  M,  Q,  H
 	{ 7, 10, 13, 17}, //  1
 	{10, 16, 22, 28}, //  2
@@ -50,6 +51,7 @@ static const uint8_t QR_ERROR_WORDS_IN_BLOCK[][4] = {
 
 #ifndef NO_MQR
   // mQR
+  //  L,  M,  Q,  H
 	{ 2,  0,  0,  0}, // M1
 	{ 5,  6,  0,  0}, // M2
 	{ 6,  8,  0,  0}, // M3
@@ -58,6 +60,7 @@ static const uint8_t QR_ERROR_WORDS_IN_BLOCK[][4] = {
 
 #ifndef NO_RMQR
   // rMQR
+  //  L,  M,  Q,  H
 	{ 0,  7,  0, 10}, // R7x43
 	{ 0,  9,  0, 14}, // R7x59
 	{ 0, 12,  0, 22}, // R7x77
@@ -94,6 +97,7 @@ static const uint8_t QR_ERROR_WORDS_IN_BLOCK[][4] = {
 };
 
 static const uint8_t QR_TOTAL_RS_BLOCKS[][4] = {
+  // QR
   //  L,  M,  Q,  H
 	{ 1,  1,  1,  1}, //  1
 	{ 1,  1,  1,  1}, //  2
@@ -138,6 +142,7 @@ static const uint8_t QR_TOTAL_RS_BLOCKS[][4] = {
 
 #ifndef NO_MQR
   // mQR
+  //  L,  M,  Q,  H
 	{ 1,  0,  0,  0}, // M1
 	{ 1,  1,  0,  0}, // M2
 	{ 1,  1,  0,  0}, // M3
@@ -146,6 +151,7 @@ static const uint8_t QR_TOTAL_RS_BLOCKS[][4] = {
 
 #ifndef NO_RMQR
   // rMQR
+  //  L,  M,  Q,  H
 	{ 0,  1,  0,  1}, // R7x43
 	{ 0,  1,  0,  1}, // R7x59
 	{ 0,  1,  0,  1}, // R7x77
@@ -183,18 +189,53 @@ static const uint8_t QR_TOTAL_RS_BLOCKS[][4] = {
 
 #ifndef NO_RMQR
 static const uint8_t RMQR_VERSION_TYPES[] = {
-	0x01, 0x02, 0x03, 0x04, 0x05, 0x11, 0x12, 0x13, 0x14, 0x15, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25,
-	0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x41, 0x42, 0x43, 0x44, 0x45, 0x51, 0x52, 0x53, 0x54, 0x55,
+	0x01,
+	0x02,
+	0x03,
+	0x04,
+	0x05,
+	0x11,
+	0x12,
+	0x13,
+	0x14,
+	0x15,
+	0x20,
+	0x21,
+	0x22,
+	0x23,
+	0x24,
+	0x25,
+	0x30,
+	0x31,
+	0x32,
+	0x33,
+	0x34,
+	0x35,
+	0x41,
+	0x42,
+	0x43,
+	0x44,
+	0x45,
+	0x51,
+	0x52,
+	0x53,
+	0x54,
+	0x55,
 };
 
 #define RMQR_SYMBOL_X_INDEX(version) (RMQR_VERSION_TYPES[(version)-QR_VERSION_R7x43] & 0xF)
 #define RMQR_SYMBOL_Y_INDEX(version) (RMQR_VERSION_TYPES[(version)-QR_VERSION_R7x43] >> 4)
 
 static const uint8_t RMQR_SYMBOL_WIDTH[6] = {
-	27, 43, 59, 77, 99, 139,
+	27,
+	43,
+	59,
+	77,
+	99,
+	139,
 };
 
-static const uint8_t RMQR_SYMBOL_HEIGHT[6] = {7, 9, 11, 13, 15, 17};
+static const uint8_t RMQR_SYMBOL_HEIGHT[6] = { 7, 9, 11, 13, 15, 17 };
 
 static const uint8_t RMQR_ALIGNMENT_ADDRS[6][4] = {
 	{ 0,  0,  0,   0}, // 27
@@ -204,25 +245,25 @@ static const uint8_t RMQR_ALIGNMENT_ADDRS[6][4] = {
 	{23, 49, 75,   0}, // 99
 	{27, 55, 83, 111}, // 139
 };
-static const uint8_t RMQR_ALIGNMENT_NUMS[6] = {0, 1, 2, 2, 3, 4};
+static const uint8_t RMQR_ALIGNMENT_NUMS[6] = { 0, 1, 2, 2, 3, 4 };
 #endif
 
 static const uint8_t DATA_LENGTH_TABLE[][4] = {
   // QR
-  // N , AL, 8B, KNJ
+  //  N, AL, 8B, KNJ
 	{10,  9,  8,  8}, // QR < 10
 	{12, 11, 16, 10}, // QR < 27
 	{14, 13, 16, 12}, // QR >= 27
 
   // mQR
-  // N ,AL,8B,KNJ
+  //  N, AL, 8B, KNJ
 	{ 3,  0,  0,  0}, // mQR  M1
 	{ 4,  3,  0,  0}, // mQR  M2
 	{ 5,  4,  4,  3}, // mQR  M3
 	{ 6,  5,  5,  4}, // mQR  M4
 
   // rMQR
-  // N ,AL,8B,KNJ
+  //  N, AL, 8B, KNJ
 	{ 4,  3,  3,  2}, // R7x43
 	{ 5,  5,  4,  3}, // R7x59
 	{ 6,  5,  5,  4}, // R7x77
@@ -262,7 +303,8 @@ static const uint8_t DATA_LENGTH_TABLE[][4] = {
 	{ 9,  8,  8,  7}, // R17x139
 };
 
-uint_fast8_t qrspec_get_data_bitlength_for(qr_version_t version, int mode) {
+uint_fast8_t qrspec_get_data_bitlength_for(qr_version_t version, int mode)
+{
 	if (version < QR_VERSION_10) return DATA_LENGTH_TABLE[0][mode];
 	if (version < QR_VERSION_27) return DATA_LENGTH_TABLE[1][mode];
 	if (version < QR_VERSION_40) return DATA_LENGTH_TABLE[2][mode];
@@ -277,7 +319,9 @@ uint_fast8_t qrspec_get_data_bitlength_for(qr_version_t version, int mode) {
 	return 0;
 }
 
-uint_fast8_t qrspec_get_symbol_width(qr_version_t version) {
+uint_fast8_t qrspec_get_symbol_width(qr_version_t version)
+{
+	if (version == QR_VERSION_AUTO) version = QR_VERSION_40;
 	if (IS_QR(version)) {
 		return 21 + (version - QR_VERSION_1) * 4;
 #ifndef NO_MQR
@@ -294,7 +338,9 @@ uint_fast8_t qrspec_get_symbol_width(qr_version_t version) {
 	return 0;
 }
 
-uint_fast8_t qrspec_get_symbol_height(qr_version_t version) {
+uint_fast8_t qrspec_get_symbol_height(qr_version_t version)
+{
+	if (version == QR_VERSION_AUTO) version = QR_VERSION_40;
 	if (IS_QR(version)) {
 		return 21 + (version - QR_VERSION_1) * 4;
 #ifndef NO_MQR
@@ -311,7 +357,8 @@ uint_fast8_t qrspec_get_symbol_height(qr_version_t version) {
 	return 0;
 }
 
-uint_fast8_t qrspec_get_alignment_num(qr_version_t version) {
+uint_fast8_t qrspec_get_alignment_num(qr_version_t version)
+{
 	if (version <= QR_VERSION_AUTO) {
 		qrean_error("Invalid version is specified");
 		return 0;
@@ -332,7 +379,8 @@ uint_fast8_t qrspec_get_alignment_num(qr_version_t version) {
 	return 0;
 }
 
-uint_fast8_t qrspec_get_alignment_steps(qr_version_t version, uint_fast8_t step) {
+uint_fast8_t qrspec_get_alignment_steps(qr_version_t version, uint_fast8_t step)
+{
 	if (version <= QR_VERSION_1 || IS_MQR(version)) return 0;
 #ifndef NO_RMQR
 	if (IS_RMQR(version)) {
@@ -349,7 +397,8 @@ uint_fast8_t qrspec_get_alignment_steps(qr_version_t version, uint_fast8_t step)
 	return v4 < r ? 6 : v4 - r + 10;
 }
 
-uint_fast8_t qrspec_get_alignment_position_x(qr_version_t version, uint_fast8_t idx) {
+uint_fast8_t qrspec_get_alignment_position_x(qr_version_t version, uint_fast8_t idx)
+{
 	if (IS_QR(version)) {
 		int N = version / 7 + 2;
 		int xidx = (idx + 1) < (N - 1) * 1 ? (idx + 1) % N : (idx + 2) < (N - 1) * N ? (idx + 2) % N : (idx + 3) % N;
@@ -363,7 +412,8 @@ uint_fast8_t qrspec_get_alignment_position_x(qr_version_t version, uint_fast8_t 
 	return 0;
 }
 
-uint_fast8_t qrspec_get_alignment_position_y(qr_version_t version, uint_fast8_t idx) {
+uint_fast8_t qrspec_get_alignment_position_y(qr_version_t version, uint_fast8_t idx)
+{
 	if (IS_QR(version)) {
 		int N = version / 7 + 2;
 		int yidx = (idx + 1) < (N - 1) * 1 ? (idx + 1) / N : (idx + 2) < (N - 1) * N ? (idx + 2) / N : (idx + 3) / N;
@@ -377,7 +427,8 @@ uint_fast8_t qrspec_get_alignment_position_y(qr_version_t version, uint_fast8_t 
 	return 0;
 }
 
-size_t qrspec_get_available_bits(qr_version_t version) {
+size_t qrspec_get_available_bits(qr_version_t version)
+{
 	size_t symbol_width = qrspec_get_symbol_width(version);
 	size_t symbol_height = qrspec_get_symbol_height(version);
 
@@ -418,8 +469,8 @@ size_t qrspec_get_available_bits(qr_version_t version) {
 		size_t timing_pattern = timing_pattern_t + timing_pattern_b + timing_pattern_r + timing_pattern_l + timing_pattern_v;
 		size_t alignment_pattern = (3 * 3) * 2 * num_aligns_x;
 
-		size_t function_bits =
-			finder_pattern + finder_sub_pattern + corner_finder_pattern + timing_pattern + alignment_pattern + format_info;
+		size_t function_bits
+			= finder_pattern + finder_sub_pattern + corner_finder_pattern + timing_pattern + alignment_pattern + format_info;
 
 		return symbol_width * symbol_height - function_bits;
 #endif
@@ -429,11 +480,13 @@ size_t qrspec_get_available_bits(qr_version_t version) {
 	return 0;
 }
 
-uint_fast8_t qrspec_get_total_blocks(qr_version_t version, qr_errorlevel_t level) {
+uint_fast8_t qrspec_get_total_blocks(qr_version_t version, qr_errorlevel_t level)
+{
 	return QR_TOTAL_RS_BLOCKS[version - QR_VERSION_1][level - QR_ERRORLEVEL_L];
 }
 
-uint_fast8_t qrspec_get_error_words_in_block(qr_version_t version, qr_errorlevel_t level) {
+uint_fast8_t qrspec_get_error_words_in_block(qr_version_t version, qr_errorlevel_t level)
+{
 	return QR_ERROR_WORDS_IN_BLOCK[version - QR_VERSION_1][level - QR_ERRORLEVEL_L];
 }
 
@@ -529,13 +582,27 @@ static const char *qr_version_string[] = {
 	"R17x139",
 };
 
-const char *qrspec_get_version_string(qr_version_t version) {
+const char *qrspec_get_version_string(qr_version_t version)
+{
 	return qr_version_string[version];
 }
 
-qr_version_t qrspec_get_version_by_string(const char *version) {
+qr_version_t qrspec_get_version_by_string(const char *version)
+{
 	for (size_t i = 0; i < sizeof(qr_version_string) / sizeof(qr_version_string[0]); i++) {
 		if (!strcasecmp(qr_version_string[i], version)) return (qr_version_t)i;
 	}
 	return QR_VERSION_INVALID;
+}
+
+int qrspec_is_valid_combination(qr_version_t version, qr_errorlevel_t level, qr_maskpattern_t mask)
+{
+	if (version <= QR_VERSION_INVALID || mask <= QR_MASKPATTERN_INVALID) return 0;
+	if (!qrspec_get_error_words_in_block(version, level)) return 0;
+
+	if (mask == QR_MASKPATTERN_AUTO) return 1;
+	if (IS_QR(version) && QR_MASKPATTERN_0 <= mask && mask <= QR_MASKPATTERN_7) return 1;
+	if (IS_MQR(version) && QR_MASKPATTERN_0 <= mask && mask <= QR_MASKPATTERN_3) return 1;
+	if (IS_RMQR(version) && QR_MASKPATTERN_0 <= mask && mask <= QR_MASKPATTERN_0) return 1;
+	return 0;
 }

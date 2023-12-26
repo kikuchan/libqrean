@@ -6,7 +6,8 @@
 #include "qrversion.h"
 #include "utils.h"
 
-qrversion_t qrversion_for(qr_version_t version) {
+qrversion_t qrversion_for(qr_version_t version)
+{
 	assert(IS_QR(version) || IS_MQR(version) || IS_RMQR(version));
 
 	qrversion_t vi;
@@ -15,7 +16,8 @@ qrversion_t qrversion_for(qr_version_t version) {
 	return vi;
 }
 
-qrversion_t qrversion_from(uint32_t value) {
+qrversion_t qrversion_from(uint32_t value)
+{
 	qrversion_t vi = {
 		.version = QR_VERSION_INVALID,
 		.value = value,

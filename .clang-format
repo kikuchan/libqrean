@@ -1,4 +1,4 @@
-BasedOnStyle: LLVM
+BasedOnStyle: WebKit
 IndentWidth: 4
 TabWidth: 4
 ColumnLimit: 140
@@ -13,3 +13,6 @@ AllowShortIfStatementsOnASingleLine: true
 AllowShortBlocksOnASingleLine: Never
 
 AlignConsecutiveMacros: Consecutive
+#BreakBeforeBinaryOperators: All
+PointerAlignment: Right
+

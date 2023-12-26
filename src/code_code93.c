@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "barcode.h"
 #include "bitstream.h"
+#include "qrean.h"
 
 static uint16_t symbol[] = {
 	/*  0 */ 0b100010100, // 0
@@ -67,10 +67,15 @@ static uint16_t symbol[] = {
 
 static const char *symbol_lookup = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-. $/+%";
 
-bitpos_t barcode_write_code93_string(barcode_t *code, const char *src) {
-	int len = strlen(src);
+bitpos_t qrean_write_code93_string(qrean_t *qrean, const void *buf, size_t len, qrean_data_type_t data_type)
+{
+	const char *src = (const char *)buf;
 
-	bitstream_t bs = barcode_create_bitstream(code, NULL);
+	bitstream_t bs = qrean_create_bitstream(qrean, NULL);
+
+	// for animation, symbol size should be determined first
+	uint8_t symbol_width = 9 + 9 * len + 9 + 9 + 9 + 1;
+	qrean_set_symbol_width(qrean, symbol_width);
 
 	bitstream_write_bits(&bs, symbol[47], 9); // Start Symbol
 
@@ -78,7 +83,7 @@ bitpos_t barcode_write_code93_string(barcode_t *code, const char *src) {
 	int C = 0, K = 0;
 	for (const char *p = src; *p; p++) {
 		const char *q = strchr(symbol_lookup, *p);
-		if (!q) continue;
+		if (!q) return 0; // invalid symbol
 
 		int n = q - symbol_lookup;
 
@@ -96,8 +101,15 @@ bitpos_t barcode_write_code93_string(barcode_t *code, const char *src) {
 	bitstream_write_bits(&bs, symbol[K], 9); // 2nd check character
 
 	bitstream_write_bits(&bs, symbol[47], 9); // Stop Symbol
-	bitstream_write_bits(&bs, 1, 1);          // Termination bar
+	bitstream_write_bits(&bs, 1, 1); // Termination bar
 
-	barcode_set_size(code, bitstream_tell(&bs));
-	return code->size;
+	return symbol_width;
 }
+
+qrean_code_t qrean_code_code93 = {
+	.type = QREAN_CODE_TYPE_CODE93,
+
+	.write_data = qrean_write_code93_string,
+
+	.init = NULL,
+};
