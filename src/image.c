@@ -269,6 +269,11 @@ float image_point_distance(image_point_t a, image_point_t b)
 	// return sqrt((POINT_X(a) - POINT_X(b)) * (POINT_X(a) - POINT_X(b)) + (POINT_Y(a) - POINT_Y(b)) * (POINT_Y(a) - POINT_Y(b)));
 }
 
+float image_point_angle(image_point_t base, image_point_t p)
+{
+	return atan2f(p.y - base.y, p.x - base.x);
+}
+
 void image_draw_extent(image_t *img, image_extent_t extent, image_pixel_t pix, int thickness)
 {
 	image_point_t points[] = {

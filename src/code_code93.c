@@ -108,8 +108,5 @@ bitpos_t qrean_write_code93_string(qrean_t *qrean, const void *buf, size_t len, 
 
 qrean_code_t qrean_code_code93 = {
 	.type = QREAN_CODE_TYPE_CODE93,
-
 	.write_data = qrean_write_code93_string,
-
-	.init = NULL,
 };

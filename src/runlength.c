@@ -80,7 +80,7 @@ void runlength_next_and_count_add(runlength_t *rl, runlength_count_t n)
 }
 
 // eg; 1 2 0 2 1 matches 1 2 X 2 1
-int runlength_match_exact(runlength_t *rl, runlength_size_t N, ...)
+int runlength_match_exact(runlength_t *rl, float div, runlength_size_t N, ...)
 {
 	va_list ap;
 
@@ -90,7 +90,7 @@ int runlength_match_exact(runlength_t *rl, runlength_size_t N, ...)
 
 	for (runlength_size_t i = 0; i < N; i++) {
 		runlength_count_t arg = va_arg(ap, runlength_size_t);
-		if (arg && runlength_get_count(rl, N - i - 1) != arg) {
+		if (arg && round(runlength_get_count(rl, N - i - 1) / div) != arg) {
 			va_end(ap);
 			return 0;
 		}

@@ -52,8 +52,8 @@ typedef struct {
 	void (*init)(qrean_t *qrean);
 	void (*deinit)(qrean_t *qrean);
 
-	size_t (*write_data)(qrean_t *qrean, const void *buf, size_t len, qrean_data_type_t data_type);
-	size_t (*read_data)(qrean_t *qrean, void *buf, size_t size);
+	bitpos_t (*write_data)(qrean_t *qrean, const void *buf, size_t len, qrean_data_type_t data_type);
+	bitpos_t (*read_data)(qrean_t *qrean, void *buf, size_t size);
 
 	unsigned int (*score)(qrean_t *qrean);
 
@@ -62,7 +62,6 @@ typedef struct {
 	// QR related bitpatterns
 	union {
 		struct {
-
 			qrean_bitpattern_t finder_pattern;
 			qrean_bitpattern_t finder_sub_pattern;
 			qrean_bitpattern_t corner_finder_pattern;

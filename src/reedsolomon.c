@@ -104,8 +104,9 @@ int rs_fix_errors(gf2_poly_t *R, int error_words)
 		// Forney algorithm:
 		//   error_value = Omega(a^i) / (a^i * Sigma'(a^i));
 		//               = Omega(a^i) / Denom(a^i)
-		GF2_POLY_COEFF(R, pos) = gf2_add(GF2_POLY_COEFF(R, pos),
-			gf2_div(gf2_poly_calc(omega, gf2_pow_a(GF2_MAX_EXP - pos)), gf2_poly_calc(Denom, gf2_pow_a(GF2_MAX_EXP - pos))));
+		gf2_value_t denom = gf2_poly_calc(Denom, gf2_pow_a(GF2_MAX_EXP - pos));
+		if (denom == 0) return -1;
+		GF2_POLY_COEFF(R, pos) = gf2_add(GF2_POLY_COEFF(R, pos), gf2_div(gf2_poly_calc(omega, gf2_pow_a(GF2_MAX_EXP - pos)), denom));
 		num_errors++;
 	}
 

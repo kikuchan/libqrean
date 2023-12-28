@@ -83,8 +83,5 @@ bitpos_t qrean_write_code39_string(qrean_t *qrean, const void *buf, size_t len, 
 
 qrean_code_t qrean_code_code39 = {
 	.type = QREAN_CODE_TYPE_CODE39,
-
 	.write_data = qrean_write_code39_string,
-
-	.init = NULL,
 };

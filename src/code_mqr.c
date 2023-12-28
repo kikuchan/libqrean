@@ -145,8 +145,8 @@ qrean_code_t qrean_code_mqr = {
 	.data_iter = composed_data_iter,
 
 	.qr = {
-		 .format_info = {format_info_iter, NULL, QR_FORMATINFO_SIZE},
 		 .finder_pattern = {finder_pattern_iter, finder_pattern_bits, QR_FINDER_PATTERN_SIZE},
 		 .timing_pattern = {timing_pattern_iter, timing_pattern_bits, 8},
+		 .format_info = {format_info_iter, NULL, QR_FORMATINFO_SIZE},
 	 },
 };

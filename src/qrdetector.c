@@ -1,10 +1,13 @@
-#include "qrdetector.h"
+#include <math.h>
+
+#include "debug.h"
 #include "image.h"
+#include "qrdetector.h"
 #include "qrean.h"
 #include "qrspec.h"
+#include "qrtypes.h"
 #include "runlength.h"
 #include "utils.h"
-#include <math.h>
 
 qrdetector_finder_candidate_t *qrdetector_scan_finder_pattern(image_t *src, int *found)
 {
@@ -85,6 +88,7 @@ qrdetector_finder_candidate_t *qrdetector_scan_finder_pattern(image_t *src, int 
 
 				float real_cx = (ring.extent.left + ring.extent.right) / 2.0f;
 				float real_cy = (ring.extent.top + ring.extent.bottom) / 2.0f;
+				if (image_read_pixel(img, POINT(real_cx, real_cy)) != inner_block_color) continue;
 
 				// find ring corners
 				int w = ring.extent.right - ring.extent.left;
@@ -191,39 +195,39 @@ void qrdetector_perspective_setup_by_finder_pattern_ring_corners(qrdetector_pers
 	qrean_on_read_pixel(warp->qrean, qrdetector_perspective_read_image_pixel, warp);
 }
 
-int qrdetector_perspective_fit_by_alignment_pattern(qrdetector_perspective_t *d)
+int qrdetector_perspective_fit_for_qr(qrdetector_perspective_t *warp)
 {
-	image_t *img = image_clone(d->img);
-	// image_t *img = d->img;
+	image_t *img = image_clone(warp->img);
+	// image_t *img = warp->img;
 	int adjusted = 0;
 
-	int N = qrspec_get_alignment_num(d->qrean->qr.version);
+	int N = qrspec_get_alignment_num(warp->qrean->qr.version);
 	int i = N - 1;
 	if (i >= 0) {
-		int cx = qrspec_get_alignment_position_x(d->qrean->qr.version, i);
-		int cy = qrspec_get_alignment_position_y(d->qrean->qr.version, i);
+		int cx = qrspec_get_alignment_position_x(warp->qrean->qr.version, i);
+		int cy = qrspec_get_alignment_position_y(warp->qrean->qr.version, i);
 
-		image_point_t c = image_point_transform(POINT(cx, cy), d->h);
-		image_point_t next = image_point_transform(POINT(cx + 1, cy), d->h);
+		image_point_t c = image_point_transform(POINT(cx, cy), warp->h);
+		image_point_t next = image_point_transform(POINT(cx + 1, cy), warp->h);
 		float module_size = image_point_distance(next, c);
 
 		int dist = 5;
 		for (float y = cy - dist; y < cy + dist; y += 0.2) {
 			for (float x = cx - dist; x < cx + dist; x += 0.2) {
-				image_point_t p = image_point_transform(POINT(x, y), d->h);
-				image_point_t ring = image_point_transform(POINT(x + 1, y), d->h);
+				image_point_t p = image_point_transform(POINT(x, y), warp->h);
+				image_point_t ring = image_point_transform(POINT(x + 1, y), warp->h);
 				if (image_read_pixel(img, p) == 0 && image_read_pixel(img, ring) == PIXEL(255, 255, 255)) {
 					image_paint_result_t result = image_paint(img, ring, PIXEL(255, 0, 0));
 					if (module_size * module_size < result.area && result.area < module_size * module_size * 16) {
 						image_point_t new_center = image_extent_center(&result.extent);
 
-						qrdetector_perspective_t backup = *d;
+						qrdetector_perspective_t backup = *warp;
 
-						d->src[3] = POINT(cx, cy);
-						d->dst[3] = new_center;
-						d->h = create_image_transform_matrix(d->src, d->dst);
+						warp->src[3] = POINT(cx, cy);
+						warp->dst[3] = new_center;
+						warp->h = create_image_transform_matrix(warp->src, warp->dst);
 
-						if (qrean_read_qr_alignment_pattern(d->qrean, i) < 10) {
+						if (qrean_read_qr_alignment_pattern(warp->qrean, i) < 10) {
 							image_paint(img, ring, PIXEL(0, 255, 0));
 							adjusted = 1;
 
@@ -231,7 +235,7 @@ int qrdetector_perspective_fit_by_alignment_pattern(qrdetector_perspective_t *d)
 						}
 
 						// restore if it doesn't fit
-						*d = backup;
+						*warp = backup;
 					}
 				}
 			}
@@ -240,4 +244,207 @@ int qrdetector_perspective_fit_by_alignment_pattern(qrdetector_perspective_t *d)
 	}
 
 	return adjusted;
+}
+
+int qrdetector_try_decode_qr(image_t *src, qrdetector_finder_candidate_t *candidates, int num_candidates,
+	void (*on_found)(qrdetector_perspective_t *warp, void *opaque), void *opaque)
+{
+	int found = 0;
+	// try all possible pairs!
+	for (int i = 0; i < num_candidates; i++) {
+		for (int j = i + 1; j < num_candidates; j++) {
+			for (int k = j + 1; k < num_candidates; k++) {
+				int idx[] = { i, j, k, i, k, j, j, i, k, j, k, i, k, i, j, k, j, i };
+				for (int l = 0; l < 6; l++) {
+					image_point_t points[] = {
+						candidates[idx[l * 3 + 0]].center,
+						candidates[idx[l * 3 + 1]].center,
+						candidates[idx[l * 3 + 2]].center,
+					};
+
+					qrean_t *qrean = new_qrean(QREAN_CODE_TYPE_QR);
+
+					for (int version = QR_VERSION_1; version <= QR_VERSION_40; version++) {
+						qrean_set_qr_version(qrean, (qr_version_t)version);
+
+						qrdetector_perspective_t warp = create_qrdetector_perspective(qrean, src);
+						qrdetector_perspective_setup_by_finder_pattern_qr(&warp, points);
+
+						if (qrean_read_qr_finder_pattern(qrean, 0) > 10) continue;
+
+						qrdetector_perspective_fit_for_qr(&warp);
+
+						if (qrean_set_qr_format_info(qrean, qrean_read_qr_format_info(qrean))) {
+							if (qrean_read_qr_version(qrean) != version) continue;
+
+							if (qrean_fix_errors(qrean) >= 0) {
+								on_found(&warp, opaque);
+								found++;
+								break;
+							}
+						}
+					}
+
+					qrean_free(qrean);
+				}
+			}
+		}
+	}
+
+	return found;
+}
+
+static image_point_t find_corner(image_t *img, image_point_t c, image_pixel_t pix, float max_dist, float center_theta, float delta_theta)
+{
+	for (float r = max_dist; r > 0; r -= 0.2) {
+		float theta;
+		for (theta = center_theta - delta_theta; theta <= center_theta + delta_theta; theta += 1 / max_dist) {
+			float x = c.x + r * cos(theta);
+			float y = c.y + r * sin(theta);
+			if (image_read_pixel(img, POINT(x, y)) == pix) {
+				return POINT(x, y);
+			}
+		}
+	}
+	return c;
+}
+
+static image_point_t find_corner_finder_pattern(qrdetector_perspective_t *warp, image_point_t a, float angle, float dist, int corner_size)
+{
+	float modsize = image_point_distance(warp->dst[0], warp->dst[1]) / 7;
+
+	image_point_t last_p = POINT_INVALID;
+	int found = 0;
+
+	for (float theta = angle - M_PI / 32; theta <= angle + M_PI / 32; theta += 1 / dist) {
+		runlength_t rl = create_runlength();
+		for (int i = 0; i < dist * 2; i += 1) {
+			image_point_t p = POINT(a.x + i * cos(theta), a.y + i * sin(theta));
+			image_pixel_t pix = image_read_pixel(warp->img, p) == 0 ? 1 : 0;
+			if (runlength_push_value(&rl, pix)) {
+				int ratio = round(runlength_get_count(&rl, 1) / modsize);
+				if (ratio != 0 && ratio != 5 && ratio != 6 && ratio != 7 && ratio != 1 && ratio != 3) {
+					break;
+				}
+			}
+
+			if (runlength_match_ratio(&rl, 7, 1, 1, 1, 1, 1, corner_size, 2) && !pix) {
+				float n = i - runlength_get_count(&rl, 0) - runlength_get_count(&rl, 0) / 2.0;
+				image_point_t p = POINT(a.x + n * cos(theta), a.y + n * sin(theta));
+
+				if (image_read_pixel(warp->img, p) != 0) continue;
+
+				if (found < n) {
+					image_t *work = image_clone(warp->img);
+					image_paint_result_t painted = image_paint(work, p, PIXEL(255, 0, 0));
+					image_point_t c = image_extent_center(&painted.extent);
+					float dist = image_point_distance(c, p);
+					p = find_corner(work, c, PIXEL(255, 0, 0), dist * 1.1, image_point_angle(c, p), 1 / dist);
+					free(work);
+
+					found = n;
+					last_p = p;
+				}
+			}
+		}
+	}
+
+	return last_p;
+}
+
+int qrdetector_perspective_fit_for_rmqr(qrdetector_perspective_t *warp)
+{
+	image_point_t a = image_point_transform(POINT(0, 0), warp->h);
+	image_point_t b = image_point_transform(POINT(warp->qrean->canvas.symbol_width - 1, 0), warp->h);
+	image_point_t c = image_point_transform(POINT(warp->qrean->canvas.symbol_width - 1, warp->qrean->canvas.symbol_height - 1), warp->h);
+	image_point_t d = image_point_transform(POINT(0, warp->qrean->canvas.symbol_height - 1), warp->h);
+	float modsize = image_point_distance(warp->dst[0], warp->dst[1]) / 7;
+	float delta = 0.5 / modsize;
+
+	image_point_t rt = find_corner_finder_pattern(warp, a, image_point_angle(a, b), image_point_distance(a, b), 3);
+	image_point_t lb = find_corner_finder_pattern(warp, a, image_point_angle(a, d), image_point_distance(a, d), 3);
+	if (POINT_IS_INVALID(lb)) lb = d;
+	image_point_t rb = find_corner_finder_pattern(warp, lb, image_point_angle(d, c), image_point_distance(d, c), 5);
+	image_point_t lt = find_corner_finder_pattern(warp, lb, image_point_angle(d, a), image_point_distance(d, a), 7);
+
+	qrdetector_perspective_t backup = *warp;
+
+	if (!POINT_IS_INVALID(lt)) {
+		warp->src[0] = POINT(-0.5 + delta, -0.5 + delta);
+		warp->dst[0] = lt;
+	}
+
+	warp->src[1] = POINT(warp->qrean->canvas.symbol_width - 0.5 - delta, -0.5 + delta);
+	warp->dst[1] = rt;
+
+	warp->src[2] = POINT(warp->qrean->canvas.symbol_width - 0.5 - delta, warp->qrean->canvas.symbol_height - 0.5 - delta);
+	warp->dst[2] = rb;
+
+	if (lb.x != d.x || lb.y != d.y) {
+		warp->src[3] = POINT(-0.5 + delta, warp->qrean->canvas.symbol_height - 0.5 - delta);
+		warp->dst[3] = lb;
+	}
+	warp->h = create_image_transform_matrix(warp->src, warp->dst);
+
+	int score = qrean_read_qr_corner_finder_pattern(warp->qrean, 0);
+	if (score < 10) return 1;
+
+	// restore if it doesn't fit
+	*warp = backup;
+	return 0;
+}
+
+int qrdetector_try_decode_rmqr(image_t *src, qrdetector_finder_candidate_t *candidates, int num_candidates,
+	void (*on_found)(qrdetector_perspective_t *warp, void *opaque), void *opaque)
+{
+	int found = 0;
+	for (int i = 0; i < num_candidates; i++) {
+		for (int c = 0; c < 4; c++) {
+			qrean_t *qrean = new_qrean(QREAN_CODE_TYPE_RMQR);
+			qrean_set_qr_version(qrean, QR_VERSION_R17x139); // max size
+
+			qrdetector_perspective_t warp = create_qrdetector_perspective(qrean, src);
+			qrdetector_perspective_setup_by_finder_pattern_ring_corners(&warp, candidates[i].corners, c);
+
+			if (!qrean_set_qr_format_info(qrean, qrean_read_qr_format_info(qrean))) continue;
+			qrean_debug_printf("Detected rMQR version: %s\n", qrspec_get_version_string(qrean->qr.version));
+
+			qrdetector_perspective_fit_for_rmqr(&warp);
+			// if (qrean_read_qr_timing_pattern(qrean, 0) > 10) continue;
+
+				on_found(&warp, opaque);
+			if (qrean_fix_errors(qrean) >= 0) {
+				found++;
+			} else {
+				qrean_dump(qrean, stderr);
+			}
+		}
+	}
+
+	return found;
+}
+
+int qrdetector_try_decode_mqr(image_t *src, qrdetector_finder_candidate_t *candidates, int num_candidates,
+	void (*on_found)(qrdetector_perspective_t *warp, void *opaque), void *opaque)
+{
+	int found = 0;
+	for (int i = 0; i < num_candidates; i++) {
+		for (int c = 0; c < 4; c++) {
+			qrean_t *qrean = new_qrean(QREAN_CODE_TYPE_MQR);
+			qrean_set_qr_version(qrean, QR_VERSION_M4); // max size
+
+			qrdetector_perspective_t warp = create_qrdetector_perspective(qrean, src);
+			qrdetector_perspective_setup_by_finder_pattern_ring_corners(&warp, candidates[i].corners, c);
+
+			if (!qrean_set_qr_format_info(qrean, qrean_read_qr_format_info(qrean))) continue;
+			if (qrean_read_qr_timing_pattern(qrean, 0) > 10) continue;
+
+			if (qrean_fix_errors(qrean) >= 0) {
+				on_found(&warp, opaque);
+				found++;
+			}
+		}
+	}
+
+	return found;
 }

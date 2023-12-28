@@ -26,7 +26,7 @@ bitpos_t qrean_write_itf_string(qrean_t *qrean, const void *buf, size_t len, qre
 	if (len % 2 != 0) {
 		return 0;
 	}
-	for (int i = 0; i < len; i++) {
+	for (size_t i = 0; i < len; i++) {
 		if (src[i] < '0' || src[i] > '9') return 0;
 	}
 
@@ -55,8 +55,5 @@ bitpos_t qrean_write_itf_string(qrean_t *qrean, const void *buf, size_t len, qre
 
 qrean_code_t qrean_code_itf = {
 	.type = QREAN_CODE_TYPE_ITF,
-
 	.write_data = qrean_write_itf_string,
-
-	.init = NULL,
 };

@@ -48,8 +48,11 @@ typedef struct {
 	float y;
 } image_point_t;
 #define POINT(x, y) create_image_point((x), (y))
-#define POINT_X(p)  p.x
-#define POINT_Y(p)  p.y
+#define POINT_X(p)  ((p).x)
+#define POINT_Y(p)  ((p).y)
+#define POINT_INVALID create_image_point(NAN, NAN)
+#define POINT_IS_INVALID(p) (isnan((p).x) || isnan((p).y))
+
 image_point_t create_image_point(float x, float y);
 image_point_t image_point_add(image_point_t a, image_point_t b);
 image_point_t image_point_sub(image_point_t a, image_point_t b);
@@ -70,6 +73,7 @@ void image_extent_dump(image_extent_t *extent);
 image_paint_result_t image_paint(image_t *img, image_point_t p, image_pixel_t pix);
 float image_point_norm(image_point_t a);
 float image_point_distance(image_point_t a, image_point_t b);
+float image_point_angle(image_point_t base, image_point_t p);
 void image_draw_extent(image_t *img, image_extent_t extent, image_pixel_t pix, int thickness);
 
 image_point_t image_point_transform(image_point_t p, image_transform_matrix_t matrix);

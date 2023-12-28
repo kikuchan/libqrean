@@ -19,6 +19,40 @@ A portable QR and Barcode generation / manipulation library written in C.
 ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
 % qrean -t mQR Hello > mqr.png
 % qrean -o qr.png Hello 
+% qrean -h
+Usage: ../cli/qrean [OPTION]... [STRING]
+Generate QR/Barcode image
+
+  General options:
+    -h                Display this help
+    -o FILENAME       Image save as FILENAME
+    -i FILENAME       Data read from FILENAME
+    -f FORMAT         Output format, one of the following:
+                          TXT    (default for tty)
+                          PNG    (default for non tty)
+                          PPM
+    -t CODE           Output CODE, one of the following:
+                          QR, mQR, rMQR
+                          EAN13, EAN8, UPCA
+                          CODE39, CODE93
+                          ITF, NW7
+
+  QR family specific options:
+    -v VERSION        Use VERSION, one of the following:
+                          1 ... 40           (for QR)
+                          M1 ... M4          (for mQR)
+                          R7x43 ... R17x139  (for rMQR)
+                            R{H}x{W}
+                              H: 7, 9, 11, 13, 15, 17
+                              W: 43, 59, 77, 99, 139
+    -m MASK           Use MASK pattern, one of the following:
+                          0 ... 7            (for QR)
+                          0 ... 4            (for mQR)
+                          0                  (for rMQR)
+    -l LEVEL          Use ecc LEVEL, one of the following:
+                          L, M, Q, H         (for QR)
+                          L, M, Q            (for mQR)
+                             M,    H         (for rMQR)
 ```
 
 # Library Usage
@@ -67,8 +101,8 @@ You can also configure a callback to draw a pixel directly on a screen for examp
 | type                | encode | decode | detect
 |---------------------|--------|--------|-----------
 | QR                  | ✓      | ✓      | ✓ (See [examples/detect.c](examples/detect.c))
-| mQR                 | ✓      | ✓      | ✓ (See [examples/detect-mqr.c](examples/detect-mqr.c))
-| rMQR                | ✓      | ✓      | ✓ (See [examples/detect-rmqr.c](examples/detect-rmqr.c))
+| mQR                 | ✓      | ✓      | ✓ (See [examples/detect.c](examples/detect.c))
+| rMQR                | ✓      | ✓      | ✓ (See [examples/detect.c](examples/detect.c))
 | UPCA / EAN13 / EAN8 | ✓      | -      | -
 | CODE39              | ✓      | -      | -
 | CODE93              | ✓      | -      | -

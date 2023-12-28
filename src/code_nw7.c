@@ -59,7 +59,7 @@ bitpos_t qrean_write_nw7_string(qrean_t *qrean, const void *buf, size_t len, qre
 	bitstream_t bs = qrean_create_bitstream(qrean, NULL);
 
 	// --- for animation, symbol size should be determined first
-	for (const char *p = src; p - src < len; p++) {
+	for (const char *p = src; p < src + len; p++) {
 		const char *q = strchr(symbol_lookup, *p);
 		if (!q) return 0;
 
@@ -73,7 +73,7 @@ bitpos_t qrean_write_nw7_string(qrean_t *qrean, const void *buf, size_t len, qre
 	bitstream_write_bits(&bs, symbol[start_code].v, symbol[start_code].w); // start symbol
 	bitstream_write_bits(&bs, 0, 1);
 
-	for (const char *p = src; p - src < len; p++) {
+	for (const char *p = src; p < src + len; p++) {
 		const char *q = strchr(symbol_lookup, *p);
 		if (!q) return 0;
 
@@ -89,8 +89,5 @@ bitpos_t qrean_write_nw7_string(qrean_t *qrean, const void *buf, size_t len, qre
 
 qrean_code_t qrean_code_nw7 = {
 	.type = QREAN_CODE_TYPE_NW7,
-
 	.write_data = qrean_write_nw7_string,
-
-	.init = NULL,
 };

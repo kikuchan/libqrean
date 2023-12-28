@@ -533,16 +533,16 @@ static size_t qrean_try_write_qr_data(qrean_t *qrean, const void *buffer, size_t
 		break;
 	}
 
-	if (writer && qrpayload_write_string(&payload, buffer, len, writer)) {
+	if (writer && qrpayload_write_string(&payload, (const char *)buffer, len, writer)) {
 		qr_maskpattern_t min_mask = qrean->qr.mask;
 		if (qrean->qr.mask == QR_MASKPATTERN_AUTO) {
 			unsigned int min_score = UINT_MAX;
 			min_mask = QR_MASKPATTERN_0; // just in case
 
 			for (uint_fast8_t m = QR_MASKPATTERN_0; m <= QR_MASKPATTERN_7; m++) {
-				if (!qrspec_is_valid_combination(qrean->qr.version, qrean->qr.level, m)) continue;
+				if (!qrspec_is_valid_combination(qrean->qr.version, qrean->qr.level, (qr_maskpattern_t)m)) continue;
 
-				qrean_set_qr_maskpattern(qrean, m);
+				qrean_set_qr_maskpattern(qrean, (qr_maskpattern_t)m);
 				qrean_write_frame(qrean);
 				qrean_write_qr_payload(qrean, &payload);
 
@@ -575,9 +575,9 @@ size_t qrean_write_qr_data(qrean_t *qrean, const void *buffer, size_t len, qrean
 
 	qr_maskpattern_t mask = qrean->qr.mask;
 	for (int v = min_v; v <= max_v; v++) {
-		if (!qrspec_is_valid_combination(v, qrean->qr.level, mask)) continue;
+		if (!qrspec_is_valid_combination((qr_version_t)v, qrean->qr.level, mask)) continue;
 
-		qrean_set_qr_version(qrean, v);
+		qrean_set_qr_version(qrean, (qr_version_t)v);
 		qrean_set_qr_maskpattern(qrean, mask);
 		bitpos_t retval = qrean_try_write_qr_data(qrean, buffer, len, data_type);
 		if (retval > 0) return retval / 8;
@@ -591,7 +591,7 @@ size_t qrean_read_qr_data(qrean_t *qrean, void *buffer, size_t size)
 	qrpayload_init(&payload, qrean->qr.version, qrean->qr.level);
 	qrean_read_qr_payload(qrean, &payload);
 
-	size_t len = qrpayload_read_string(&payload, buffer, size);
+	size_t len = qrpayload_read_string(&payload, (char *)buffer, size);
 
 	qrpayload_deinit(&payload);
 	return len;
@@ -630,7 +630,7 @@ int qrean_check_qr_combination(qrean_t *qrean)
 	}
 
 	for (int v = min_v; v <= max_v; v++) {
-		if (qrspec_is_valid_combination(v, qrean->qr.level, qrean->qr.mask)) return 1;
+		if (qrspec_is_valid_combination((qr_version_t)v, qrean->qr.level, qrean->qr.mask)) return 1;
 	}
 	return 0;
 }

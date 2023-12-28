@@ -60,7 +60,7 @@ bitpos_t qrean_write_ean13_like_string(qrean_t *qrean, const void *buf, size_t l
 	int datasize_half;
 
 	// sanity checks
-	for (int i = 0; i < len; i++) {
+	for (size_t i = 0; i < len; i++) {
 		if (src[i] < '0' || src[i] > '9') return 0;
 	}
 
@@ -141,23 +141,14 @@ bitpos_t qrean_write_ean13_like_string(qrean_t *qrean, const void *buf, size_t l
 
 qrean_code_t qrean_code_ean13 = {
 	.type = QREAN_CODE_TYPE_EAN13,
-
 	.write_data = qrean_write_ean13_like_string,
-
-	.init = NULL,
 };
 
 qrean_code_t qrean_code_ean8 = {
 	.type = QREAN_CODE_TYPE_EAN8,
-
 	.write_data = qrean_write_ean13_like_string,
-
-	.init = NULL,
 };
 qrean_code_t qrean_code_upca = {
 	.type = QREAN_CODE_TYPE_UPCA,
-
 	.write_data = qrean_write_ean13_like_string,
-
-	.init = NULL,
 };

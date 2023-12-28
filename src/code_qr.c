@@ -288,10 +288,10 @@ qrean_code_t qrean_code_qr = {
 	.data_iter = composed_data_iter,
 
 	.qr = {
-		 .format_info = {format_info_iter, NULL, QR_FORMATINFO_SIZE},
-		 .version_info = {version_info_iter, NULL, QR_VERSIONINFO_SIZE},
 		 .finder_pattern = {finder_pattern_iter, finder_pattern_bits, QR_FINDER_PATTERN_SIZE},
 		 .timing_pattern = {timing_pattern_iter, timing_pattern_bits, 8},
 		 .alignment_pattern = {alignment_pattern_iter, alignment_pattern_bits, QR_ALIGNMENT_PATTERN_SIZE},
+		 .format_info = {format_info_iter, NULL, QR_FORMATINFO_SIZE},
+		 .version_info = {version_info_iter, NULL, QR_VERSIONINFO_SIZE},
 	 },
 };

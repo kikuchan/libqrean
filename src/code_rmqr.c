@@ -313,11 +313,11 @@ qrean_code_t qrean_code_rmqr = {
 	.data_iter = composed_data_iter,
 
 	.qr = {
-		 .format_info = {format_info_iter, NULL, QR_FORMATINFO_SIZE},
 		 .finder_pattern = {finder_pattern_iter, finder_pattern_bits, QR_FINDER_PATTERN_SIZE},
 		 .finder_sub_pattern = {finder_sub_pattern_iter, finder_sub_pattern_bits, QR_FINDER_SUB_PATTERN_SIZE},
 		 .corner_finder_pattern = {corner_finder_pattern_iter, corner_finder_pattern_bits, QR_CORNER_FINDER_PATTERN_SIZE},
 		 .timing_pattern = {timing_pattern_iter, timing_pattern_bits, 8},
 		 .alignment_pattern = {alignment_pattern_iter, alignment_pattern_bits, QR_ALIGNMENT_PATTERN_SIZE},
+		 .format_info = {format_info_iter, NULL, QR_FORMATINFO_SIZE},
 	 },
 };

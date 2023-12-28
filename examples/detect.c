@@ -39,60 +39,32 @@ bit_t write_image_pixel(qrean_t *qrean, bitpos_t x, bitpos_t y, bitpos_t pos, bi
 #endif
 
 
-int tryDecode(image_t *imgsrc, image_point_t src[3]) {
-	image_t *img = image_clone(imgsrc);
-	qrean_t *qrean = new_qrean(QREAN_CODE_TYPE_QR);
-	int found = 0;
-
-	for (int version = QR_VERSION_1; version <= QR_VERSION_40 && !found; version++) {
-		qrean_set_qr_version(qrean, version);
-
-		qrdetector_perspective_t warp = create_qrdetector_perspective(qrean, img);
-		qrdetector_perspective_setup_by_finder_pattern_qr(&warp, src);
+static void on_found(qrdetector_perspective_t *warp, void *opaque) {
+	char buffer[1024];
 
 #ifdef DEBUG_DETECT
-		qrean_on_write_pixel(qrean, write_image_pixel, &warp);
+	image_point_t points[] = {
+		image_point_transform(POINT(0, 0), warp->h),
+		image_point_transform(POINT(warp->qrean->canvas.symbol_width - 1, 0), warp->h),
+		image_point_transform(POINT(warp->qrean->canvas.symbol_width - 1, warp->qrean->canvas.symbol_height - 1), warp->h),
+		image_point_transform(POINT(0, warp->qrean->canvas.symbol_height - 1), warp->h),
+	};
+	image_draw_polygon(detected, 4, points, PIXEL(0, 255, 0), 1);
+
+	qrean_on_write_pixel(warp->qrean, write_image_pixel, warp);
+	qrpayload_t payload = create_qrpayload(warp->qrean->qr.version, warp->qrean->qr.level);
+	qrean_read_qr_payload(warp->qrean, &payload);
+	qrean_write_frame(warp->qrean);
+	qrean_write_qr_payload(warp->qrean, &payload);
 #endif
 
-		if (qrean_read_qr_finder_pattern(qrean, 0) > 10) continue;
-
-		if (qrdetector_perspective_fit_by_alignment_pattern(&warp)) {
-			fprintf(stderr, "   ** Ajusted\n");
-		}
-
-		if (qrean_set_qr_format_info(qrean, qrean_read_qr_format_info(qrean))) {
-			char buf[1024];
-
-			if (qrean_fix_errors(qrean) >= 0) {
-				size_t l = qrean_read_string(qrean, buf, sizeof(buf));
-#ifndef DEBUG_DETECT
-				qrean_dump(qrean, stderr);
-				printf("Found: RECV(%zu): '%s'\n", l, buf);
+	qrean_read_string(warp->qrean, buffer, sizeof(buffer));
+#ifdef DEBUG_DETECT
+	fprintf(stderr, "%s\n", buffer);
 #else
-				safe_fprintf(stderr, "RECV(%zu): '%s'\n", l, buf);
-
-				// draw read points on `detected` image for debug
-				qrean_write_qr_finder_pattern(qrean);
-				qrean_write_qr_alignment_pattern(qrean);
-				qrean_write_qr_timing_pattern(qrean);
-				qrean_write_qr_format_info(qrean);
-
-				qrpayload_t *payload = new_qrpayload(qrean->qr.version, qrean->qr.level);
-				qrean_read_qr_payload(qrean, payload);
-				qrean_write_qr_payload(qrean, payload);
-				qrpayload_free(payload);
+	printf("%s\n", buffer);
 #endif
-
-				found = 1;
-			}
-		}
-	}
-
-	qrean_free(qrean);
-
-	return found;
 }
-
 
 void done(pngle_t *pngle) {
 	image_t *mono = image_clone(img);
@@ -111,27 +83,13 @@ void done(pngle_t *pngle) {
 	}
 #endif
 
-	// try all possible pairs!
-	for (int i = 0; i < num_candidates; i++) {
-		for (int j = i + 1; j < num_candidates; j++) {
-			for (int k = j + 1; k < num_candidates; k++) {
-				int idx[] = { i, j, k, i, k, j, j, i, k, j, k, i, k, i, j, k, j, i };
-				for (int l = 0; l < 6; l++) {
-					image_point_t points[] = {
-						candidates[idx[l * 3 + 0]].center,
-						candidates[idx[l * 3 + 1]].center,
-						candidates[idx[l * 3 + 2]].center,
-					};
-
-					found += tryDecode(mono, points);
-				}
-			}
-		}
-	}
+	found += qrdetector_try_decode_qr(mono, candidates, num_candidates, on_found, NULL);
+	found += qrdetector_try_decode_mqr(mono, candidates, num_candidates, on_found, NULL);
+	found += qrdetector_try_decode_rmqr(mono, candidates, num_candidates, on_found, NULL);
 
 	if (!found) {
 #ifndef DEBUG_DETECT
-		printf("Not found\n");
+		fprintf(stderr, "Not found\n");
 #endif
 	}
 #ifdef DEBUG_DETECT
