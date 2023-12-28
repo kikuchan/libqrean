@@ -10,10 +10,15 @@ A portable QR and Barcode generation / manipulation library written in C.
 
 # CLI Usage
 ```sh
-% qrean Hello
-...
+% qrean -t rmqr Hello
+███████████████████████████████████████████████████████████████
+██ ▄▄▄▄▄ █ █ ▀ █ ▀▄▀ ▄ █▄▀ █▄█ █▄▀ █▄█▄█ ▄ █▄█ ▀ █ ▀ █▄▀▄█ ▄ ██
+██ █   █ █ ▀█▄███▄ █▄▄   ▄▄▄▄ █▄▀█▀▄▄ ▀ ▄▄  ▀█▄ ▄▀█▄  ▄▀ ▄▄▄ ██
+██ █▄▄▄█ █▀▄ ██▀ ██▀ ▄  ▄▀▀██ ▀▀▀█▄ ▀█   ▄  ▄█▀  ██ ▄ ▄█ █▄█ ██
+██▄▄▄▄▄▄▄█▄█▄█▄█▄█▄█▄▄▄█▄█▄█▄█▄█▄█▄█▄█▄█▄▄▄█▄█▄█▄█▄█▄█▄█▄▄▄▄▄██
+▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
 % qrean -t mQR Hello > mqr.png
-% qrean -o rmqr.png -t rMQR Hello 
+% qrean -o qr.png Hello 
 ```
 
 # Library Usage

@@ -46,6 +46,9 @@ int usage(FILE *out)
 	fprintf(out, "                          1 ... 40           (for QR)\n");
 	fprintf(out, "                          M1 ... M4          (for mQR)\n");
 	fprintf(out, "                          R7x43 ... R17x139  (for rMQR)\n");
+	fprintf(out, "                            R{H}x{W}\n");
+	fprintf(out, "                              H: 7, 9, 11, 13, 15, 17\n");
+	fprintf(out, "                              W: 43, 59, 77, 99, 139\n");
 	fprintf(out, "    -m MASK           Use MASK pattern, one of the following:\n");
 	fprintf(out, "                          0 ... 7            (for QR)\n");
 	fprintf(out, "                          0 ... 4            (for mQR)\n");
@@ -162,15 +165,19 @@ int main(int argc, char *argv[])
 
 		case 'l':
 			switch (optarg[0]) {
+			case 'l':
 			case 'L':
 				level = QR_ERRORLEVEL_L;
 				break;
+			case 'm':
 			case 'M':
 				level = QR_ERRORLEVEL_M;
 				break;
+			case 'q':
 			case 'Q':
 				level = QR_ERRORLEVEL_Q;
 				break;
+			case 'h':
 			case 'H':
 				level = QR_ERRORLEVEL_H;
 				break;
