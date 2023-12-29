@@ -397,14 +397,14 @@ void qrean_write_qr_format_info(qrean_t *qrean)
 	}
 }
 
-qrformat_t qrean_read_qr_format_info(qrean_t *qrean)
+qrformat_t qrean_read_qr_format_info(qrean_t *qrean, int idx)
 {
 	bitstream_t bs = qrean_create_bitstream(qrean, qrean->code->qr.format_info.iter);
 
 	qrformat_t fi1 = qrformat_from(qrean->qr.version, bitstream_read_bits(&bs, qrean->code->qr.format_info.size));
 	qrformat_t fi2 = qrformat_from(qrean->qr.version, bitstream_read_bits(&bs, qrean->code->qr.format_info.size));
 
-	if (fi1.mask != QR_MASKPATTERN_INVALID) return fi1;
+	if (idx != 1 && (idx == 0 || fi1.mask != QR_MASKPATTERN_INVALID)) return fi1;
 	return fi2;
 }
 
@@ -434,41 +434,59 @@ void qrean_write_qr_version_info(qrean_t *qrean)
 	bitstream_write_bits(&bs, vi.value, qrean->code->qr.version_info.size);
 }
 
-qrversion_t qrean_read_qr_version_info(qrean_t *qrean)
+qrversion_t qrean_read_qr_version_info(qrean_t *qrean, int idx)
 {
-	bitstream_t bs = qrean_create_bitstream(qrean, qrean->code->qr.version_info.iter);
-
-	if (QREAN_IS_TYPE_RMQR(qrean) || QREAN_IS_TYPE_MQR(qrean) || qrean->qr.version < QR_VERSION_7) {
+	if (QREAN_IS_TYPE_RMQR(qrean) || QREAN_IS_TYPE_MQR(qrean)) {
+		// XXX: dummy
+		qrformat_t fi = qrean_read_qr_format_info(qrean, idx);
+		return qrversion_for(fi.version);
+	}
+	if (qrean->qr.version < QR_VERSION_7) {
 		// XXX: dummy
 		return qrversion_for(qrean->qr.version);
 	}
 
+	bitstream_t bs = qrean_create_bitstream(qrean, qrean->code->qr.version_info.iter);
+
 	qrversion_t vi1 = qrversion_from(bitstream_read_bits(&bs, qrean->code->qr.version_info.size));
 	qrversion_t vi2 = qrversion_from(bitstream_read_bits(&bs, qrean->code->qr.version_info.size));
 
-	if (vi1.version != QR_VERSION_INVALID) return vi1;
+	if (idx != 1 && (idx == 0 || vi1.version != QR_VERSION_INVALID)) return vi1;
 	return vi2;
 }
 
 qr_version_t qrean_read_qr_version(qrean_t *qrean)
 {
-	qrversion_t v = qrean_read_qr_version_info(qrean);
+	qrversion_t v = qrean_read_qr_version_info(qrean, -1);
 	return v.version;
 }
 
-#define DEFINE_QR_PATTERN(name)                                                                                                         \
-	void qrean_write_qr_##name(qrean_t *qrean)                                                                                          \
-	{                                                                                                                                   \
-		if (!qrean->code->qr.name.bits) return;                                                                                         \
-		bitstream_t bs = qrean_create_bitstream(qrean, qrean->code->qr.name.iter);                                                      \
-		bitstream_write(&bs, qrean->code->qr.name.bits, qrean->code->qr.name.size, 0);                                                  \
-	}                                                                                                                                   \
-                                                                                                                                        \
-	int qrean_read_qr_##name(qrean_t *qrean, int idx)                                                                                   \
-	{                                                                                                                                   \
-		if (!qrean->code->qr.name.bits) return 0;                                                                                       \
-		bitstream_t bs = qrean_create_bitstream(qrean, qrean->code->qr.name.iter);                                                      \
-		return calc_pattern_mismatch_error_rate(&bs, qrean->code->qr.name.bits, qrean->code->qr.name.size, idx ? idx : 0, idx ? 1 : 0); \
+qr_maskpattern_t qrean_read_qr_maskpattern(qrean_t *qrean)
+{
+	qrformat_t fi = qrean_read_qr_format_info(qrean, -1);
+	return fi.mask;
+}
+
+qr_errorlevel_t qrean_read_qr_errorlevel(qrean_t *qrean)
+{
+	qrformat_t fi = qrean_read_qr_format_info(qrean, -1);
+	return fi.level;
+}
+
+#define DEFINE_QR_PATTERN(name)                                                                               \
+	void qrean_write_qr_##name(qrean_t *qrean)                                                                \
+	{                                                                                                         \
+		if (!qrean->code->qr.name.bits) return;                                                               \
+		bitstream_t bs = qrean_create_bitstream(qrean, qrean->code->qr.name.iter);                            \
+		bitstream_write(&bs, qrean->code->qr.name.bits, qrean->code->qr.name.size, 0);                        \
+	}                                                                                                         \
+                                                                                                              \
+	int qrean_read_qr_##name(qrean_t *qrean, int idx)                                                         \
+	{                                                                                                         \
+		if (!qrean->code->qr.name.bits) return 0;                                                             \
+		bitstream_t bs = qrean_create_bitstream(qrean, qrean->code->qr.name.iter);                            \
+		return calc_pattern_mismatch_error_rate(                                                              \
+			&bs, qrean->code->qr.name.bits, qrean->code->qr.name.size, idx >= 0 ? idx : 0, idx >= 0 ? 1 : 0); \
 	}
 
 DEFINE_QR_PATTERN(finder_pattern);

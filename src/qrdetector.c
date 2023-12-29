@@ -270,11 +270,11 @@ int qrdetector_try_decode_qr(image_t *src, qrdetector_finder_candidate_t *candid
 						qrdetector_perspective_t warp = create_qrdetector_perspective(qrean, src);
 						qrdetector_perspective_setup_by_finder_pattern_qr(&warp, points);
 
-						if (qrean_read_qr_finder_pattern(qrean, 0) > 10) continue;
+						if (qrean_read_qr_finder_pattern(qrean, -1) > 10) continue;
 
 						qrdetector_perspective_fit_for_qr(&warp);
 
-						if (qrean_set_qr_format_info(qrean, qrean_read_qr_format_info(qrean))) {
+						if (qrean_set_qr_format_info(qrean, qrean_read_qr_format_info(qrean, -1))) {
 							if (qrean_read_qr_version(qrean) != version) continue;
 
 							if (qrean_fix_errors(qrean) >= 0) {
@@ -386,7 +386,7 @@ int qrdetector_perspective_fit_for_rmqr(qrdetector_perspective_t *warp)
 	}
 	warp->h = create_image_transform_matrix(warp->src, warp->dst);
 
-	int score = qrean_read_qr_corner_finder_pattern(warp->qrean, 0);
+	int score = qrean_read_qr_corner_finder_pattern(warp->qrean, -1);
 	if (score < 10) return 1;
 
 	// restore if it doesn't fit
@@ -406,17 +406,15 @@ int qrdetector_try_decode_rmqr(image_t *src, qrdetector_finder_candidate_t *cand
 			qrdetector_perspective_t warp = create_qrdetector_perspective(qrean, src);
 			qrdetector_perspective_setup_by_finder_pattern_ring_corners(&warp, candidates[i].corners, c);
 
-			if (!qrean_set_qr_format_info(qrean, qrean_read_qr_format_info(qrean))) continue;
+			if (!qrean_set_qr_format_info(qrean, qrean_read_qr_format_info(qrean, -1))) continue;
 			qrean_debug_printf("Detected rMQR version: %s\n", qrspec_get_version_string(qrean->qr.version));
 
 			qrdetector_perspective_fit_for_rmqr(&warp);
-			// if (qrean_read_qr_timing_pattern(qrean, 0) > 10) continue;
+			// if (qrean_read_qr_timing_pattern(qrean, -1) > 10) continue;
 
-				on_found(&warp, opaque);
 			if (qrean_fix_errors(qrean) >= 0) {
+				on_found(&warp, opaque);
 				found++;
-			} else {
-				qrean_dump(qrean, stderr);
 			}
 		}
 	}
@@ -436,8 +434,8 @@ int qrdetector_try_decode_mqr(image_t *src, qrdetector_finder_candidate_t *candi
 			qrdetector_perspective_t warp = create_qrdetector_perspective(qrean, src);
 			qrdetector_perspective_setup_by_finder_pattern_ring_corners(&warp, candidates[i].corners, c);
 
-			if (!qrean_set_qr_format_info(qrean, qrean_read_qr_format_info(qrean))) continue;
-			if (qrean_read_qr_timing_pattern(qrean, 0) > 10) continue;
+			if (!qrean_set_qr_format_info(qrean, qrean_read_qr_format_info(qrean, -1))) continue;
+			if (qrean_read_qr_timing_pattern(qrean, -1) > 10) continue;
 
 			if (qrean_fix_errors(qrean) >= 0) {
 				on_found(&warp, opaque);

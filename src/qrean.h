@@ -149,15 +149,17 @@ int qrean_fix_errors(qrean_t *qrean);
 int qrean_check_errors(qrean_t *qrean);
 
 // ========= code interaction (read/write)
-qrformat_t qrean_read_qr_format_info(qrean_t *qrean);
-qrversion_t qrean_read_qr_version_info(qrean_t *qrean);
-qr_version_t qrean_read_qr_version(qrean_t *qrean);
-
+qrformat_t qrean_read_qr_format_info(qrean_t *qrean, int idx);
+qrversion_t qrean_read_qr_version_info(qrean_t *qrean, int idx);
 int qrean_read_qr_finder_pattern(qrean_t *qrean, int idx);
 int qrean_read_qr_finder_sub_pattern(qrean_t *qrean, int idx);
 int qrean_read_qr_corner_finder_pattern(qrean_t *qrean, int idx);
 int qrean_read_qr_timing_pattern(qrean_t *qrean, int idx);
 int qrean_read_qr_alignment_pattern(qrean_t *qrean, int idx);
+
+qr_version_t qrean_read_qr_version(qrean_t *qrean);
+qr_maskpattern_t qrean_read_qr_maskpattern(qrean_t *qrean);
+qr_errorlevel_t qrean_read_qr_errorlevel(qrean_t *qrean);
 
 void qrean_write_qr_format_info(qrean_t *qrean);
 void qrean_write_qr_version_info(qrean_t *qrean);

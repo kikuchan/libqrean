@@ -47,10 +47,10 @@ typedef struct {
 	float x;
 	float y;
 } image_point_t;
-#define POINT(x, y) create_image_point((x), (y))
-#define POINT_X(p)  ((p).x)
-#define POINT_Y(p)  ((p).y)
-#define POINT_INVALID create_image_point(NAN, NAN)
+#define POINT(x, y)         create_image_point((x), (y))
+#define POINT_X(p)          ((p).x)
+#define POINT_Y(p)          ((p).y)
+#define POINT_INVALID       create_image_point(NAN, NAN)
 #define POINT_IS_INVALID(p) (isnan((p).x) || isnan((p).y))
 
 image_point_t create_image_point(float x, float y);

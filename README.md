@@ -9,7 +9,7 @@ A portable QR and Barcode generation / manipulation library written in C.
 ![rmqr-animation](https://github.com/kikuchan/libqrean/assets/445223/e56d97b3-24a3-44d2-8ee3-d0f4339c6157)
 
 # CLI Usage
-```sh
+```
 % qrean -t rmqr Hello
 ███████████████████████████████████████████████████████████████
 ██ ▄▄▄▄▄ █ █ ▀ █ ▀▄▀ ▄ █▄▀ █▄█ █▄▀ █▄█▄█ ▄ █▄█ ▀ █ ▀ █▄▀▄█ ▄ ██
