@@ -40,6 +40,7 @@ int usage(FILE *out)
 	fprintf(out, "                          EAN13, EAN8, UPCA\n");
 	fprintf(out, "                          CODE39, CODE93\n");
 	fprintf(out, "                          ITF, NW7\n");
+	fprintf(out, "    -p PADDING        Comma-separated PADDING for the code\n");
 	fprintf(out, "\n");
 	fprintf(out, "  QR family specific options:\n");
 	fprintf(out, "    -v VERSION        Use VERSION, one of the following:\n");
@@ -71,6 +72,37 @@ void image_save_as_png(image_t *img, FILE *out)
 	}
 }
 
+padding_t parse_padding(const char *src)
+{
+	padding_t padding = create_padding1(4);
+	const char *p = src;
+	unsigned long v;
+
+	for (int i = 0; i < 4; i++, src = p) {
+		v = strtoul(src, (char **)&p, 0);
+		if (src == p) break;
+
+		switch (i) {
+		case 0:
+			padding.t = padding.r = padding.b = padding.l = v;
+			break;
+		case 1:
+			padding.r = padding.l = v;
+			break;
+		case 2:
+			padding.b = v;
+			break;
+		case 3:
+			padding.l = v;
+			break;
+		}
+
+		if (p && *p && *p == ',') p++;
+	}
+
+	return padding;
+}
+
 int main(int argc, char *argv[])
 {
 	progname = argv[0];
@@ -85,8 +117,9 @@ int main(int argc, char *argv[])
 	qr_errorlevel_t level = QR_ERRORLEVEL_M;
 	qr_maskpattern_t mask = QR_MASKPATTERN_AUTO;
 	int scale = 4;
+	padding_t padding = create_padding1(4);
 
-	while ((ch = getopt(argc, argv, "hi:o:s:f:t:v:l:m:")) != -1) {
+	while ((ch = getopt(argc, argv, "hi:o:s:f:t:v:l:m:p:")) != -1) {
 		int n;
 		switch (ch) {
 		case 'h':
@@ -190,6 +223,10 @@ int main(int argc, char *argv[])
 				mask = (qr_maskpattern_t)n;
 			}
 			break;
+
+		case 'p':
+			padding = parse_padding(optarg);
+			break;
 		}
 	}
 
@@ -221,6 +258,7 @@ int main(int argc, char *argv[])
 	}
 
 	qrean_set_bitmap_scale(qrean, scale);
+	qrean_set_bitmap_padding(qrean, padding);
 	if (QREAN_IS_TYPE_QRFAMILY(qrean)) {
 		qrean_set_qr_version(qrean, version);
 		qrean_set_qr_errorlevel(qrean, level);

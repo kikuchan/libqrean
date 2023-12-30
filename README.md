@@ -20,7 +20,7 @@ A portable QR and Barcode generation / manipulation library written in C.
 % qrean -t mQR Hello > mqr.png
 % qrean -o qr.png Hello 
 % qrean -h
-Usage: ../cli/qrean [OPTION]... [STRING]
+Usage: qrean [OPTION]... [STRING]
 Generate QR/Barcode image
 
   General options:
@@ -36,6 +36,7 @@ Generate QR/Barcode image
                           EAN13, EAN8, UPCA
                           CODE39, CODE93
                           ITF, NW7
+    -p PADDING        Comma-separated PADDING for the code
 
   QR family specific options:
     -v VERSION        Use VERSION, one of the following:
