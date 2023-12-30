@@ -338,8 +338,8 @@ static image_point_t find_corner_finder_pattern(qrdetector_perspective_t *warp, 
 					image_t *work = image_clone(warp->img);
 					image_paint_result_t painted = image_paint(work, p, PIXEL(255, 0, 0));
 					image_point_t c = image_extent_center(&painted.extent);
-					float dist = image_point_distance(c, p);
-					p = find_corner(work, c, PIXEL(255, 0, 0), dist * 1.1, image_point_angle(c, p), 1 / dist);
+					float dist = image_point_distance(c, p) * 1.2;
+					p = find_corner(work, c, PIXEL(255, 0, 0), dist, image_point_angle(c, p), modsize * 1.5 / dist);
 					free(work);
 
 					found = n;
@@ -363,9 +363,18 @@ int qrdetector_perspective_fit_for_rmqr(qrdetector_perspective_t *warp)
 
 	image_point_t rt = find_corner_finder_pattern(warp, a, image_point_angle(a, b), image_point_distance(a, b), 3);
 	image_point_t lb = find_corner_finder_pattern(warp, a, image_point_angle(a, d), image_point_distance(a, d), 3);
-	if (POINT_IS_INVALID(lb)) lb = d;
+	if (POINT_IS_INVALID(lb)) {
+		image_point_t center = image_point_transform(POINT(3.5, 3.5), warp->h);
+		float dist = image_point_distance(center, d) * 1.2;
+		lb = find_corner(warp->img, center, PIXEL(0, 0, 0), dist, image_point_angle(center, d), modsize * 1.5 / dist);
+	}
 	image_point_t rb = find_corner_finder_pattern(warp, lb, image_point_angle(d, c), image_point_distance(d, c), 5);
-	image_point_t lt = find_corner_finder_pattern(warp, lb, image_point_angle(d, a), image_point_distance(d, a), 7);
+	image_point_t lt;
+	{
+		image_point_t center = image_point_transform(POINT(3.5, 3.5), warp->h);
+		float dist = image_point_distance(center, a) * 1.2;
+		lt = find_corner(warp->img, center, PIXEL(0, 0, 0), dist, image_point_angle(center, a), modsize * 1.5 / dist);
+	}
 
 	qrdetector_perspective_t backup = *warp;
 
