@@ -57,16 +57,16 @@ void bitstream_rewind(bitstream_t *bs)
 	bitstream_seek(bs, 0);
 }
 
-static bitpos_t read_iter_pos(bitstream_t *bs)
+static bitpos_t read_iter_pos(bitstream_t *bs, bitpos_t i)
 {
-	bitpos_t pos = bs->iter ? bs->iter(bs, bs->pos, bs->opaque) : bs->pos;
+	bitpos_t pos = bs->iter ? bs->iter(bs, i, bs->opaque) : i;
 	if (pos == bs->size) return BITPOS_END;
 	return pos;
 }
 
 bit_t bitstream_is_end(bitstream_t *bs)
 {
-	bitpos_t pos = read_iter_pos(bs);
+	bitpos_t pos = read_iter_pos(bs, bs->pos);
 	if (pos == BITPOS_END) return 1;
 	return 0;
 }
@@ -104,18 +104,24 @@ static bit_t bitstream_write_bit_at(bitstream_t *bs, bitpos_t pos, bit_t bit)
 	return 1;
 }
 
-bit_t bitstream_read_bit(bitstream_t *bs)
+bit_t bitstream_peek_bit(bitstream_t *bs, bitpos_t *i)
 {
 	bitpos_t pos;
-
+	bitpos_t idx = i ? *i : bs->pos;
 	do {
-		pos = read_iter_pos(bs);
+		pos = read_iter_pos(bs, idx);
 		if (pos == BITPOS_END) return 0;
-		bs->pos++;
+		idx++;
+		if (i) *i = idx;
 	} while (pos == BITPOS_TRUNC);
 	if (pos == BITPOS_BLANK) return 0;
 
 	return bitstream_read_bit_at(bs, pos & BITPOS_MASK) ^ ((pos & BITPOS_TOGGLE) ? 1 : 0);
+}
+
+bit_t bitstream_read_bit(bitstream_t *bs)
+{
+	return bitstream_peek_bit(bs, &bs->pos);
 }
 
 uint_fast32_t bitstream_read_bits(bitstream_t *bs, uint_fast8_t num_bits)
@@ -126,6 +132,19 @@ uint_fast32_t bitstream_read_bits(bitstream_t *bs, uint_fast8_t num_bits)
 
 	for (uint_fast8_t i = 0; i < num_bits; i++) {
 		val = (val << 1) | bitstream_read_bit(bs);
+	}
+	return val;
+}
+
+uint_fast32_t bitstream_peek_bits(bitstream_t *bs, uint_fast8_t num_bits)
+{
+	uint_fast32_t val = 0;
+
+	assert(0 <= num_bits && num_bits <= 32);
+
+	bitpos_t iter_idx = bs->pos;
+	for (uint_fast8_t i = 0; i < num_bits; i++) {
+		val = (val << 1) | bitstream_peek_bit(bs, &iter_idx);
 	}
 	return val;
 }
@@ -144,7 +163,7 @@ bit_t bitstream_write_bit(bitstream_t *bs, bit_t bit)
 	bitpos_t pos;
 
 	do {
-		pos = read_iter_pos(bs);
+		pos = read_iter_pos(bs, bs->pos);
 		if (pos == BITPOS_END) return 0;
 		bs->pos++;
 	} while (pos == BITPOS_TRUNC);

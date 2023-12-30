@@ -52,8 +52,8 @@ typedef struct {
 	void (*init)(qrean_t *qrean);
 	void (*deinit)(qrean_t *qrean);
 
-	bitpos_t (*write_data)(qrean_t *qrean, const void *buf, size_t len, qrean_data_type_t data_type);
-	bitpos_t (*read_data)(qrean_t *qrean, void *buf, size_t size);
+	size_t (*write_data)(qrean_t *qrean, const void *buf, size_t len, qrean_data_type_t data_type);
+	size_t (*read_data)(qrean_t *qrean, void *buf, size_t size);
 
 	unsigned int (*score)(qrean_t *qrean);
 

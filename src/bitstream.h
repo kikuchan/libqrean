@@ -47,7 +47,9 @@ bitpos_t bitstream_length(bitstream_t *bs);
 void bitstream_dump(bitstream_t *bs, bitpos_t len, FILE *out);
 
 bit_t bitstream_read_bit(bitstream_t *bs);
+bit_t bitstream_peek_bit(bitstream_t *bs, bitpos_t *pos);
 uint_fast32_t bitstream_read_bits(bitstream_t *bs, uint_fast8_t num_bits);
+uint_fast32_t bitstream_peek_bits(bitstream_t *bs, uint_fast8_t num_bits);
 
 uint_fast8_t bitstream_skip_bits(bitstream_t *bs, uint_fast8_t num_bits);
 

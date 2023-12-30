@@ -139,10 +139,11 @@ int runlength_match_ratio(runlength_t *rl, runlength_size_t N, ...)
 	return 1;
 }
 
-void runlength_dump(runlength_t *rl, runlength_size_t N)
+void runlength_dump(runlength_t *rl, FILE *out)
 {
+	runlength_size_t N = MAX_RUNLENGTH;
 	for (runlength_size_t i = 0; i < N; i++) {
-		fprintf(stderr, "%2d ", runlength_get_count(rl, N - i - 1));
+		fprintf(out, "%2d ", runlength_get_count(rl, N - i - 1));
 	}
-	fprintf(stderr, "\n");
+	fprintf(out, "\n");
 }

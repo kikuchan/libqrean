@@ -5,6 +5,7 @@
 
 #include "bitstream.h"
 #include "qrean.h"
+#include "debug.h"
 
 static uint16_t symbol[] = {
 	/*  0 */ 0b100010100, // 0
@@ -67,7 +68,57 @@ static uint16_t symbol[] = {
 
 static const char *symbol_lookup = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-. $/+%";
 
-bitpos_t qrean_write_code93_string(qrean_t *qrean, const void *buf, size_t len, qrean_data_type_t data_type)
+static int8_t get_symbol_index(uint16_t sym) {
+	for (size_t i = 0; i < sizeof(symbol) / sizeof(symbol[0]); i++) {
+		if (sym == symbol[i]) return i;
+	}
+	return -1;
+}
+
+size_t qrean_read_code93_string(qrean_t *qrean, void *buf, size_t size)
+{
+	char *dst = (char *)buf;
+	bitstream_t bs = qrean_create_bitstream(qrean, NULL);
+	int8_t ch;
+
+	ch = get_symbol_index(bitstream_read_bits(&bs, 9));
+	if (ch != 47) return 0;
+
+	size_t len = 0;
+	while (len < size - 1) {
+		ch = get_symbol_index(bitstream_read_bits(&bs, 9));
+
+		if (ch == 47) break;
+		if (ch < 0) return 0;
+
+		dst[len++] = ch;
+	}
+
+	if (bitstream_read_bit(&bs) == 0) return 0; // Termination bar
+
+	int C = 0, K = 0;
+	int w = (len - 1);
+	for (size_t i = 0; i < len - 2; i++) {
+		int n = dst[i];
+		C = (C + n * ((w + 0) % 20 + 1)) % 47;
+		K = (K + n * ((w + 1) % 15 + 1)) % 47;
+
+		w--;
+
+		dst[i] = symbol_lookup[n];
+	}
+
+	// Check parity
+	K = (K + C) % 47;
+	if (dst[len - 3] == C) return 0;
+	if (dst[len - 2] == K) return 0;
+
+	dst[len - 2] = '\0';
+
+	return len;
+}
+
+size_t qrean_write_code93_string(qrean_t *qrean, const void *buf, size_t len, qrean_data_type_t data_type)
 {
 	const char *src = (const char *)buf;
 
@@ -83,9 +134,10 @@ bitpos_t qrean_write_code93_string(qrean_t *qrean, const void *buf, size_t len, 
 	int C = 0, K = 0;
 	for (const char *p = src; *p; p++) {
 		const char *q = strchr(symbol_lookup, *p);
-		if (!q) return 0; // invalid symbol
+		if (!q) return 0; // invalid char
 
 		int n = q - symbol_lookup;
+		if (n >= 43) return 0; // invalid char
 
 		C = (C + n * ((w + 0) % 20 + 1)) % 47;
 		K = (K + n * ((w + 1) % 15 + 1)) % 47;
@@ -103,10 +155,11 @@ bitpos_t qrean_write_code93_string(qrean_t *qrean, const void *buf, size_t len, 
 	bitstream_write_bits(&bs, symbol[47], 9); // Stop Symbol
 	bitstream_write_bits(&bs, 1, 1); // Termination bar
 
-	return symbol_width;
+	return len;
 }
 
 qrean_code_t qrean_code_code93 = {
 	.type = QREAN_CODE_TYPE_CODE93,
 	.write_data = qrean_write_code93_string,
+	.read_data = qrean_read_code93_string,
 };

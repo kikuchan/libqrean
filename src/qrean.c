@@ -34,7 +34,7 @@ bit_t qrean_init(qrean_t *qrean, qrean_code_type_t type)
 				qrean->canvas.stride = 0;
 			}
 
-			qrean_set_bitmap_padding(qrean, create_padding1(2));
+			qrean_set_bitmap_padding(qrean, create_padding1(4));
 			qrean_set_bitmap_scale(qrean, 4);
 
 #ifndef NO_QRMATRIX_BUFFER

@@ -39,6 +39,6 @@ void runlength_next_and_count_add(runlength_t *rl, runlength_count_t n);
 int runlength_match_exact(runlength_t *rl, float div, runlength_size_t N, ...);
 int runlength_match_ratio(runlength_t *rl, runlength_size_t N, ...);
 
-void runlength_dump(runlength_t *rl, runlength_size_t N);
+void runlength_dump(runlength_t *rl, FILE *out);
 
 #endif /* __QR_RUNLENGTH_H__ */

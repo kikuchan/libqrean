@@ -7,7 +7,7 @@
 #include "qrean.h"
 
 static const struct {
-	uint32_t v;
+	uint16_t v;
 	int w;
 } symbol[] = {
 	{   /*  0 */ 0b10101000111, 11}, // 0
@@ -35,7 +35,49 @@ static const struct {
 
 static const char *symbol_lookup = "0123456789-$./:+";
 
-bitpos_t qrean_write_nw7_string(qrean_t *qrean, const void *buf, size_t len, qrean_data_type_t data_type)
+static int8_t read_symbol(bitstream_t *bs){
+	while (bitstream_peek_bit(bs, NULL) == 0) bitstream_skip_bits(bs, 1);
+
+	uint16_t v = bitstream_peek_bits(bs, 13);
+
+	for (size_t i = 0; i < sizeof(symbol) / sizeof(symbol[0]); i++) {
+		if (v >> (13 - symbol[i].w) == symbol[i].v) {
+			bitstream_skip_bits(bs, symbol[i].w);
+			return i;
+		}
+	}
+
+	return -1;
+}
+
+size_t qrean_read_nw7_string(qrean_t *qrean, void *buf, size_t size) {
+	char *dst = (char *)buf;
+	bitstream_t bs = qrean_create_bitstream(qrean, NULL);
+	int8_t ch;
+	size_t len = 0;
+
+	// start symbol
+	ch = read_symbol(&bs);
+	if (ch < 16) return 0;
+	dst[len++] = ch - 16 + 'A';
+
+	while ((ch = read_symbol(&bs)) < 16 && len < size - 1) {
+		if (ch < 0) return 0;
+
+		dst[len++] = symbol_lookup[ch];
+	}
+
+	// stop symbol
+	if (ch >= 16 && len < size - 1) {
+		dst[len++] = ch - 16 + 'A';
+	}
+
+	dst[len] = '\0';
+
+	return len;
+}
+
+size_t qrean_write_nw7_string(qrean_t *qrean, const void *buf, size_t len, qrean_data_type_t data_type)
 {
 	const char *src = (const char *)buf;
 	int start_code, stop_code;
@@ -44,6 +86,7 @@ bitpos_t qrean_write_nw7_string(qrean_t *qrean, const void *buf, size_t len, qre
 	// check first letter
 	if (*src == 'A' || *src == 'B' || *src == 'C' || *src == 'D') {
 		start_code = *src++ - 'A' + 16;
+		len--;
 	} else {
 		start_code = 16; // default to 'A'
 	}
@@ -84,10 +127,11 @@ bitpos_t qrean_write_nw7_string(qrean_t *qrean, const void *buf, size_t len, qre
 
 	bitstream_write_bits(&bs, symbol[stop_code].v, symbol[stop_code].w); // stop symbol
 
-	return symbol_width;
+	return len;
 }
 
 qrean_code_t qrean_code_nw7 = {
 	.type = QREAN_CODE_TYPE_NW7,
 	.write_data = qrean_write_nw7_string,
+	.read_data = qrean_read_nw7_string,
 };

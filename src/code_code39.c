@@ -56,7 +56,42 @@ static uint16_t symbol[] = {
 
 static const char *symbol_lookup = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ-. $/+%";
 
-bitpos_t qrean_write_code39_string(qrean_t *qrean, const void *buf, size_t len, qrean_data_type_t data_type)
+static int8_t read_symbol(bitstream_t *bs) {
+	while (bitstream_peek_bit(bs, NULL) == 0) bitstream_skip_bits(bs, 1);
+
+	uint16_t v = bitstream_read_bits(bs, 15);
+
+	for (size_t i = 0; i < sizeof(symbol) / sizeof(symbol[0]); i++) {
+		if (v == symbol[i]) return i;
+	}
+
+	return -1;
+}
+
+
+size_t qrean_read_code39_string(qrean_t *qrean, void *buf, size_t size) {
+	char *dst = (char *)buf;
+	bitstream_t bs = qrean_create_bitstream(qrean, NULL);
+	int8_t ch;
+
+	ch = read_symbol(&bs);
+	if (ch != 43) return 0;
+
+	size_t len = 0;
+	while (len < size - 1) {
+		ch = read_symbol(&bs);
+
+		if (ch < 0) return 0;
+		if (ch == 43) break;
+
+		dst[len++] = symbol_lookup[ch];
+	}
+	dst[len] = '\0';
+
+	return len;
+}
+
+size_t qrean_write_code39_string(qrean_t *qrean, const void *buf, size_t len, qrean_data_type_t data_type)
 {
 	const char *src = (const char *)buf;
 	bitstream_t bs = qrean_create_bitstream(qrean, NULL);
@@ -84,4 +119,5 @@ bitpos_t qrean_write_code39_string(qrean_t *qrean, const void *buf, size_t len, 
 qrean_code_t qrean_code_code39 = {
 	.type = QREAN_CODE_TYPE_CODE39,
 	.write_data = qrean_write_code39_string,
+	.read_data = qrean_read_code39_string,
 };
