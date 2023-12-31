@@ -385,6 +385,7 @@ size_t qrean_write_string(qrean_t *qrean, const char *str, qrean_data_type_t dat
 
 void qrean_write_qr_format_info(qrean_t *qrean)
 {
+	if (!qrean->code->qr.format_info.iter) return;
 	bitstream_t bs = qrean_create_bitstream(qrean, qrean->code->qr.format_info.iter);
 	qrformat_t fi = qrformat_for(qrean->qr.version, qrean->qr.level, qrean->qr.mask);
 
@@ -427,6 +428,7 @@ bit_t qrean_set_qr_version_info(qrean_t *qrean, qrversion_t vi)
 
 void qrean_write_qr_version_info(qrean_t *qrean)
 {
+	if (!qrean->code->qr.version_info.iter) return;
 	bitstream_t bs = qrean_create_bitstream(qrean, qrean->code->qr.version_info.iter);
 	qrversion_t vi = qrversion_for(qrean->qr.version);
 

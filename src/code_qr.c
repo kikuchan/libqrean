@@ -10,25 +10,25 @@
 #define QR_FINDER_PATTERN_SIZE    (9 * 9)
 #define QR_ALIGNMENT_PATTERN_SIZE (5 * 5)
 
-static bit_t is_mask(int_fast16_t x, int_fast16_t y, qr_maskpattern_t mask)
+static bit_t is_mask(int_fast16_t j, int_fast16_t i, qr_maskpattern_t mask)
 {
 	switch (mask) {
 	case QR_MASKPATTERN_0:
-		return (y + x) % 2 == 0;
+		return (i + j) % 2 == 0;
 	case QR_MASKPATTERN_1:
-		return y % 2 == 0;
+		return i % 2 == 0;
 	case QR_MASKPATTERN_2:
-		return x % 3 == 0;
+		return j % 3 == 0;
 	case QR_MASKPATTERN_3:
-		return (y + x) % 3 == 0;
+		return (i + j) % 3 == 0;
 	case QR_MASKPATTERN_4:
-		return (y / 2 + x / 3) % 2 == 0;
+		return (i / 2 + j / 3) % 2 == 0;
 	case QR_MASKPATTERN_5:
-		return ((y * x) % 2) + ((y * x) % 3) == 0;
+		return ((i * j) % 2) + ((i * j) % 3) == 0;
 	case QR_MASKPATTERN_6:
-		return (((y * x) % 2) + ((y * x) % 3)) % 2 == 0;
+		return (((i * j) % 2) + ((i * j) % 3)) % 2 == 0;
 	case QR_MASKPATTERN_7:
-		return (((y * x) % 3) + ((y + x) % 2)) % 2 == 0;
+		return (((i * j) % 3) + ((i + j) % 2)) % 2 == 0;
 
 	default:
 	case QR_MASKPATTERN_NONE:
@@ -87,10 +87,8 @@ static bitpos_t version_info_iter(bitstream_t *bs, bitpos_t i, void *opaque)
 static bit_t is_finder_pattern(qrean_t *qrean, int_fast16_t x, int_fast16_t y)
 {
 	if (x < 8 && y < 8) return 1;
-	if (QREAN_IS_TYPE_QR(qrean)) {
-		if (x < 8 && y >= qrean->canvas.symbol_height - 8) return 1;
-		if (x >= qrean->canvas.symbol_width - 8 && y < 8) return 1;
-	}
+	if (x < 8 && y >= qrean->canvas.symbol_height - 8) return 1;
+	if (x >= qrean->canvas.symbol_width - 8 && y < 8) return 1;
 	return 0;
 }
 
@@ -98,7 +96,7 @@ static bitpos_t finder_pattern_iter(bitstream_t *bs, bitpos_t i, void *opaque)
 {
 	qrean_t *qrean = (qrean_t *)opaque;
 	int n = i / QR_FINDER_PATTERN_SIZE;
-	if (n >= (QREAN_IS_TYPE_RMQR(qrean) || QREAN_IS_TYPE_MQR(qrean) ? 1 : 3)) return BITPOS_END;
+	if (n >= 3) return BITPOS_END;
 
 	int x = (i % 9) + (n == 1 ? (qrean->canvas.symbol_width - 8) : -1);
 	int y = (i / 9 % 9) + (n == 2 ? (qrean->canvas.symbol_height - 8) : -1);
@@ -288,10 +286,10 @@ qrean_code_t qrean_code_qr = {
 	.data_iter = composed_data_iter,
 
 	.qr = {
-		 .finder_pattern = {finder_pattern_iter, finder_pattern_bits, QR_FINDER_PATTERN_SIZE},
-		 .timing_pattern = {timing_pattern_iter, timing_pattern_bits, 8},
-		 .alignment_pattern = {alignment_pattern_iter, alignment_pattern_bits, QR_ALIGNMENT_PATTERN_SIZE},
-		 .format_info = {format_info_iter, NULL, QR_FORMATINFO_SIZE},
-		 .version_info = {version_info_iter, NULL, QR_VERSIONINFO_SIZE},
+		.finder_pattern = {finder_pattern_iter, finder_pattern_bits, QR_FINDER_PATTERN_SIZE},
+		.timing_pattern = {timing_pattern_iter, timing_pattern_bits, 8},
+		.alignment_pattern = {alignment_pattern_iter, alignment_pattern_bits, QR_ALIGNMENT_PATTERN_SIZE},
+		.format_info = {format_info_iter, NULL, QR_FORMATINFO_SIZE},
+		.version_info = {version_info_iter, NULL, QR_VERSIONINFO_SIZE},
 	 },
 };

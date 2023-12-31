@@ -40,25 +40,25 @@ typedef struct {
 #endif
 } qrpayload_t;
 
-void qrpayload_init(qrpayload_t *qrs, qr_version_t version, qr_errorlevel_t level);
-void qrpayload_deinit(qrpayload_t *qrs);
+void qrpayload_init(qrpayload_t *payload, qr_version_t version, qr_errorlevel_t level);
+void qrpayload_deinit(qrpayload_t *payload);
 
 qrpayload_t create_qrpayload(qr_version_t version, qr_errorlevel_t level);
 qrpayload_t create_qrpayload_for_string(qr_version_t version, qr_errorlevel_t level, const char *src);
-void qrpayload_destroy(qrpayload_t *qrs);
+void qrpayload_destroy(qrpayload_t *payload);
 
 #ifndef NO_MALLOC
 qrpayload_t *new_qrpayload(qr_version_t version, qr_errorlevel_t level);
 qrpayload_t *new_qrpayload_for_string(qr_version_t version, qr_errorlevel_t level, const char *src);
-void qrpayload_free(qrpayload_t *qrs);
+void qrpayload_free(qrpayload_t *payload);
 #endif
 
-bitstream_t qrpayload_get_bitstream(qrpayload_t *qrs);
-bitstream_t qrpayload_get_bitstream_for_data(qrpayload_t *qrs);
-bitstream_t qrpayload_get_bitstream_for_error(qrpayload_t *qrs);
+bitstream_t qrpayload_get_bitstream(qrpayload_t *payload);
+bitstream_t qrpayload_get_bitstream_for_data(qrpayload_t *payload);
+bitstream_t qrpayload_get_bitstream_for_error(qrpayload_t *payload);
 
-void qrpayload_set_error_words(qrpayload_t *qrs);
-int qrpayload_fix_errors(qrpayload_t *qrs);
+void qrpayload_set_error_words(qrpayload_t *payload);
+int qrpayload_fix_errors(qrpayload_t *payload);
 
 size_t qrpayload_read_string(qrpayload_t *payload, char *buffer, size_t size);
 bit_t qrpayload_write_string(qrpayload_t *payload, const char *src, size_t len, qrdata_writer_t writer);
