@@ -1,6 +1,7 @@
 #ifndef __QR_IMAGE_H__
 #define __QR_IMAGE_H__
 
+#include "qrean.h"
 #include <stdint.h>
 #include <stdio.h>
 
@@ -18,10 +19,10 @@ typedef struct {
 } image_t;
 
 typedef struct {
-	int top;
-	int right;
-	int bottom;
-	int left;
+	float top;
+	float right;
+	float bottom;
+	float left;
 } image_extent_t;
 
 typedef struct {
@@ -41,6 +42,7 @@ typedef struct {
 image_t *new_image(size_t width, size_t height);
 void image_free(image_t *img);
 image_t *image_clone(image_t *img);
+image_t *new_image_from_qrean(qrean_t *qrean);
 
 // image_point_t
 typedef struct {
@@ -66,6 +68,7 @@ void image_draw_filled_rectangle(image_t *img, image_point_t s, int w, int h, im
 void image_draw_filled_ellipse(image_t *img, image_point_t center, int w, int h, image_pixel_t pix);
 void image_draw_polygon(image_t *img, int N, image_point_t points[], image_pixel_t pixel, int thickness);
 
+image_extent_t create_image_extent();
 image_extent_t *image_extent_update(image_extent_t *extent, image_extent_t src);
 image_point_t image_extent_center(image_extent_t *extent);
 

@@ -13,7 +13,7 @@
 #include "qrpayload.h"
 #include "qrspec.h"
 #include "runlength.h"
-#include "qrdetector.h"
+#include "detector.h"
 #include "debug.h"
 
 #include "image.h"
@@ -31,7 +31,7 @@ uint32_t H = 0;
 
 #ifdef DEBUG_DETECT
 bit_t write_image_pixel(qrean_t *qrean, bitpos_t x, bitpos_t y, bitpos_t pos, bit_t value, void *opaque) {
-	qrdetector_perspective_t *warp = (qrdetector_perspective_t *)opaque;
+	qrean_detector_perspective_t *warp = (qrean_detector_perspective_t *)opaque;
 	image_draw_pixel(detected, image_point_transform(POINT(x, y), warp->h), value ? PIXEL(255, 0, 0) : PIXEL(0, 255, 0));
 	//image_draw_filled_ellipse(detected, image_point_transform(POINT(x, y), warp->h), 1, 1, value ? PIXEL(255, 0, 0) : PIXEL(0, 255, 0));
 	return 1;
@@ -39,23 +39,25 @@ bit_t write_image_pixel(qrean_t *qrean, bitpos_t x, bitpos_t y, bitpos_t pos, bi
 #endif
 
 
-static void on_found(qrdetector_perspective_t *warp, void *opaque) {
+static void on_found(qrean_detector_perspective_t *warp, void *opaque) {
 	char buffer[1024];
 
 #ifdef DEBUG_DETECT
-	image_point_t points[] = {
-		image_point_transform(POINT(0, 0), warp->h),
-		image_point_transform(POINT(warp->qrean->canvas.symbol_width - 1, 0), warp->h),
-		image_point_transform(POINT(warp->qrean->canvas.symbol_width - 1, warp->qrean->canvas.symbol_height - 1), warp->h),
-		image_point_transform(POINT(0, warp->qrean->canvas.symbol_height - 1), warp->h),
-	};
-	image_draw_polygon(detected, 4, points, PIXEL(0, 255, 0), 1);
+	if (QREAN_IS_TYPE_QR(warp->qrean)) {
+		image_point_t points[] = {
+			image_point_transform(POINT(0, 0), warp->h),
+			image_point_transform(POINT(warp->qrean->canvas.symbol_width - 1, 0), warp->h),
+			image_point_transform(POINT(warp->qrean->canvas.symbol_width - 1, warp->qrean->canvas.symbol_height - 1), warp->h),
+			image_point_transform(POINT(0, warp->qrean->canvas.symbol_height - 1), warp->h),
+		};
+		image_draw_polygon(detected, 4, points, PIXEL(0, 255, 0), 1);
 
-	qrean_on_write_pixel(warp->qrean, write_image_pixel, warp);
-	qrpayload_t payload = create_qrpayload(warp->qrean->qr.version, warp->qrean->qr.level);
-	qrean_read_qr_payload(warp->qrean, &payload);
-	qrean_write_frame(warp->qrean);
-	qrean_write_qr_payload(warp->qrean, &payload);
+		qrean_on_write_pixel(warp->qrean, write_image_pixel, warp);
+		qrpayload_t payload = create_qrpayload(warp->qrean->qr.version, warp->qrean->qr.level);
+		qrean_read_qr_payload(warp->qrean, &payload);
+		qrean_write_frame(warp->qrean);
+		qrean_write_qr_payload(warp->qrean, &payload);
+	}
 #endif
 
 	qrean_read_string(warp->qrean, buffer, sizeof(buffer));
@@ -72,7 +74,7 @@ void done(pngle_t *pngle) {
 	image_digitize(mono, img, 1.8);
 
 	int num_candidates;
-	qrdetector_finder_candidate_t *candidates = qrdetector_scan_finder_pattern(mono, &num_candidates);
+	qrean_detector_qr_finder_candidate_t *candidates = qrean_detector_scan_qr_finder_pattern(mono, &num_candidates);
 	int found = 0;
 
 #ifdef DEBUG_DETECT
@@ -83,15 +85,18 @@ void done(pngle_t *pngle) {
 	}
 #endif
 
-	found += qrdetector_try_decode_qr(mono, candidates, num_candidates, on_found, NULL);
-	found += qrdetector_try_decode_mqr(mono, candidates, num_candidates, on_found, NULL);
-	found += qrdetector_try_decode_rmqr(mono, candidates, num_candidates, on_found, NULL);
+	found += qrean_detector_try_decode_qr(mono, candidates, num_candidates, on_found, NULL);
+	found += qrean_detector_try_decode_mqr(mono, candidates, num_candidates, on_found, NULL);
+	found += qrean_detector_try_decode_rmqr(mono, candidates, num_candidates, on_found, NULL);
 
 	if (!found) {
 #ifndef DEBUG_DETECT
 		fprintf(stderr, "Not found\n");
 #endif
 	}
+
+
+	qrean_detector_scan_barcodes(mono, on_found, NULL);
 #ifdef DEBUG_DETECT
 	image_dump(detected, stdout);
 #endif

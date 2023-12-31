@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "image.h"
+#include "qrean.h"
 
 // #define RINT(x) rint((x))
 // #define RINT(x) (x)
@@ -40,6 +41,17 @@ image_t *image_clone(image_t *img)
 		memcpy(clone->buffer, img->buffer, img->width * img->height * sizeof(image_pixel_t));
 	}
 	return clone;
+}
+
+image_t *new_image_from_qrean(qrean_t *qrean)
+{
+	size_t width = qrean_get_bitmap_width(qrean);
+	size_t height = qrean_get_bitmap_height(qrean);
+	image_t *img = new_image(width, height);
+	if (img) {
+		qrean_read_bitmap(qrean, img->buffer, width * height * sizeof(img->buffer[0]), sizeof(img->buffer[0]) * 8);
+	}
+	return img;
 }
 
 image_point_t create_image_point(float x, float y)
@@ -197,12 +209,18 @@ void image_draw_filled_ellipse(image_t *img, image_point_t center, int w, int h,
 	}
 }
 
+image_extent_t create_image_extent()
+{
+	image_extent_t e = { NAN, NAN, NAN, NAN };
+	return e;
+}
+
 image_extent_t *image_extent_update(image_extent_t *extent, image_extent_t src)
 {
-	if (src.top < extent->top) extent->top = src.top;
-	if (src.left < extent->left) extent->left = src.left;
-	if (extent->right < src.right) extent->right = src.right;
-	if (extent->bottom < src.bottom) extent->bottom = src.bottom;
+	if (isnan(extent->top) || src.top < extent->top) extent->top = src.top;
+	if (isnan(extent->left) || src.left < extent->left) extent->left = src.left;
+	if (isnan(extent->right) || extent->right < src.right) extent->right = src.right;
+	if (isnan(extent->bottom) || extent->bottom < src.bottom) extent->bottom = src.bottom;
 	return extent;
 }
 
@@ -213,7 +231,7 @@ image_point_t image_extent_center(image_extent_t *extent)
 
 void image_extent_dump(image_extent_t *extent)
 {
-	fprintf(stderr, "[%u %u %u %u]\n", extent->top, extent->right, extent->bottom, extent->left);
+	fprintf(stderr, "[%f %f %f %f]\n", extent->top, extent->right, extent->bottom, extent->left);
 }
 
 static void image_paint_update_result(image_paint_result_t *target, image_paint_result_t result)
@@ -226,8 +244,8 @@ static void image_paint_update_result(image_paint_result_t *target, image_paint_
 
 image_paint_result_t image_paint(image_t *img, image_point_t center, image_pixel_t pix)
 {
-	int cx = POINT_X(center);
-	int cy = POINT_Y(center);
+	float cx = POINT_X(center);
+	float cy = POINT_Y(center);
 	image_paint_result_t result = {
 		{cy, cx, cy, cx},
 		0,

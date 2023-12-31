@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#define MAX_RUNLENGTH (10)
+#define MAX_RUNLENGTH (16)
 
 #define RUNLENGTH_SIZE(rl) (MAX_RUNLENGTH)
 

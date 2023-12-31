@@ -56,8 +56,10 @@ static uint16_t symbol[] = {
 
 static const char *symbol_lookup = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ-. $/+%";
 
-static int8_t read_symbol(bitstream_t *bs) {
-	while (bitstream_peek_bit(bs, NULL) == 0) bitstream_skip_bits(bs, 1);
+static int8_t read_symbol(bitstream_t *bs)
+{
+	while (bitstream_peek_bit(bs, NULL) == 0)
+		bitstream_skip_bits(bs, 1);
 
 	uint16_t v = bitstream_read_bits(bs, 15);
 
@@ -68,8 +70,8 @@ static int8_t read_symbol(bitstream_t *bs) {
 	return -1;
 }
 
-
-size_t qrean_read_code39_string(qrean_t *qrean, void *buf, size_t size) {
+size_t qrean_read_code39_string(qrean_t *qrean, void *buf, size_t size)
+{
 	char *dst = (char *)buf;
 	bitstream_t bs = qrean_create_bitstream(qrean, NULL);
 	int8_t ch;
@@ -88,6 +90,7 @@ size_t qrean_read_code39_string(qrean_t *qrean, void *buf, size_t size) {
 	}
 	dst[len] = '\0';
 
+	qrean_set_symbol_width(qrean, bitstream_tell(&bs));
 	return len;
 }
 

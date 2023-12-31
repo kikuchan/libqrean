@@ -20,7 +20,8 @@ static const uint8_t symbol[] = {
 	0b01010,
 };
 
-static int8_t lookup_symbol(uint8_t sym) {
+static int8_t lookup_symbol(uint8_t sym)
+{
 	for (size_t i = 0; i < sizeof(symbol); i++) {
 		if (sym == symbol[i]) return i;
 	}
@@ -62,6 +63,8 @@ size_t qrean_read_itf_string(qrean_t *qrean, void *buf, size_t size)
 	}
 	dst[len] = '\0';
 
+	uint8_t symbol_width = 4 + 9 * len + 6;
+	qrean_set_symbol_width(qrean, symbol_width);
 	return len;
 }
 

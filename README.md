@@ -101,12 +101,12 @@ You can also configure a callback to draw a pixel directly on a screen for examp
 
 | type                | encode | decode | detect
 |---------------------|--------|--------|-----------
-| QR                  | ✓      | ✓      | ✓ (See [examples/detect.c](examples/detect.c))
-| mQR                 | ✓      | ✓      | ✓ (See [examples/detect.c](examples/detect.c))
-| rMQR                | ✓      | ✓      | ✓ (See [examples/detect.c](examples/detect.c))
-| UPCA / EAN13 / EAN8 | ✓      | ✓      | -
-| CODE39              | ✓      | ✓      | -
-| CODE93              | ✓      | ✓      | -
-| NW7                 | ✓      | ✓      | -
-| ITF                 | ✓      | ✓      | -
+| QR                  | ✓      | ✓      | ✓
+| mQR                 | ✓      | ✓      | ✓
+| rMQR                | ✓      | ✓      | ✓
+| UPCA / EAN13 / EAN8 | ✓      | ✓      | ✓
+| CODE39              | ✓      | ✓      | ✓
+| CODE93              | ✓      | ✓      | ✓
+| NW7                 | ✓      | ✓      | ✓
+| ITF                 | ✓      | ✓      | ✓
 

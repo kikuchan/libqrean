@@ -97,7 +97,7 @@ size_t qrean_read_ean13_like_string(qrean_t *qrean, void *buffer, size_t size)
 		}
 
 		uint8_t sym = lookup_symbol(bitstream_read_bits(&bs, 7));
-		if (sym == 10) return 0; // invalid
+		if (sym == 10) return 0;
 
 		dst[i++] = (sym & MASK) + '0';
 		if (!separator_found) {
@@ -123,6 +123,8 @@ size_t qrean_read_ean13_like_string(qrean_t *qrean, void *buffer, size_t size)
 	} else if (tfd_parity) {
 		return 0;
 	}
+
+	qrean_set_symbol_width(qrean, bitstream_tell(&bs));
 
 	// sanity check
 	if (i == 13 && qrean->code->type == QREAN_CODE_TYPE_EAN13) return i;

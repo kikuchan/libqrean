@@ -131,7 +131,7 @@ int runlength_match_ratio(runlength_t *rl, runlength_size_t N, ...)
 		if (!ratio[i]) continue; // skip (wildcard)
 
 		int avg = total_count * scale / total_ratio;
-		int err = avg;
+		int err = avg / 2;
 
 		if (!(ratio[i] * avg - err <= count_i && count_i <= ratio[i] * avg + err)) return 0;
 	}

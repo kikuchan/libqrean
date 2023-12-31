@@ -6,7 +6,6 @@ OBJS += debug.o
 OBJS += galois.o
 OBJS += reedsolomon.o
 OBJS += runlength.o
-OBJS += qrdetector.o
 OBJS += qrspec.o
 OBJS += qrbch.o
 OBJS += qrdata.o
@@ -15,6 +14,7 @@ OBJS += qrpayload.o
 OBJS += qrversion.o
 
 OBJS += qrean.o
+OBJS += detector.o
 
 OBJS += code_qr.o
 OBJS += code_mqr.o

@@ -4,8 +4,8 @@
 #include <string.h>
 
 #include "bitstream.h"
-#include "qrean.h"
 #include "debug.h"
+#include "qrean.h"
 
 static uint16_t symbol[] = {
 	/*  0 */ 0b100010100, // 0
@@ -68,7 +68,8 @@ static uint16_t symbol[] = {
 
 static const char *symbol_lookup = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-. $/+%";
 
-static int8_t get_symbol_index(uint16_t sym) {
+static int8_t get_symbol_index(uint16_t sym)
+{
 	for (size_t i = 0; i < sizeof(symbol) / sizeof(symbol[0]); i++) {
 		if (sym == symbol[i]) return i;
 	}
@@ -115,6 +116,7 @@ size_t qrean_read_code93_string(qrean_t *qrean, void *buf, size_t size)
 
 	dst[len - 2] = '\0';
 
+	qrean_set_symbol_width(qrean, bitstream_tell(&bs));
 	return len;
 }
 
