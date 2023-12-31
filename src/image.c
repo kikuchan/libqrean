@@ -363,11 +363,7 @@ void image_digitize(image_t *dst, image_t *src, float gamma_value)
 	for (int y = 0; y < (int)src->height; y++) {
 		for (int x = 0; x < (int)src->width; x++) {
 			image_pixel_t pix = image_read_pixel(src, POINT(x, y));
-			if (PIXEL_GET_R(pix) < threshold) {
-				image_draw_pixel(dst, POINT(x, y), PIXEL(0, 0, 0));
-			} else {
-				image_draw_pixel(dst, POINT(x, y), PIXEL(255, 255, 255));
-			}
+			image_draw_pixel(dst, POINT(x, y), PIXEL_GET_R(pix) < threshold ? PIXEL(0, 0, 0) : PIXEL(255, 255, 255));
 		}
 	}
 }
@@ -463,4 +459,64 @@ image_transform_matrix_t create_image_transform_matrix(image_point_t src[4], ima
 	};
 
 	return matrix;
+}
+
+void image_morphology_erode(image_t *dst)
+{
+	image_t *src = image_clone(dst);
+	for (int y = 0; y < (int)src->height; y++) {
+		for (int x = 0; x < (int)src->width; x++) {
+			image_pixel_t pix = image_read_pixel(src, POINT(x, y));
+			if (pix == 0) continue;
+
+			for (int dy = -1; dy <= 1; dy++) {
+				for (int dx = -1; dx <= 1; dx++) {
+					if (dx == 0 && dy == 0) continue;
+					if (x + dx < 0 || y + dy < 0 || x + dx >= (int)src->width || y + dy >= (int)src->height) continue;
+					if (image_read_pixel(src, POINT(x + dx, y + dy)) == 0) {
+						image_draw_pixel(dst, POINT(x, y), 0);
+						goto next;
+					}
+				}
+			}
+		next:;
+		}
+	}
+	image_free(src);
+}
+
+void image_morphology_dilate(image_t *dst)
+{
+	image_t *src = image_clone(dst);
+	for (int y = 0; y < (int)src->height; y++) {
+		for (int x = 0; x < (int)src->width; x++) {
+			image_pixel_t pix = image_read_pixel(src, POINT(x, y));
+			if (pix != 0) continue;
+
+			for (int dy = -1; dy <= 1; dy++) {
+				for (int dx = -1; dx <= 1; dx++) {
+					if (dx == 0 && dy == 0) continue;
+					if (x + dx < 0 || y + dy < 0 || x + dx >= (int)src->width || y + dy >= (int)src->height) continue;
+					if (image_read_pixel(src, POINT(x + dx, y + dy)) != 0) {
+						image_draw_pixel(dst, POINT(x, y), PIXEL(255, 255, 255));
+						goto next;
+					}
+				}
+			}
+		next:;
+		}
+	}
+	image_free(src);
+}
+
+void image_morphology_close(image_t *dst)
+{
+	image_morphology_erode(dst);
+	image_morphology_dilate(dst);
+}
+
+void image_morphology_open(image_t *dst)
+{
+	image_morphology_dilate(dst);
+	image_morphology_erode(dst);
 }

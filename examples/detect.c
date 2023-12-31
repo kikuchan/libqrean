@@ -72,6 +72,8 @@ void done(pngle_t *pngle) {
 	image_t *mono = image_clone(img);
 
 	image_digitize(mono, img, 1.8);
+	//image_morphology_open(mono);
+	//image_morphology_close(mono);
 
 	int num_candidates;
 	qrean_detector_qr_finder_candidate_t *candidates = qrean_detector_scan_qr_finder_pattern(mono, &num_candidates);

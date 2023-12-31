@@ -85,4 +85,8 @@ image_transform_matrix_t create_image_transform_matrix(image_point_t src[4], ima
 void image_digitize(image_t *dst, image_t *src, float gamma_value);
 void image_monochrome(image_t *dst, image_t *src, float gamma_value, int hist_result[256]);
 
+void image_morphology_erode(image_t *img);
+void image_morphology_dilate(image_t *img);
+void image_morphology_close(image_t *img);
+void image_morphology_open(image_t *img);
 #endif
