@@ -22,6 +22,7 @@ typedef enum {
 	QREAN_CODE_TYPE_QR,
 	QREAN_CODE_TYPE_MQR,
 	QREAN_CODE_TYPE_RMQR,
+	QREAN_CODE_TYPE_TQR,
 
 	QREAN_CODE_TYPE_EAN13,
 	QREAN_CODE_TYPE_EAN8,
@@ -73,7 +74,7 @@ typedef struct {
 	};
 } qrean_code_t;
 
-#define QREAN_IS_TYPE_QRFAMILY(qrean) (QREAN_CODE_TYPE_QR <= (qrean)->code->type && (qrean)->code->type <= QREAN_CODE_TYPE_RMQR)
+#define QREAN_IS_TYPE_QRFAMILY(qrean) (QREAN_CODE_TYPE_QR <= (qrean)->code->type && (qrean)->code->type <= QREAN_CODE_TYPE_TQR)
 #define QREAN_IS_TYPE_BARCODE(qrean)  (QREAN_CODE_TYPE_EAN13 <= (qrean)->code->type && (qrean)->code->type <= QREAN_CODE_TYPE_ITF)
 #define QREAN_IS_TYPE_QR(qrean)       ((qrean)->code->type == QREAN_CODE_TYPE_QR)
 #define QREAN_IS_TYPE_MQR(qrean)      ((qrean)->code->type == QREAN_CODE_TYPE_MQR)

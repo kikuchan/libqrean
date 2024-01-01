@@ -8,6 +8,7 @@
 #include "qrdata.h"
 #include "qrpayload.h"
 #include "qrspec.h"
+#include "qrtypes.h"
 #include "reedsolomon.h"
 #include "utils.h"
 
@@ -15,7 +16,7 @@
 
 void qrpayload_init(qrpayload_t *payload, qr_version_t version, qr_errorlevel_t level)
 {
-	assert(IS_QR(version) || IS_MQR(version) || IS_RMQR(version));
+	// assert(IS_QR(version) || IS_MQR(version) || IS_RMQR(version));
 	assert(QR_ERRORLEVEL_L <= level && level <= QR_ERRORLEVEL_H);
 
 	payload->version = version;
@@ -26,11 +27,14 @@ void qrpayload_init(qrpayload_t *payload, qr_version_t version, qr_errorlevel_t 
 	payload->total_blocks = qrspec_get_total_blocks(version, level);
 	payload->error_words_in_block = qrspec_get_error_words_in_block(version, level);
 
+	payload->word_size = version == QR_VERSION_TQR ? 10 : 8;
+
 	// let's do the simple math
-	payload->total_words = IS_MQR(version) ? (payload->total_bits + 7) / 8 : payload->total_bits / 8;
+	payload->total_words = IS_MQR(version) ? (payload->total_bits + 7) / 8 : payload->total_bits / payload->word_size;
 	payload->error_words = payload->error_words_in_block * payload->total_blocks;
 	payload->data_words = payload->total_words - payload->error_words;
-	payload->data_bits = IS_MQR(version) ? payload->total_bits / 4 * 4 - payload->error_words * 8 : payload->data_words * 8;
+	payload->data_bits
+		= IS_MQR(version) ? payload->total_bits / 4 * 4 - payload->error_words * 8 : payload->data_words * payload->word_size;
 
 	assert(payload->total_words != 0);
 
@@ -92,14 +96,14 @@ static bitpos_t qrpayload_data_words_iter(bitstream_t *bs, bitpos_t i, void *opa
 	bitpos_t n = i / 8;
 	bitpos_t u = i % 8;
 
-	if (i >= payload->data_bits) return BITPOS_END;
+	if (n >= payload->data_words) return BITPOS_END;
 
 	// data words
 	if (n < payload->data_words_in_small_block * payload->small_blocks) {
 		const bitpos_t x = n % payload->data_words_in_small_block;
 		const bitpos_t y = n / payload->data_words_in_small_block;
 
-		return (x * payload->total_blocks + y) * 8 + u;
+		return (x * payload->total_blocks + y) * payload->word_size + u;
 	} else {
 		const bitpos_t base = payload->data_words_in_small_block * payload->small_blocks;
 		n -= base;
@@ -107,7 +111,8 @@ static bitpos_t qrpayload_data_words_iter(bitstream_t *bs, bitpos_t i, void *opa
 		const bitpos_t x = n % payload->data_words_in_large_block;
 		const bitpos_t y = n / payload->data_words_in_large_block;
 
-		return (payload->small_blocks * MIN(x + 1, payload->data_words_in_small_block) + payload->large_blocks * x + y) * 8 + u;
+		return (payload->small_blocks * MIN(x + 1, payload->data_words_in_small_block) + payload->large_blocks * x + y) * payload->word_size
+			+ u;
 	}
 }
 
@@ -123,7 +128,7 @@ static bitpos_t qrpayload_error_words_iter(bitstream_t *bs, bitpos_t i, void *op
 	const bitpos_t x = n % payload->error_words_in_block;
 	const bitpos_t y = n / payload->error_words_in_block;
 
-	return (x * payload->total_blocks + y) * 8 + payload->data_bits + u;
+	return (x * payload->total_blocks + y) * payload->word_size + payload->data_bits + u;
 }
 
 void qrpayload_set_error_words(qrpayload_t *payload)
@@ -267,4 +272,11 @@ void qrpayload_dump_error(qrpayload_t *payload, FILE *out)
 {
 	bitstream_t bs = qrpayload_get_bitstream_for_error(payload);
 	bitstream_dump(&bs, 0, out);
+}
+
+void qrpayload_apply_xor(qrpayload_t *payload, const char *buf, size_t len)
+{
+	for (size_t i = 0; i < len; i++) {
+		payload->buffer[i] ^= buf[i];
+	}
 }

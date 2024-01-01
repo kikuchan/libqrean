@@ -92,6 +92,8 @@ typedef enum {
 	QR_VERSION_R17x77, // 29
 	QR_VERSION_R17x99, // 30
 	QR_VERSION_R17x139, // 31
+
+	QR_VERSION_TQR,
 } qr_version_t;
 
 typedef enum {

@@ -3,6 +3,7 @@
 extern qrean_code_t qrean_code_qr;
 extern qrean_code_t qrean_code_mqr;
 extern qrean_code_t qrean_code_rmqr;
+extern qrean_code_t qrean_code_tqr;
 
 extern qrean_code_t qrean_code_ean8;
 extern qrean_code_t qrean_code_ean13;
@@ -16,6 +17,7 @@ static const qrean_code_t *codes[] = {
 	&qrean_code_qr,
 	&qrean_code_mqr,
 	&qrean_code_rmqr,
+	&qrean_code_tqr,
 	&qrean_code_ean8,
 	&qrean_code_ean13,
 	&qrean_code_upca,

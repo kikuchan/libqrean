@@ -64,7 +64,7 @@ size_t qrdata_write_numeric_string(qrdata_t *data, const char *src, size_t len)
 		bitstream_write_bits(&data->bs, 0, data->version - QR_VERSION_M1);
 	} else if (IS_RMQR(data->version)) {
 		bitstream_write_bits(&data->bs, RMQR_DATA_MODE_NUMERIC, 3);
-	} else {
+	} else if (IS_QR(data->version)) {
 		bitstream_write_bits(&data->bs, QR_DATA_MODE_NUMERIC, 4);
 	}
 	bitstream_write_bits(&data->bs, len, LENGTH_BIT_SIZE_FOR_NUMERIC(data->version));

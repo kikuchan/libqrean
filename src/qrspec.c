@@ -93,6 +93,8 @@ static const uint8_t QR_ERROR_WORDS_IN_BLOCK[][4] = {
 	{ 0, 22,  0, 28}, // R17x77
 	{ 0, 20,  0, 26}, // R17x99
 	{ 0, 20,  0, 26}, // R17x139
+
+	{11, 11, 11, 11}, // tqr
 #endif
 };
 
@@ -185,6 +187,7 @@ static const uint8_t QR_TOTAL_RS_BLOCKS[][4] = {
 	{ 0,  3,  0,  4}, // R17x99
 	{ 0,  4,  0,  6}, // R17x139
 #endif
+	{ 1,  1,  1,  1}, // tqr
 };
 
 #ifndef NO_RMQR
@@ -334,6 +337,8 @@ uint_fast8_t qrspec_get_symbol_width(qr_version_t version)
 #endif
 	}
 
+	if (version == QR_VERSION_TQR) return 19;
+
 	qrean_error("Invalid version is specified");
 	return 0;
 }
@@ -353,6 +358,7 @@ uint_fast8_t qrspec_get_symbol_height(qr_version_t version)
 #endif
 	}
 
+	if (version == QR_VERSION_TQR) return 19;
 	qrean_error("Invalid version is specified");
 	return 0;
 }
@@ -431,6 +437,8 @@ size_t qrspec_get_available_bits(qr_version_t version)
 {
 	size_t symbol_width = qrspec_get_symbol_width(version);
 	size_t symbol_height = qrspec_get_symbol_height(version);
+
+	if (version == QR_VERSION_TQR) return 19 * 19 - 3 * 2 - 8 * 8 * 3 - 3;
 
 	if (IS_QR(version)) {
 		size_t finder_pattern = 8 * 8 * 3;

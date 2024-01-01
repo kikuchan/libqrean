@@ -17,6 +17,7 @@ typedef struct {
 
 	bitpos_t total_bits;
 	bitpos_t data_bits;
+	bitpos_t word_size;
 
 	bitpos_t small_blocks;
 	bitpos_t large_blocks;

@@ -19,6 +19,7 @@ OBJS += detector.o
 OBJS += code_qr.o
 OBJS += code_mqr.o
 OBJS += code_rmqr.o
+OBJS += code_tqr.o
 
 OBJS += code_ean.o
 OBJS += code_code39.o
