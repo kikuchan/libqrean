@@ -159,12 +159,42 @@ void qrpayload_set_error_words(qrpayload_t *payload)
 			bitstream_write_bits(&bs_error, GF2_POLY_COEFF(parity, error_words - i - 1), 8);
 		}
 	}
+
+	if (payload->version == QR_VERSION_TQR) {
+		// additional simple parity for each symbols
+		bitstream_t bs = qrpayload_get_bitstream(payload);
+		while (!bitstream_is_end(&bs)) {
+			int p = 1;
+			for (int i = 0; i < 8; i++) {
+				uint8_t v = bitstream_read_bit(&bs);
+				if (v) p++;
+			}
+			bitstream_write_bit(&bs, p & 1);
+			bitstream_write_bit(&bs, (p & 2) ? 1 : 0);
+		}
+	}
 }
 
 int qrpayload_fix_errors(qrpayload_t *payload)
 {
 	bitstream_t bs_data = qrpayload_get_bitstream_for_data(payload);
 	bitstream_t bs_error = qrpayload_get_bitstream_for_error(payload);
+
+	if (payload->version == QR_VERSION_TQR) {
+		// additional simple parity check for each symbols
+		bitstream_t bs = qrpayload_get_bitstream(payload);
+		int block = 0;
+		while (!bitstream_is_end(&bs)) {
+			int p = 1;
+			block++;
+			for (int i = 0; i < 8; i++) {
+				uint8_t v = bitstream_read_bit(&bs);
+				if (v) p++;
+			}
+			if (bitstream_read_bit(&bs) != (p & 1)) qrean_debug_printf("symbol #%d: parity error 1\n", block);
+			if (bitstream_read_bit(&bs) != ((p & 2) ? 1 : 0)) qrean_debug_printf("symbol #%d: parity error 2\n", block);
+		}
+	}
 
 	int num_errors_total = 0;
 	for (uint16_t rsblock_num = 0; rsblock_num < payload->total_blocks; rsblock_num++) {
@@ -190,14 +220,14 @@ int qrpayload_fix_errors(qrpayload_t *payload)
 		int num_errors;
 		switch (num_errors = rs_fix_errors(R, error_words)) {
 		default:
-			qrean_debug_printf("rsblock #%d: %d error(s) fixed\n", rsblock_num, num_errors);
+			qrean_debug_printf("rsblock #%d: %d error(s) fixed\n", rsblock_num + 1, num_errors);
 			num_errors_total += num_errors;
 			break;
 		case 0:
-			qrean_debug_printf("rsblock #%d: No errors\n", rsblock_num);
+			qrean_debug_printf("rsblock #%d: No errors\n", rsblock_num + 1);
 			continue;
 		case -1:
-			qrean_debug_printf("rsblock #%d: Too many errors\n", rsblock_num);
+			qrean_debug_printf("rsblock #%d: Too many errors\n", rsblock_num + 1);
 			return -1;
 		};
 
