@@ -27,7 +27,7 @@ void qrpayload_init(qrpayload_t *payload, qr_version_t version, qr_errorlevel_t 
 	payload->total_blocks = qrspec_get_total_blocks(version, level);
 	payload->error_words_in_block = qrspec_get_error_words_in_block(version, level);
 
-	payload->word_size = version == QR_VERSION_TQR ? 10 : 8;
+	payload->word_size = IS_TQR(version) ? 10 : 8;
 
 	// let's do the simple math
 	payload->total_words = IS_MQR(version) ? (payload->total_bits + 7) / 8 : payload->total_bits / payload->word_size;
@@ -160,7 +160,7 @@ void qrpayload_set_error_words(qrpayload_t *payload)
 		}
 	}
 
-	if (payload->version == QR_VERSION_TQR) {
+	if (payload->word_size == 10) {
 		// additional simple parity for each symbols
 		bitstream_t bs = qrpayload_get_bitstream(payload);
 		while (!bitstream_is_end(&bs)) {
@@ -180,7 +180,7 @@ int qrpayload_fix_errors(qrpayload_t *payload)
 	bitstream_t bs_data = qrpayload_get_bitstream_for_data(payload);
 	bitstream_t bs_error = qrpayload_get_bitstream_for_error(payload);
 
-	if (payload->version == QR_VERSION_TQR) {
+	if (payload->word_size == 10) {
 		// additional simple parity check for each symbols
 		bitstream_t bs = qrpayload_get_bitstream(payload);
 		int block = 0;

@@ -335,9 +335,11 @@ uint_fast8_t qrspec_get_symbol_width(qr_version_t version)
 	} else if (IS_RMQR(version)) {
 		return RMQR_SYMBOL_WIDTH[RMQR_SYMBOL_X_INDEX(version)];
 #endif
+#ifndef NO_TQR
+	} else if (IS_TQR(version)) {
+		return 23;
+#endif
 	}
-
-	if (version == QR_VERSION_TQR) return 19;
 
 	qrean_error("Invalid version is specified");
 	return 0;
@@ -356,9 +358,12 @@ uint_fast8_t qrspec_get_symbol_height(qr_version_t version)
 	} else if (IS_RMQR(version)) {
 		return RMQR_SYMBOL_HEIGHT[RMQR_SYMBOL_Y_INDEX(version)];
 #endif
+#ifndef NO_TQR
+	} else if (IS_TQR(version)) {
+		return 23;
+#endif
 	}
 
-	if (version == QR_VERSION_TQR) return 19;
 	qrean_error("Invalid version is specified");
 	return 0;
 }
@@ -438,8 +443,6 @@ size_t qrspec_get_available_bits(qr_version_t version)
 	size_t symbol_width = qrspec_get_symbol_width(version);
 	size_t symbol_height = qrspec_get_symbol_height(version);
 
-	if (version == QR_VERSION_TQR) return 19 * 19 - 3 * 2 - 8 * 8 * 3 - 3;
-
 	if (IS_QR(version)) {
 		size_t finder_pattern = 8 * 8 * 3;
 		size_t N = version > 1 ? (version / 7) + 2 : 0; // alignment_pattern_addr[version - 1][0];
@@ -481,6 +484,10 @@ size_t qrspec_get_available_bits(qr_version_t version)
 			= finder_pattern + finder_sub_pattern + corner_finder_pattern + timing_pattern + alignment_pattern + format_info;
 
 		return symbol_width * symbol_height - function_bits;
+#endif
+#ifndef NO_TQR
+	} else if (IS_TQR(version)) {
+		return 19 * 19 - 3 * 2 - 8 * 8 * 3 - 3;
 #endif
 	}
 

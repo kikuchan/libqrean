@@ -298,7 +298,7 @@ size_t qrdata_parse(qrdata_t *data, void (*on_letter_cb)(qr_data_mode_t mode, co
 
 		case QR_DATA_MODE_NUMERIC:
 			len = bitstream_read_bits(r, LENGTH_BIT_SIZE_FOR_NUMERIC(data->version));
-			if (data->version == QR_VERSION_TQR) len = 12;
+			if (IS_TQR(data->version)) len = 12;
 			if (len == 0) goto mode_end;
 			while (len > 0) {
 				uint16_t v = bitstream_read_bits(r, len >= 3 ? 10 : len == 2 ? 7 : 4);

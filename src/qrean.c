@@ -494,6 +494,7 @@ qr_errorlevel_t qrean_read_qr_errorlevel(qrean_t *qrean)
 DEFINE_QR_PATTERN(finder_pattern);
 DEFINE_QR_PATTERN(finder_sub_pattern);
 DEFINE_QR_PATTERN(corner_finder_pattern);
+DEFINE_QR_PATTERN(border_pattern);
 DEFINE_QR_PATTERN(alignment_pattern);
 DEFINE_QR_PATTERN(timing_pattern);
 
@@ -513,6 +514,7 @@ void qrean_write_frame(qrean_t *qrean)
 		qrean_write_qr_finder_pattern(qrean);
 		qrean_write_qr_finder_sub_pattern(qrean);
 		qrean_write_qr_corner_finder_pattern(qrean);
+		qrean_write_qr_border_pattern(qrean);
 		qrean_write_qr_alignment_pattern(qrean);
 		qrean_write_qr_timing_pattern(qrean);
 		qrean_write_qr_format_info(qrean);

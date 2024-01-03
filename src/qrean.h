@@ -66,6 +66,7 @@ typedef struct {
 			qrean_bitpattern_t finder_pattern;
 			qrean_bitpattern_t finder_sub_pattern;
 			qrean_bitpattern_t corner_finder_pattern;
+			qrean_bitpattern_t border_pattern;
 			qrean_bitpattern_t timing_pattern;
 			qrean_bitpattern_t alignment_pattern;
 			qrean_bitpattern_t format_info;
@@ -79,6 +80,7 @@ typedef struct {
 #define QREAN_IS_TYPE_QR(qrean)       ((qrean)->code->type == QREAN_CODE_TYPE_QR)
 #define QREAN_IS_TYPE_MQR(qrean)      ((qrean)->code->type == QREAN_CODE_TYPE_MQR)
 #define QREAN_IS_TYPE_RMQR(qrean)     ((qrean)->code->type == QREAN_CODE_TYPE_RMQR)
+#define QREAN_IS_TYPE_TQR(qrean)      ((qrean)->code->type == QREAN_CODE_TYPE_TQR)
 
 struct _qrean_canvas_t {
 	uint8_t symbol_width;
@@ -155,6 +157,7 @@ qrversion_t qrean_read_qr_version_info(qrean_t *qrean, int idx);
 int qrean_read_qr_finder_pattern(qrean_t *qrean, int idx);
 int qrean_read_qr_finder_sub_pattern(qrean_t *qrean, int idx);
 int qrean_read_qr_corner_finder_pattern(qrean_t *qrean, int idx);
+int qrean_read_qr_border_pattern(qrean_t *qrean, int idx);
 int qrean_read_qr_timing_pattern(qrean_t *qrean, int idx);
 int qrean_read_qr_alignment_pattern(qrean_t *qrean, int idx);
 
@@ -167,6 +170,7 @@ void qrean_write_qr_version_info(qrean_t *qrean);
 void qrean_write_qr_finder_pattern(qrean_t *qrean);
 void qrean_write_qr_finder_sub_pattern(qrean_t *qrean);
 void qrean_write_qr_corner_finder_pattern(qrean_t *qrean);
+void qrean_write_qr_border_pattern(qrean_t *qrean);
 void qrean_write_qr_timing_pattern(qrean_t *qrean);
 void qrean_write_qr_alignment_pattern(qrean_t *qrean);
 

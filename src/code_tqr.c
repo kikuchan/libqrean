@@ -7,6 +7,11 @@
 
 #define QR_FORMATINFO_SIZE     (15)
 #define QR_FINDER_PATTERN_SIZE (9 * 9)
+#define QR_BORDER_PATTERN_SIZE ((23 - 1) * 4)
+
+#define BORDER_SIZE         (2)
+#define INNER_SYMBOL_WIDTH  (19)
+#define INNER_SYMBOL_HEIGHT (19)
 
 static bit_t is_mask(int_fast16_t j, int_fast16_t i, qr_maskpattern_t mask)
 {
@@ -36,12 +41,17 @@ static bit_t is_mask(int_fast16_t j, int_fast16_t i, qr_maskpattern_t mask)
 	}
 }
 
-static bit_t is_finder_pattern(qrean_t *qrean, int_fast16_t x, int_fast16_t y)
+static bitpos_t border_pattern_iter(bitstream_t *bs, bitpos_t i, void *opaque)
 {
-	if (x < 8 && y < 8) return 1;
-	if (x < 8 && y >= qrean->canvas.symbol_height - 8) return 1;
-	if (x >= qrean->canvas.symbol_width - 8 && y < 8) return 1;
-	return 0;
+	qrean_t *qrean = (qrean_t *)opaque;
+	if (i >= QR_BORDER_PATTERN_SIZE) return BITPOS_END;
+
+	int x = i < 22 ? i : i < 22 * 2 ? 23 - 1 : i < 22 * 3 ? 23 - 1 - (i - 22 * 2) : 0;
+	int y = i < 22 ? 0 : i < 22 * 2 ? i - 22 * 1 : i < 22 * 3 ? 23 - 1 : 23 - 1 - (i - 22 * 3);
+
+	int v = ((30 < i && i < 38 && i % 2) || (50 < i && i < 58 && i % 2)) ? 1 : 0;
+
+	return QREAN_XYV_TO_BITPOS(qrean, x, y, v);
 }
 
 static bitpos_t finder_pattern_iter(bitstream_t *bs, bitpos_t i, void *opaque)
@@ -50,28 +60,30 @@ static bitpos_t finder_pattern_iter(bitstream_t *bs, bitpos_t i, void *opaque)
 	int n = i / QR_FINDER_PATTERN_SIZE;
 	if (n >= 3) return BITPOS_END;
 
-	int x = (i % 9) + (n == 1 ? (qrean->canvas.symbol_width - 8) : -1);
-	int y = (i / 9 % 9) + (n == 2 ? (qrean->canvas.symbol_height - 8) : -1);
+	int x = (i % 9) + (n == 1 ? (INNER_SYMBOL_WIDTH - 8) : -1);
+	int y = (i / 9 % 9) + (n == 2 ? (INNER_SYMBOL_HEIGHT - 8) : -1);
 
+	x += BORDER_SIZE;
+	y += BORDER_SIZE;
 	return QREAN_XYV_TO_BITPOS(qrean, x, y, 0);
-}
-
-static bit_t is_timing_pattern(qrean_t *qrean, int_fast16_t x, int_fast16_t y)
-{
-	if (x == 6 || y == 6) return 1;
-	return 0;
 }
 
 static bitpos_t timing_pattern_iter(bitstream_t *bs, bitpos_t i, void *opaque)
 {
 	qrean_t *qrean = (qrean_t *)opaque;
-	int n = i / (qrean->canvas.symbol_width - 7 * 2 - 1) % (qrean->canvas.symbol_width - 7 * 2 - 1);
-	int u = i % (qrean->canvas.symbol_width - 7 * 2 - 1);
+	int n = i / (INNER_SYMBOL_WIDTH - 7 * 2 - 1) % (INNER_SYMBOL_WIDTH - 7 * 2 - 1);
+	int u = i % (INNER_SYMBOL_WIDTH - 7 * 2 - 1);
 
 	if (n >= 2) return BITPOS_END;
 
-	if (u > qrean->canvas.symbol_width - 8 * 2) return BITPOS_TRUNC;
-	return QREAN_XYV_TO_BITPOS(qrean, n == 0 ? 7 + u : 6, n != 0 ? 7 + u : 6, 1);
+	if (u > INNER_SYMBOL_WIDTH - 8 * 2) return BITPOS_TRUNC;
+
+	int x = n == 0 ? 7 + u : 6;
+	int y = n != 0 ? 7 + u : 6;
+
+	x += BORDER_SIZE;
+	y += BORDER_SIZE;
+	return QREAN_XYV_TO_BITPOS(qrean, x, y, 1);
 }
 
 static const struct {
@@ -249,6 +261,10 @@ static bitpos_t composed_data_iter(bitstream_t *bs, bitpos_t i, void *opaque)
 	int y = data_xypos[i].y;
 
 	bit_t v = is_mask(x, y, qrean->qr.mask);
+
+	x += BORDER_SIZE;
+	y += BORDER_SIZE;
+
 	return QREAN_XYV_TO_BITPOS(qrean, x, y, v);
 }
 
@@ -278,6 +294,7 @@ static const uint8_t finder_pattern_bits[] = {
 };
 
 static const uint8_t timing_pattern_bits[] = { 0xAA };
+static const uint8_t border_pattern_bits[] = { 0xFF };
 
 qrean_code_t qrean_code_tqr = {
 	.type = QREAN_CODE_TYPE_TQR,
@@ -287,6 +304,7 @@ qrean_code_t qrean_code_tqr = {
 
 	.qr = {
 		 .finder_pattern = {finder_pattern_iter, finder_pattern_bits, QR_FINDER_PATTERN_SIZE},
+		 .border_pattern = {border_pattern_iter, border_pattern_bits, 8},
 		 .timing_pattern = {timing_pattern_iter, timing_pattern_bits, 8},
 	},
 };
