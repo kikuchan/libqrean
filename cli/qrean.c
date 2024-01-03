@@ -36,7 +36,7 @@ int usage(FILE *out)
 	fprintf(out, "                          PNG    (default for non tty)\n");
 	fprintf(out, "                          PPM\n");
 	fprintf(out, "    -t CODE           Output CODE, one of the following:\n");
-	fprintf(out, "                          QR, mQR, rMQR\n");
+	fprintf(out, "                          QR, mQR, rMQR, tQR\n");
 	fprintf(out, "                          EAN13, EAN8, UPCA\n");
 	fprintf(out, "                          CODE39, CODE93\n");
 	fprintf(out, "                          ITF, NW7\n");
@@ -50,10 +50,10 @@ int usage(FILE *out)
 	fprintf(out, "                            R{H}x{W}\n");
 	fprintf(out, "                              H: 7, 9, 11, 13, 15, 17\n");
 	fprintf(out, "                              W: 43, 59, 77, 99, 139\n");
+	fprintf(out, "                          tQR                (for tQR)\n");
 	fprintf(out, "    -m MASK           Use MASK pattern, one of the following:\n");
 	fprintf(out, "                          0 ... 7            (for QR)\n");
 	fprintf(out, "                          0 ... 4            (for mQR)\n");
-	fprintf(out, "                          0                  (for rMQR)\n");
 	fprintf(out, "    -l LEVEL          Use ecc LEVEL, one of the following:\n");
 	fprintf(out, "                          L, M, Q, H         (for QR)\n");
 	fprintf(out, "                          L, M, Q            (for mQR)\n");

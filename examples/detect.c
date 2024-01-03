@@ -43,7 +43,7 @@ static void on_found(qrean_detector_perspective_t *warp, void *opaque) {
 	char buffer[1024];
 
 #ifdef DEBUG_DETECT
-	if (QREAN_IS_TYPE_QR(warp->qrean)) {
+	if (QREAN_IS_TYPE_QRFAMILY(warp->qrean)) {
 		image_point_t points[] = {
 			image_point_transform(POINT(0, 0), warp->h),
 			image_point_transform(POINT(warp->qrean->canvas.symbol_width - 1, 0), warp->h),
@@ -80,6 +80,7 @@ void done(pngle_t *pngle) {
 	int found = 0;
 
 #ifdef DEBUG_DETECT
+	// detected = image_clone(img);
 	detected = image_clone(mono);
 	for (int i = 0; i < num_candidates; i++) {
 		image_draw_filled_ellipse(detected, candidates[i].center, 5, 5, PIXEL(255, 0, 0));

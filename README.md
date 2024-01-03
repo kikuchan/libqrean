@@ -32,7 +32,7 @@ Generate QR/Barcode image
                           PNG    (default for non tty)
                           PPM
     -t CODE           Output CODE, one of the following:
-                          QR, mQR, rMQR
+                          QR, mQR, rMQR, tQR
                           EAN13, EAN8, UPCA
                           CODE39, CODE93
                           ITF, NW7
@@ -46,10 +46,10 @@ Generate QR/Barcode image
                             R{H}x{W}
                               H: 7, 9, 11, 13, 15, 17
                               W: 43, 59, 77, 99, 139
+                          tQR                (for tQR)
     -m MASK           Use MASK pattern, one of the following:
                           0 ... 7            (for QR)
                           0 ... 4            (for mQR)
-                          0                  (for rMQR)
     -l LEVEL          Use ecc LEVEL, one of the following:
                           L, M, Q, H         (for QR)
                           L, M, Q            (for mQR)
@@ -104,6 +104,7 @@ You can also configure a callback to draw a pixel directly on a screen for examp
 | QR                  | ✓      | ✓      | ✓
 | mQR                 | ✓      | ✓      | ✓
 | rMQR                | ✓      | ✓      | ✓
+| tQR                 | ✓      | ✓      | ✓
 | UPCA / EAN13 / EAN8 | ✓      | ✓      | ✓
 | CODE39              | ✓      | ✓      | ✓
 | CODE93              | ✓      | ✓      | ✓

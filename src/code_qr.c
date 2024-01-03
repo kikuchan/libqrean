@@ -1,4 +1,5 @@
 #include "bitstream.h"
+#include "debug.h"
 #include "qrean.h"
 #include "qrpayload.h"
 #include "qrspec.h"
@@ -30,11 +31,14 @@ static bit_t is_mask(int_fast16_t j, int_fast16_t i, qr_maskpattern_t mask)
 	case QR_MASKPATTERN_7:
 		return (((i * j) % 3) + ((i + j) % 2)) % 2 == 0;
 
-	default:
 	case QR_MASKPATTERN_NONE:
 		return 0;
 	case QR_MASKPATTERN_ALL:
 		return 1;
+
+	default:
+		qrean_error("Invalid mask pattern");
+		return 0;
 	}
 }
 
