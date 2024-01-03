@@ -94,8 +94,11 @@ size_t qrdata_write_alnum_string(qrdata_t *data, const char *src, size_t len)
 		bitstream_write_bits(&data->bs, 1, data->version - QR_VERSION_M1);
 	} else if (IS_RMQR(data->version)) {
 		bitstream_write_bits(&data->bs, RMQR_DATA_MODE_ALNUM, 3);
-	} else {
+	} else if (IS_QR(data->version)) {
 		bitstream_write_bits(&data->bs, QR_DATA_MODE_ALNUM, 4);
+	} else {
+		// unsupported
+		return 0;
 	}
 	bitstream_write_bits(&data->bs, len, LENGTH_BIT_SIZE_FOR_ALNUM(data->version));
 
@@ -124,8 +127,11 @@ size_t qrdata_write_8bit_string(qrdata_t *data, const char *src, size_t len)
 		bitstream_write_bits(&data->bs, 2, data->version - QR_VERSION_M1);
 	} else if (IS_RMQR(data->version)) {
 		bitstream_write_bits(&data->bs, RMQR_DATA_MODE_8BIT, 3);
-	} else {
+	} else if (IS_QR(data->version)) {
 		bitstream_write_bits(&data->bs, QR_DATA_MODE_8BIT, 4);
+	} else {
+		// unsupported
+		return 0;
 	}
 
 	bitstream_write_bits(&data->bs, len, LENGTH_BIT_SIZE_FOR_8BIT(data->version));
@@ -143,8 +149,14 @@ bit_t qrdata_finalize(qrdata_t *data)
 		if (!bitstream_write_bits(&data->bs, 0, 3 + 2 * (data->version - QR_VERSION_M1))) return 0;
 	} else if (IS_RMQR(data->version)) {
 		if (!bitstream_write_bits(&data->bs, RMQR_DATA_MODE_END, 3)) return 0;
-	} else {
+	} else if (IS_QR(data->version)) {
 		if (!bitstream_write_bits(&data->bs, QR_DATA_MODE_END, 4)) return 0;
+	} else if (IS_TQR(data->version)) {
+		if (bitstream_tell(&data->bs) != 4 * 10) {
+			return 0;
+		}
+	} else {
+		return 0;
 	}
 	if (bitstream_tell(&data->bs) % 8) bitstream_write_bits(&data->bs, 0, 8 - (bitstream_tell(&data->bs) % 8));
 

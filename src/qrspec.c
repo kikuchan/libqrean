@@ -595,6 +595,8 @@ static const char *qr_version_string[] = {
 	"R17x77",
 	"R17x99",
 	"R17x139",
+
+	"tQR",
 };
 
 const char *qrspec_get_version_string(qr_version_t version)
@@ -619,5 +621,6 @@ int qrspec_is_valid_combination(qr_version_t version, qr_errorlevel_t level, qr_
 	if (IS_QR(version) && QR_MASKPATTERN_0 <= mask && mask <= QR_MASKPATTERN_7) return 1;
 	if (IS_MQR(version) && QR_MASKPATTERN_0 <= mask && mask <= QR_MASKPATTERN_3) return 1;
 	if (IS_RMQR(version) && QR_MASKPATTERN_0 <= mask && mask <= QR_MASKPATTERN_0) return 1;
+	if (IS_TQR(version) && QR_MASKPATTERN_0 <= mask && mask <= QR_MASKPATTERN_0) return 1;
 	return 0;
 }

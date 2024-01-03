@@ -156,27 +156,30 @@ int main(int argc, char *argv[])
 			break;
 
 		case 't':
-			if (!strcasecmp(optarg, "qr"))
+			if (!strcasecmp(optarg, "qr")) {
 				code = QREAN_CODE_TYPE_QR;
-			else if (!strcasecmp(optarg, "mqr"))
+			} else if (!strcasecmp(optarg, "mqr")) {
 				code = QREAN_CODE_TYPE_MQR;
-			else if (!strcasecmp(optarg, "rmqr"))
+			} else if (!strcasecmp(optarg, "rmqr")) {
 				code = QREAN_CODE_TYPE_RMQR;
-			else if (!strcasecmp(optarg, "ean8"))
+			} else if (!strcasecmp(optarg, "tqr")) {
+				code = QREAN_CODE_TYPE_TQR;
+				version = QR_VERSION_TQR;
+			} else if (!strcasecmp(optarg, "ean8")) {
 				code = QREAN_CODE_TYPE_EAN8;
-			else if (!strcasecmp(optarg, "ean13"))
+			} else if (!strcasecmp(optarg, "ean13")) {
 				code = QREAN_CODE_TYPE_EAN13;
-			else if (!strcasecmp(optarg, "upca"))
+			} else if (!strcasecmp(optarg, "upca")) {
 				code = QREAN_CODE_TYPE_UPCA;
-			else if (!strcasecmp(optarg, "code39"))
+			} else if (!strcasecmp(optarg, "code39")) {
 				code = QREAN_CODE_TYPE_CODE39;
-			else if (!strcasecmp(optarg, "code93"))
+			} else if (!strcasecmp(optarg, "code93")) {
 				code = QREAN_CODE_TYPE_CODE93;
-			else if (!strcasecmp(optarg, "itf"))
+			} else if (!strcasecmp(optarg, "itf")) {
 				code = QREAN_CODE_TYPE_ITF;
-			else if (!strcasecmp(optarg, "nw7"))
+			} else if (!strcasecmp(optarg, "nw7")) {
 				code = QREAN_CODE_TYPE_NW7;
-			else {
+			} else {
 				fprintf(stderr, "Unknown code '%s' is specified\n", optarg);
 				return -1;
 			}
@@ -184,13 +187,15 @@ int main(int argc, char *argv[])
 
 		case 'v':
 			version = qrspec_get_version_by_string(optarg);
-			if (IS_QR(version))
+			if (IS_QR(version)) {
 				code = QREAN_CODE_TYPE_QR;
-			else if (IS_MQR(version))
+			} else if (IS_MQR(version)) {
 				code = QREAN_CODE_TYPE_MQR;
-			else if (IS_RMQR(version))
+			} else if (IS_RMQR(version)) {
 				code = QREAN_CODE_TYPE_RMQR;
-			else if (version == QR_VERSION_INVALID) {
+			} else if (IS_TQR(version)) {
+				code = QREAN_CODE_TYPE_TQR;
+			} else if (version == QR_VERSION_INVALID) {
 				fprintf(stderr, "Unknown version '%s' is specified\n", optarg);
 				return -1;
 			}
