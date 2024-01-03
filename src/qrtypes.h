@@ -126,6 +126,6 @@ typedef enum {
 #define IS_MQR(version)  (QR_VERSION_M1 <= (version) && (version) <= QR_VERSION_M4)
 #define IS_QR(version)   (QR_VERSION_1 <= (version) && (version) <= QR_VERSION_40)
 #define IS_RMQR(version) (QR_VERSION_R7x43 <= (version) && (version) <= QR_VERSION_R17x139)
-#define IS_TQR(version) ((version) == QR_VERSION_TQR)
+#define IS_TQR(version)  ((version) == QR_VERSION_TQR)
 
 #endif /* __QR_QRTYPES_H__*/

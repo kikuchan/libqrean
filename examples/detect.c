@@ -90,6 +90,7 @@ void done(pngle_t *pngle) {
 	found += qrean_detector_try_decode_qr(mono, candidates, num_candidates, on_found, NULL);
 	found += qrean_detector_try_decode_mqr(mono, candidates, num_candidates, on_found, NULL);
 	found += qrean_detector_try_decode_rmqr(mono, candidates, num_candidates, on_found, NULL);
+	found += qrean_detector_try_decode_tqr(mono, candidates, num_candidates, on_found, NULL);
 
 	if (!found) {
 #ifndef DEBUG_DETECT

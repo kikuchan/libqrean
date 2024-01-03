@@ -17,21 +17,7 @@ static bit_t is_mask(int_fast16_t j, int_fast16_t i, qr_maskpattern_t mask)
 {
 	switch (mask) {
 	case QR_MASKPATTERN_0:
-		return (i + j) % 2 == 0;
-	case QR_MASKPATTERN_1:
-		return i % 2 == 0;
-	case QR_MASKPATTERN_2:
-		return j % 3 == 0;
-	case QR_MASKPATTERN_3:
-		return (i + j) % 3 == 0;
-	case QR_MASKPATTERN_4:
 		return (i / 2 + j / 3) % 2 == 0;
-	case QR_MASKPATTERN_5:
-		return ((i * j) % 2) + ((i * j) % 3) == 0;
-	case QR_MASKPATTERN_6:
-		return (((i * j) % 2) + ((i * j) % 3)) % 2 == 0;
-	case QR_MASKPATTERN_7:
-		return (((i * j) % 3) + ((i + j) % 2)) % 2 == 0;
 
 	default:
 	case QR_MASKPATTERN_NONE:

@@ -253,13 +253,14 @@ bit_t qrean_detector_perspective_read_image_pixel(qrean_t *qrean, bitpos_t x, bi
 	return pix == 0 ? 1 : 0;
 }
 
-void qrean_detector_perspective_setup_by_qr_finder_pattern_centers(qrean_detector_perspective_t *warp, image_point_t src[3])
+void qrean_detector_perspective_setup_by_qr_finder_pattern_centers(
+	qrean_detector_perspective_t *warp, image_point_t src[3], int border_offset)
 {
-	warp->src[0] = POINT(3, 3); // center of the 1st keystone
-	warp->src[1] = POINT(warp->qrean->canvas.symbol_width - 4, 3); // center of the 2nd keystone
-	warp->src[2] = POINT(3, warp->qrean->canvas.symbol_height - 4); // center of the 3rd keystone
-	warp->src[3]
-		= POINT(warp->qrean->canvas.symbol_width - 4, warp->qrean->canvas.symbol_height - 4); // center of the 4th estimated pseudo keystone
+	warp->src[0] = POINT(3 + border_offset, 3 + border_offset); // center of the 1st keystone
+	warp->src[1] = POINT(warp->qrean->canvas.symbol_width - 4 - border_offset, 3 + border_offset); // center of the 2nd keystone
+	warp->src[2] = POINT(3 + border_offset, warp->qrean->canvas.symbol_height - 4 - border_offset); // center of the 3rd keystone
+	warp->src[3] = POINT(warp->qrean->canvas.symbol_width - 4 - border_offset,
+		warp->qrean->canvas.symbol_height - 4 - border_offset); // center of the 4th estimated pseudo keystone
 
 	warp->dst[0] = src[0];
 	warp->dst[1] = src[1];
@@ -368,7 +369,7 @@ int qrean_detector_try_decode_qr(image_t *src, qrean_detector_qr_finder_candidat
 						qrean_set_qr_version(qrean, (qr_version_t)version);
 
 						qrean_detector_perspective_t warp = create_qrean_detector_perspective(qrean, src);
-						qrean_detector_perspective_setup_by_qr_finder_pattern_centers(&warp, points);
+						qrean_detector_perspective_setup_by_qr_finder_pattern_centers(&warp, points, 0);
 
 						if (qrean_read_qr_finder_pattern(qrean, -1) > 10) continue;
 
@@ -383,6 +384,47 @@ int qrean_detector_try_decode_qr(image_t *src, qrean_detector_qr_finder_candidat
 								break;
 							}
 						}
+					}
+
+					qrean_free(qrean);
+				}
+			}
+		}
+	}
+
+	return found;
+}
+
+int qrean_detector_try_decode_tqr(image_t *src, qrean_detector_qr_finder_candidate_t *candidates, int num_candidates,
+	void (*on_found)(qrean_detector_perspective_t *warp, void *opaque), void *opaque)
+{
+	int found = 0;
+	// try all possible pairs!
+	for (int i = 0; i < num_candidates; i++) {
+		for (int j = i + 1; j < num_candidates; j++) {
+			for (int k = j + 1; k < num_candidates; k++) {
+				int idx[] = { i, j, k, i, k, j, j, i, k, j, k, i, k, i, j, k, j, i };
+				for (int l = 0; l < 6; l++) {
+					image_point_t points[] = {
+						candidates[idx[l * 3 + 0]].center,
+						candidates[idx[l * 3 + 1]].center,
+						candidates[idx[l * 3 + 2]].center,
+					};
+
+					qrean_t *qrean = new_qrean(QREAN_CODE_TYPE_TQR);
+					qrean_set_qr_version(qrean, QR_VERSION_TQR);
+					qrean_set_qr_maskpattern(qrean, QR_MASKPATTERN_0);
+
+					qrean_detector_perspective_t warp = create_qrean_detector_perspective(qrean, src);
+					qrean_detector_perspective_setup_by_qr_finder_pattern_centers(&warp, points, 2);
+
+					if (qrean_read_qr_finder_pattern(qrean, -1) > 10) continue;
+
+					// qrean_detector_perspective_fit_for_qr(&warp);
+
+					if (qrean_fix_errors(qrean) >= 0) {
+						on_found(&warp, opaque);
+						found++;
 					}
 
 					qrean_free(qrean);

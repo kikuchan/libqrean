@@ -37,7 +37,8 @@ qrean_detector_perspective_t create_qrean_detector_perspective(qrean_t *qrean, i
 
 bit_t qrean_detector_perspective_read_image_pixel(qrean_t *qrean, bitpos_t x, bitpos_t y, bitpos_t pos, void *opaque);
 
-void qrean_detector_perspective_setup_by_qr_finder_pattern_centers(qrean_detector_perspective_t *warp, image_point_t src[3]);
+void qrean_detector_perspective_setup_by_qr_finder_pattern_centers(
+	qrean_detector_perspective_t *warp, image_point_t src[3], int border_offset);
 void qrean_detector_perspective_setup_by_qr_finder_pattern_ring_corners(
 	qrean_detector_perspective_t *warp, image_point_t ring[4], int offset);
 
@@ -49,6 +50,8 @@ int qrean_detector_try_decode_qr(image_t *src, qrean_detector_qr_finder_candidat
 int qrean_detector_try_decode_mqr(image_t *src, qrean_detector_qr_finder_candidate_t *candidates, int num_candidates,
 	void (*on_found)(qrean_detector_perspective_t *warp, void *opaque), void *opaque);
 int qrean_detector_try_decode_rmqr(image_t *src, qrean_detector_qr_finder_candidate_t *candidates, int num_candidates,
+	void (*on_found)(qrean_detector_perspective_t *warp, void *opaque), void *opaque);
+int qrean_detector_try_decode_tqr(image_t *src, qrean_detector_qr_finder_candidate_t *candidates, int num_candidates,
 	void (*on_found)(qrean_detector_perspective_t *warp, void *opaque), void *opaque);
 
 #endif /* __QREAN_DETECTOR_H__ */
