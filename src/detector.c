@@ -517,7 +517,7 @@ int qrean_detector_try_decode_rmqr(image_t *src, qrean_detector_qr_finder_candid
 			qrean_detector_perspective_setup_by_qr_finder_pattern_ring_corners(&warp, candidates[i].corners, c);
 
 			if (!qrean_set_qr_format_info(qrean, qrean_read_qr_format_info(qrean, -1))) continue;
-			qrean_debug_printf("Detected rMQR version: %s\n", qrspec_get_version_string(qrean->qr.version));
+			qrean_debug_printf("Detected as rMQR version: %s\n", qrspec_get_version_string(qrean->qr.version));
 
 			qrean_detector_perspective_fit_for_rmqr(&warp);
 			// if (qrean_read_qr_timing_pattern(qrean, -1) > 10) continue;
