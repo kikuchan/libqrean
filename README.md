@@ -18,7 +18,7 @@ A portable QR and Barcode generation / manipulation library written in C.
 ██▄▄▄▄▄▄▄█▄█▄█▄█▄█▄█▄▄▄█▄█▄█▄█▄█▄█▄█▄█▄█▄▄▄█▄█▄█▄█▄█▄█▄█▄▄▄▄▄██
 ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
 % qrean -t mQR Hello > mqr.png
-% qrean -o qr.png Hello 
+% qrean -o qr.png Hello
 % qrean -h
 Usage: qrean [OPTION]... [STRING]
 Generate QR/Barcode image
@@ -54,6 +54,12 @@ Generate QR/Barcode image
                           L, M, Q, H         (for QR)
                           L, M, Q            (for mQR)
                              M,    H         (for rMQR)
+```
+Detection (Source file must be a PNG file so far)
+```
+% qrean-detect qr.png
+Hello
+%
 ```
 
 # Library Usage

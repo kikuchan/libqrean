@@ -1,9 +1,11 @@
-#include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#ifdef __WIN32
+#include <windows.h>
+#endif
 
 #include "image.h"
 #include "qrean.h"
@@ -65,11 +67,27 @@ int usage(FILE *out)
 void image_save_as_png(image_t *img, FILE *out)
 {
 	size_t len;
-	void *png = tdefl_write_image_to_png_file_in_memory(img->buffer, img->width, img->height, 4, &len);
+
+	uint8_t *buf = (uint8_t *)malloc(img->width * img->height * 4);
+	if (!buf) return;
+
+	for (int y = 0; y < img->height; y++) {
+		for (int x = 0; x < img->width; x++) {
+			image_pixel_t pix = image_read_pixel(img, POINT(x, y));
+			buf[(y * img->width + x) * 4 + 0] = PIXEL_GET_R(pix);
+			buf[(y * img->width + x) * 4 + 1] = PIXEL_GET_G(pix);
+			buf[(y * img->width + x) * 4 + 2] = PIXEL_GET_B(pix);
+			buf[(y * img->width + x) * 4 + 3] = 255;
+		}
+	}
+
+	void *png = tdefl_write_image_to_png_file_in_memory(buf, img->width, img->height, 4, &len);
 	if (png) {
 		fwrite(png, 1, len, out);
 		free(png);
 	}
+
+	free(buf);
 }
 
 padding_t parse_padding(const char *src)
@@ -128,14 +146,16 @@ int main(int argc, char *argv[])
 		case 'i':
 			in = fopen(optarg, "rb");
 			if (in == NULL) {
-				errx(1, "fopen failed. (%s: %s)", optarg, strerror(errno));
+				fprintf(stderr, "fopen failed. (%s: %s)", optarg, strerror(errno));
+				return 1;
 			}
 			break;
 
 		case 'o':
 			out = fopen(optarg, "w+b");
 			if (out == NULL) {
-				errx(1, "fopen failed. (%s: %s)", optarg, strerror(errno));
+				fprintf(stderr, "fopen failed. (%s: %s)", optarg, strerror(errno));
+				return 1;
 			}
 			break;
 
@@ -151,7 +171,8 @@ int main(int argc, char *argv[])
 			} else if (!strcasecmp(optarg, "txt")) {
 				save_as = SAVE_AS_TXT;
 			} else {
-				errx(1, "Unknown safe format\n");
+				fprintf(stderr, "Unknown safe format\n");
+				return 1;
 			}
 			break;
 
@@ -301,7 +322,14 @@ int main(int argc, char *argv[])
 
 	default:
 	case SAVE_AS_TXT:
+#ifdef __WIN32
+		unsigned int cp = GetConsoleOutputCP();
+		SetConsoleOutputCP(65001);
+#endif
 		qrean_dump(qrean, out);
+#ifdef __WIN32
+		SetConsoleOutputCP(cp);
+#endif
 		break;
 	}
 
