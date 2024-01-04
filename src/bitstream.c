@@ -199,6 +199,8 @@ bitpos_t bitstream_write_string(bitstream_t *bs, const char *fmt, ...)
 		bitstream_write_bits(bs, buf[i++], 8);
 	}
 	return i;
+#else
+	return 0;
 #endif
 }
 

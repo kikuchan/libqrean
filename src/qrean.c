@@ -106,10 +106,7 @@ bit_t qrean_set_qr_version(qrean_t *qrean, qr_version_t version)
 		return 0;
 	}
 	qrean->qr.version = version;
-	qrean->canvas.symbol_width = qrspec_get_symbol_width(version);
-	qrean->canvas.symbol_height = qrspec_get_symbol_height(version);
-	qrean->canvas.bitmap_width = qrean->canvas.symbol_width + qrean->canvas.bitmap_padding.l + qrean->canvas.bitmap_padding.r;
-	qrean->canvas.bitmap_height = qrean->canvas.symbol_height + qrean->canvas.bitmap_padding.t + qrean->canvas.bitmap_padding.b;
+	qrean_set_symbol_size(qrean, qrspec_get_symbol_width(version), qrspec_get_symbol_height(version));
 	return 1;
 }
 
@@ -596,8 +593,8 @@ size_t qrean_write_qr_data(qrean_t *qrean, const void *buffer, size_t len, qrean
 {
 	int min_v, max_v;
 	if (qrean->qr.version == QR_VERSION_AUTO) {
-		min_v = QREAN_IS_TYPE_QR(qrean) ? QR_VERSION_1 : QREAN_IS_TYPE_MQR(qrean) ? QR_VERSION_M1 : QR_VERSION_R7x43;
-		max_v = QREAN_IS_TYPE_QR(qrean) ? QR_VERSION_40 : QREAN_IS_TYPE_MQR(qrean) ? QR_VERSION_M4 : QR_VERSION_R17x139;
+		min_v = QREAN_IS_TYPE_QR(qrean) ? QR_VERSION_1 : QREAN_IS_TYPE_MQR(qrean) ? QR_VERSION_M1 : QREAN_IS_TYPE_TQR(qrean) ? QR_VERSION_TQR : QR_VERSION_R7x43;
+		max_v = QREAN_IS_TYPE_QR(qrean) ? QR_VERSION_40 : QREAN_IS_TYPE_MQR(qrean) ? QR_VERSION_M4 : QREAN_IS_TYPE_TQR(qrean) ? QR_VERSION_TQR : QR_VERSION_R17x139;
 	} else {
 		min_v = max_v = qrean->qr.version;
 	}
