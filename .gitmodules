@@ -1,0 +1,3 @@
+[submodule "wasm/tinymm"]
+	path = wasm/tinymm
+	url = https://github.com/code4fukui/tinymm

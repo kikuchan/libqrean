@@ -1,0 +1,56 @@
+<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><link rel="icon" href="data:">
+
+<h1>mQR maker by QRean</h1>
+
+<main>
+<input id=intext value="123"><br>
+<select id=seltype></select><br>
+<select id=seldatatype></select><br>
+<div id=divimg></div>
+</main>
+
+<footer>
+<a href=https://github.com/kikuchan/libqrean>src on GitHub</a>
+</footer>
+
+<style>
+body {
+  text-align: center;
+}
+main > * {
+  margin: 1em .2em;
+  font-size: 20px;
+}
+</style>
+
+<script type="module">
+import { QRean } from "./QRean.js";
+import { PNG } from "https://code4fukui.github.io/PNG/PNG.js";
+import { encodeData } from "https://code4fukui.github.io/dataencoder/encodeData.js";
+
+const setsel = (sel, types) => {
+  for (const name in types) {
+    const opt = document.createElement("option");
+    opt.value = types[name];
+    opt.textContent = name;
+    sel.appendChild(opt);
+  }
+};
+setsel(seltype, QRean.TYPES);
+seltype.value = QRean.TYPE_MQR;
+setsel(seldatatype, QRean.DATA_TYPES);
+seldatatype.value = QRean.DATA_TYPE_NUMERIC;
+
+const qrean = await QRean.create();
+
+seltype.oninput = seldatatype.oninput = intext.oninput = () => {
+  divimg.innerHTML = "";
+  const imgd = qrean.make(intext.value, seltype.value, seldatatype.value);
+  if (!imgd) return;
+  const png = PNG.encode(imgd);
+  const img = new Image();
+  img.src = encodeData("image/png", png);
+  divimg.appendChild(img);
+};
+intext.oninput();
+</script>
