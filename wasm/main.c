@@ -35,6 +35,7 @@ image_t* make(int type, int datatype) { // QREAN_CODE_TYPE_QR
 	img->buffer = (image_pixel_t*)(void*)(img + sizeof(size_t) * 4);
 	img->width = width;
 	img->height = height;
+	qrean_set_bitmap_color(&qrean, 0x000000FF, 0xFFFFFFFF);
 	qrean_read_bitmap(&qrean, img->buffer, width * height * 4, 32);
 	return img;
 	//image_dump(img, stdout);

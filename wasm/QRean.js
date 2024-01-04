@@ -80,7 +80,7 @@ export class QRean {
     "numeric": QRean.DATA_TYPE_NUMERIC,
     "alphabet & numeric": QRean.DATA_TYPE_ALNUM,
     "8bit binary": QRean.DATA_TYPE_8BIT,
-    "kanji character": QRean.DATA_TYPE_KNAJI,
+    "kanji character": QRean.DATA_TYPE_KANJI,
   };
   make(text, type, datatype) {
     const ex = this.wasm.instance.exports;
@@ -94,14 +94,12 @@ export class QRean {
       //throw new Exception(res);
     }
     const pbuf = (mem[pimage + 0] & 0xff) | ((mem[pimage + 1] & 0xff) << 8);
-    const width = mem[pimage + 4];
-    const height = mem[pimage + 8];
+    const width = (mem[pimage + 4] & 0xff) | ((mem[pimage + 5] & 0xff) << 8);
+    const height = (mem[pimage + 8] & 0xff) | ((mem[pimage + 9] & 0xff) << 8);
+
     const data = new Uint8ClampedArray(width * height * 4);
     for (let i = 0; i < data.length; i++) {
       data[i] = mem[pbuf + i];
-    }
-    for (let i = 0; i < data.length; i += 4) {
-      data[i + 3] = 255;
     }
     const imgdata = {
       width,

@@ -1,1 +1,1 @@
-#define assert
+#define assert (void)
