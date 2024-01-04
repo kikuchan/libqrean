@@ -2,7 +2,7 @@
 set -u
 
 QREAN=${QREAN:-../cli/qrean/qrean}
-QREAN_DETECT=${QREAN_DETECT:-../cli/qrean/qrean-detect}
+QREAN_DETECT=${QREAN_DETECT:-../cli/qrean-detect/qrean-detect}
 error=0
 
 check() {
@@ -17,5 +17,6 @@ check() {
 
 ${QREAN} -t rmqr -f txt Hello | check - rmqr-1.txt
 ${QREAN} -t tqr -f txt 000000000000 | check - tqr-000000000000.txt
+${QREAN_DETECT} github-libqrean-qr.png | check - github-libqrean-qr.txt
 
 exit ${error}

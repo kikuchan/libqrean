@@ -9,6 +9,23 @@
 #include "runlength.h"
 #include "utils.h"
 
+bit_t qrean_detector_perspective_read_image_pixel(qrean_t *qrean, bitpos_t x, bitpos_t y, bitpos_t pos, void *opaque)
+{
+	qrean_detector_perspective_t *warp = (qrean_detector_perspective_t *)opaque;
+
+	uint32_t pix = image_read_pixel(warp->img, image_point_transform(POINT(x, y), warp->h)) & 0xFFFFFF;
+
+	return pix == 0 ? 1 : 0;
+}
+
+bit_t qrean_detector_perspective_write_image_pixel(qrean_t *qrean, bitpos_t x, bitpos_t y, bitpos_t pos, bit_t v, void *opaque)
+{
+	qrean_detector_perspective_t *warp = (qrean_detector_perspective_t *)opaque;
+
+	image_draw_pixel(warp->img, image_point_transform(POINT(x, y), warp->h), v ? PIXEL(0, 0, 0) : PIXEL(255, 255, 255));
+	return 0;
+}
+
 int qrean_detector_scan_barcodes(image_t *src, void (*on_found)(qrean_detector_perspective_t *warp, void *opaque), void *opaque)
 {
 	int found = 0;
@@ -81,6 +98,7 @@ int qrean_detector_scan_barcodes(image_t *src, void (*on_found)(qrean_detector_p
 				qrean_detector_perspective_t warp = create_qrean_detector_perspective(qrean, src);
 				warp.h = mat;
 				qrean_on_read_pixel(warp.qrean, qrean_detector_perspective_read_image_pixel, &warp);
+				qrean_on_write_pixel(warp.qrean, qrean_detector_perspective_write_image_pixel, &warp);
 
 				char buf[256];
 				if (qrean_read_string(qrean, buf, sizeof(buf))) {
@@ -244,15 +262,6 @@ qrean_detector_perspective_t create_qrean_detector_perspective(qrean_t *qrean, i
 	return warp;
 }
 
-bit_t qrean_detector_perspective_read_image_pixel(qrean_t *qrean, bitpos_t x, bitpos_t y, bitpos_t pos, void *opaque)
-{
-	qrean_detector_perspective_t *warp = (qrean_detector_perspective_t *)opaque;
-
-	uint32_t pix = image_read_pixel(warp->img, image_point_transform(POINT(x, y), warp->h));
-
-	return pix == 0 ? 1 : 0;
-}
-
 void qrean_detector_perspective_setup_by_qr_finder_pattern_centers(
 	qrean_detector_perspective_t *warp, image_point_t src[3], int border_offset)
 {
@@ -271,6 +280,7 @@ void qrean_detector_perspective_setup_by_qr_finder_pattern_centers(
 	warp->h = create_image_transform_matrix(warp->src, warp->dst);
 
 	qrean_on_read_pixel(warp->qrean, qrean_detector_perspective_read_image_pixel, warp);
+	qrean_on_write_pixel(warp->qrean, qrean_detector_perspective_write_image_pixel, warp);
 }
 
 void qrean_detector_perspective_setup_by_qr_finder_pattern_ring_corners(
@@ -292,6 +302,7 @@ void qrean_detector_perspective_setup_by_qr_finder_pattern_ring_corners(
 	warp->h = create_image_transform_matrix(warp->src, warp->dst);
 
 	qrean_on_read_pixel(warp->qrean, qrean_detector_perspective_read_image_pixel, warp);
+	qrean_on_write_pixel(warp->qrean, qrean_detector_perspective_write_image_pixel, warp);
 }
 
 int qrean_detector_perspective_fit_for_qr(qrean_detector_perspective_t *warp)
