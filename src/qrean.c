@@ -36,6 +36,7 @@ bit_t qrean_init(qrean_t *qrean, qrean_code_type_t type)
 
 			qrean_set_bitmap_padding(qrean, create_padding1(4));
 			qrean_set_bitmap_scale(qrean, 4);
+			qrean_set_bitmap_color(qrean, 0x00000000, 0xffffffff);
 
 #ifndef NO_QRMATRIX_BUFFER
 #if defined(USE_MALLOC_BUFFER) && !defined(NO_MALLOC)
@@ -177,6 +178,13 @@ bit_t qrean_set_bitmap_scale(qrean_t *qrean, uint8_t scale)
 	return 1;
 }
 
+bit_t qrean_set_bitmap_color(qrean_t *qrean, uint32_t dark, uint32_t light)
+{
+	qrean->canvas.bitmap_color_dark = dark;
+	qrean->canvas.bitmap_color_light = light;
+	return 1;
+}
+
 uint8_t qrean_get_bitmap_scale(qrean_t *qrean)
 {
 	return qrean->canvas.bitmap_scale;
@@ -191,6 +199,7 @@ size_t qrean_get_bitmap_height(qrean_t *qrean)
 {
 	return qrean->canvas.bitmap_height * qrean->canvas.bitmap_scale;
 }
+
 
 void qrean_fill(qrean_t *qrean, bit_t v)
 {
@@ -346,7 +355,7 @@ size_t qrean_read_bitmap(qrean_t *qrean, void *buffer, size_t size, bitpos_t bpp
 	bitstream_t dst = create_bitstream(buffer, size * 8, NULL, NULL);
 
 	while (!bitstream_is_end(&src) && !bitstream_is_end(&dst)) {
-		uint32_t v = bitstream_read_bit(&src) ? 0x00000000 : 0xffffffff;
+		uint32_t v = bitstream_read_bit(&src) ? qrean->canvas.bitmap_color_dark : qrean->canvas.bitmap_color_light;
 		bitstream_write_bits(&dst, v, bpp);
 	}
 	return bitstream_tell(&dst) / 8;

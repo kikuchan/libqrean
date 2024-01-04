@@ -93,6 +93,8 @@ struct _qrean_canvas_t {
 	uint8_t bitmap_height;
 	uint8_t bitmap_scale;
 	padding_t bitmap_padding;
+	uint32_t bitmap_color_dark;
+	uint32_t bitmap_color_light;
 
 #if defined(USE_MALLOC_BUFFER) && defined(NO_MALLOC)
 #error "Specify both of USE_MALLOC_BUFFER and NO_MALLOC doesn't make sense"
@@ -208,6 +210,8 @@ uint8_t qrean_get_bitmap_scale(qrean_t *qrean);
 
 size_t qrean_get_bitmap_width(qrean_t *qrean);
 size_t qrean_get_bitmap_height(qrean_t *qrean);
+
+bit_t qrean_set_bitmap_color(qrean_t *qrean, uint32_t dark, uint32_t light);
 
 void qrean_dump(qrean_t *qrean, FILE *out);
 
