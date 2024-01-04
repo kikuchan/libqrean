@@ -8,8 +8,8 @@
 static int (*qrean_debug_vprintf_cb)(void *opaque, const char *fmt, va_list ap);
 static void *qrean_debug_vprintf_opaque = NULL;
 
-static void (*qrean_error_cb)(const char *message);
 #endif
+static void (*qrean_error_cb)(const char *message);
 
 const char *qrean_last_error = NULL;
 
