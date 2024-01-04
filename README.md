@@ -9,16 +9,19 @@ A portable QR and Barcode generation / manipulation library written in C.
 ![rmqr-animation](https://github.com/kikuchan/libqrean/assets/445223/e56d97b3-24a3-44d2-8ee3-d0f4339c6157)
 
 # CLI Usage
+## Generation
 ```
 % qrean -t rmqr Hello
-███████████████████████████████████████████████████████████████
-██ ▄▄▄▄▄ █ █ ▀ █ ▀▄▀ ▄ █▄▀ █▄█ █▄▀ █▄█▄█ ▄ █▄█ ▀ █ ▀ █▄▀▄█ ▄ ██
-██ █   █ █ ▀█▄███▄ █▄▄   ▄▄▄▄ █▄▀█▀▄▄ ▀ ▄▄  ▀█▄ ▄▀█▄  ▄▀ ▄▄▄ ██
-██ █▄▄▄█ █▀▄ ██▀ ██▀ ▄  ▄▀▀██ ▀▀▀█▄ ▀█   ▄  ▄█▀  ██ ▄ ▄█ █▄█ ██
-██▄▄▄▄▄▄▄█▄█▄█▄█▄█▄█▄▄▄█▄█▄█▄█▄█▄█▄█▄█▄█▄▄▄█▄█▄█▄█▄█▄█▄█▄▄▄▄▄██
-▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
-% qrean -t mQR Hello > mqr.png
-% qrean -o qr.png Hello
+███████████████████████████████████████████████████████████████████
+███████████████████████████████████████████████████████████████████
+████ ▄▄▄▄▄ █ █ ▀ █ ▀▄▀ ▄ █▄▀ █▄█ █▄▀ █▄█▄█ ▄ █▄█ ▀ █ ▀ █▄▀▄█ ▄ ████
+████ █   █ █ ▀█▄███▄ █▄▄   ▄▄▄▄ █▄▀█▀▄▄ ▀ ▄▄  ▀█▄ ▄▀█▄  ▄▀ ▄▄▄ ████
+████ █▄▄▄█ █▀▄ ██▀ ██▀ ▄  ▄▀▀██ ▀▀▀█▄ ▀█   ▄  ▄█▀  ██ ▄ ▄█ █▄█ ████
+████▄▄▄▄▄▄▄█▄█▄█▄█▄█▄█▄▄▄█▄█▄█▄█▄█▄█▄█▄█▄█▄▄▄█▄█▄█▄█▄█▄█▄█▄▄▄▄▄████
+███████████████████████████████████████████████████████████████████
+▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+% qrean -t mQR Hello > mqr.png     # CAVEAT: Outputs PNG stream for not a tty
+% qrean -o qr.png Hello            # You can also specify output filename
 % qrean -h
 Usage: qrean [OPTION]... [STRING]
 Generate QR/Barcode image
@@ -55,9 +58,9 @@ Generate QR/Barcode image
                           L, M, Q            (for mQR)
                              M,    H         (for rMQR)
 ```
-Detection (Source file must be a PNG file so far)
+## Detection
 ```
-% qrean-detect qr.png
+% qrean-detect qr.png   # The source file must be a PNG file so far
 Hello
 %
 ```

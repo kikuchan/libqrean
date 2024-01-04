@@ -14,3 +14,6 @@ install: cli
 clean:
 	@make -C src clean
 	@make -C cli clean
+
+test: cli
+	@make -C tests
