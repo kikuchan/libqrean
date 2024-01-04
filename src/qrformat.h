@@ -1,7 +1,7 @@
 #ifndef __QR_FORMATINFO_H__
 #define __QR_FORMATINFO_H__
 
-#include "qrtypes.h"
+#include "qrspec.h"
 
 typedef struct {
 	qr_version_t version; // for mQR

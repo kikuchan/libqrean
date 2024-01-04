@@ -3,7 +3,6 @@
 #include "qrean.h"
 #include "qrpayload.h"
 #include "qrspec.h"
-#include "qrtypes.h"
 #include "runlength.h"
 
 #define QR_FORMATINFO_SIZE        (15)

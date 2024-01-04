@@ -4,7 +4,6 @@
 #include "galois.h"
 #include "qrbch.h"
 #include "qrformat.h"
-#include "qrtypes.h"
 #include "utils.h"
 
 #define NUM_MAPPINGS (8)

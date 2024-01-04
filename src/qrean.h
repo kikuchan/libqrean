@@ -6,7 +6,7 @@
 
 #include "qrformat.h"
 #include "qrpayload.h"
-#include "qrtypes.h"
+#include "qrspec.h"
 #include "qrversion.h"
 #include "utils.h"
 

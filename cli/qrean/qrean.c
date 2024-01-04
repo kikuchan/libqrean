@@ -10,7 +10,6 @@
 #include "image.h"
 #include "qrean.h"
 #include "qrspec.h"
-#include "qrtypes.h"
 
 #include "miniz.h"
 

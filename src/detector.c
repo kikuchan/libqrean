@@ -5,7 +5,6 @@
 #include "image.h"
 #include "qrean.h"
 #include "qrspec.h"
-#include "qrtypes.h"
 #include "runlength.h"
 #include "utils.h"
 

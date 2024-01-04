@@ -3,7 +3,7 @@
 
 #include "bitstream.h"
 #include "qrdata.h"
-#include "qrtypes.h"
+#include "qrspec.h"
 
 #define RSBLOCK_BUFFER_SIZE (3706)
 

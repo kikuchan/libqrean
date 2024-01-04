@@ -3,7 +3,7 @@
 #include <string.h>
 
 #include "debug.h"
-#include "qrtypes.h"
+#include "qrspec.h"
 
 static const uint8_t QR_ERROR_WORDS_IN_BLOCK[][4] = {
   // QR

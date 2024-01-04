@@ -8,7 +8,6 @@
 #include "qrdata.h"
 #include "qrpayload.h"
 #include "qrspec.h"
-#include "qrtypes.h"
 #include "reedsolomon.h"
 #include "utils.h"
 

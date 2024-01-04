@@ -2,7 +2,7 @@
 #define __QR_QRDATA_H__
 
 #include "bitstream.h"
-#include "qrtypes.h"
+#include "qrspec.h"
 
 typedef struct {
 	bitstream_t bs;
