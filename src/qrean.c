@@ -200,7 +200,6 @@ size_t qrean_get_bitmap_height(qrean_t *qrean)
 	return qrean->canvas.bitmap_height * qrean->canvas.bitmap_scale;
 }
 
-
 void qrean_fill(qrean_t *qrean, bit_t v)
 {
 	bitstream_t bs = qrean_create_bitstream(qrean, NULL);
