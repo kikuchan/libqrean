@@ -1,27 +1,25 @@
 #include "stdint.h"
+#include "tinymm.h"
 
 //#define BUF_SIZE (1 * 1024 * 1024) // 1MB
-#define BUF_SIZE (1 * 1024) // 1kB - ok
+#define MEM_SIZE (640 * 1024) // 640kB
 //#define BUF_SIZE (10 * 1024) // 10kB - ok
 //#define BUF_SIZE (50 * 1024) // 50kB - ok
 //#define BUF_SIZE (50 * 1024) // 100kB - ng
-char buf[BUF_SIZE];
-int p = 0;
+
+#define MEM_TOP (256 * 1024)
+#define N_ENTRIES 1000
+
 void memreset() {
-  p = 0;
+  tinymm_init((void*)MEM_TOP, MEM_SIZE - MEM_TOP, N_ENTRIES);
 }
 
 void* malloc(unsigned long len) {
-  if (p + len >= BUF_SIZE) {
-    return NULL;
-  }
-  void* res = (void*)(buf + p);
-  p += len;
-  return res;
+  return tinymm_malloc(len);
 }
 
 void free(void* p) {
-  // don't free memory
+  tinymm_free(p);
 }
 
 void* memset(void* p, int len, unsigned long n) {

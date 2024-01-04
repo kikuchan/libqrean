@@ -33,6 +33,7 @@ all:
 	./math.c \
 	./main.c \
 	../src/detector.c \
+	./tinymm/tinymm.c -I./tinymm \
 	-Wl,--no-entry -Wl,--export-all -Wl,--allow-undefined \
 	-Wl,--initial-memory=655360 -Wl,--max-memory=655360 \
 	-o ./qrean.wasm
