@@ -34,6 +34,3 @@ double fabs(double n);
 int isnan(float f);
 int abs(int n);
 double floor(double f);
-extern double sin(double th);
-extern double cos(double th);
-extern double fmod(double n, double m);

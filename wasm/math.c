@@ -1,6 +1,5 @@
 #include "math.h"
 
-
 #ifndef USE_JS_MATH
 
 float roundf(float f) {
