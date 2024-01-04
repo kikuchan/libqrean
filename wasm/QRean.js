@@ -78,7 +78,7 @@ export class QRean {
   static DATA_TYPES = {
     "auto": QRean.DATA_TYPE_AUTO,
     "numeric": QRean.DATA_TYPE_NUMERIC,
-    "alphabate & numeric": QRean.DATA_TYPE_ALNUM,
+    "alphabet & numeric": QRean.DATA_TYPE_ALNUM,
     "8bit binary": QRean.DATA_TYPE_8BIT,
     "kanji character": QRean.DATA_TYPE_KNAJI,
   };
