@@ -50,7 +50,6 @@ CFLAGS += -Wno-misleading-indentation
 #CFLAGS += -D NO_RMQR
 
 #CFLAGS += -D NO_DEBUG
-CFLAGS += -D DEBUG_QRDATA
 
 all: size
 
