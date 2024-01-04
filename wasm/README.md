@@ -20,3 +20,17 @@ setup clang
 ```sh
 make
 ```
+
+# Supported codes
+
+| type                | encode | decode | detect
+|---------------------|--------|--------|-----------
+| QR                  | ✓      |        | 
+| mQR                 | ✓      |        | 
+| rMQR                | ✓      |        | 
+| tQR                 |        |        | 
+| UPCA / EAN13 / EAN8 |        |        | 
+| CODE39              |        |        | 
+| CODE93              |        |        | 
+| NW7                 |        |        | 
+| ITF                 |        |        | 
