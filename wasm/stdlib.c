@@ -22,7 +22,7 @@ void free(void* p) {
   tinymm_free(p);
 }
 
-void* memset(void* p, int len, unsigned long n) {
+void* memset(void* p, int n, unsigned long len) {
   for (int i = 0; i < len; i++) {
     ((char*)p)[i] = (char)n;
   }
