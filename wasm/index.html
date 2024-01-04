@@ -37,7 +37,9 @@ const setsel = (sel, types) => {
   }
 };
 setsel(seltype, QRean.TYPES);
+seltype.value = QRean.TYPE_MQR;
 setsel(seldatatype, QRean.DATA_TYPES);
+seldatatype.value = QRean.DATA_TYPE_NUMERIC;
 
 const qrean = await QRean.create();
 
