@@ -86,7 +86,7 @@ size_t qrean_read_code39_string(qrean_t *qrean, void *buf, size_t size)
 		if (ch < 0) return 0;
 		if (ch == 43) break;
 
-		dst[len++] = symbol_lookup[ch];
+		dst[len++] = symbol_lookup[(uint8_t)ch];
 	}
 	dst[len] = '\0';
 

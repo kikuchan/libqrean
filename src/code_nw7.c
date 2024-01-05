@@ -67,7 +67,7 @@ size_t qrean_read_nw7_string(qrean_t *qrean, void *buf, size_t size)
 	while ((ch = read_symbol(&bs)) < 16 && len < size - 1) {
 		if (ch < 0) return 0;
 
-		dst[len++] = symbol_lookup[ch];
+		dst[len++] = symbol_lookup[(uint8_t)ch];
 	}
 
 	// stop symbol

@@ -1,31 +1,33 @@
-OBJS += bitstream.o
-OBJS += utils.o
-OBJS += image.o
-OBJS += debug.o
+BUILDDIR ?= ../build/system
 
-OBJS += galois.o
-OBJS += reedsolomon.o
-OBJS += runlength.o
-OBJS += qrspec.o
-OBJS += qrbch.o
-OBJS += qrdata.o
-OBJS += qrformat.o
-OBJS += qrpayload.o
-OBJS += qrversion.o
+SRCS += bitstream.c
+SRCS += utils.c
+SRCS += image.c
+SRCS += debug.c
 
-OBJS += qrean.o
-OBJS += detector.o
+SRCS += galois.c
+SRCS += reedsolomon.c
+SRCS += runlength.c
+SRCS += qrspec.c
+SRCS += qrbch.c
+SRCS += qrdata.c
+SRCS += qrformat.c
+SRCS += qrpayload.c
+SRCS += qrversion.c
 
-OBJS += code_qr.o
-OBJS += code_mqr.o
-OBJS += code_rmqr.o
-OBJS += code_tqr.o
+SRCS += qrean.c
+SRCS += detector.c
 
-OBJS += code_ean.o
-OBJS += code_code39.o
-OBJS += code_code93.o
-OBJS += code_itf.o
-OBJS += code_nw7.o
+SRCS += code_qr.c
+SRCS += code_mqr.c
+SRCS += code_rmqr.c
+SRCS += code_tqr.c
+
+SRCS += code_ean.c
+SRCS += code_code39.c
+SRCS += code_code93.c
+SRCS += code_itf.c
+SRCS += code_nw7.c
 
 #CC=avr-gcc -mmcu=atmega32u4
 #CC=clang
@@ -51,19 +53,26 @@ CFLAGS += -Wno-misleading-indentation
 
 #CFLAGS += -D NO_DEBUG
 
-all: size
+LDFLAGS += -lm
 
-libqrean.a: ${OBJS}
-	${AR} rcs libqrean.a $(OBJS)
+OBJS = $(addprefix $(BUILDDIR)/,$(SRCS:.c=.o))
+DEPS = $(OBJS:.o=.d)
 
-size: libqrean.a
-	$(SIZE) libqrean.a
+TARGET = $(BUILDDIR)/libqrean.a
 
-.c.o:
-	$(CC) $(CFLAGS) -c $<
+all: $(TARGET)
+
+$(TARGET): $(OBJS)
+	$(AR) rcs $@ $^
+
+-include $(DEPS)
+
+$(BUILDDIR)/%.o: %.c
+	@mkdir -p $(BUILDDIR)
+	$(CC) $(CFLAGS) -c -MMD -MP $< -o $@
 
 clean:
-	rm -f *.o libqrean.a
+	rm -f $(BUILDDIR)/*.[do] $(TARGET)
 
 format:
 	clang-format -i *.[ch]

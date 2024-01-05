@@ -1,4 +1,4 @@
-import wasmbin from "./qrean.wasm.js";
+import wasmbin from "../dist/qrean.wasm.js";
 
 export const setText = (mem, idx, s) => {
   const sbin = new TextEncoder().encode(s + "\0");

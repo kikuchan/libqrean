@@ -1,19 +1,28 @@
-.PHONY: all clean examples cli
+BUILDDIR?=`pwd`/build/system
 
-all: src cli
+.PHONY: all clean examples cli wasm win32
 
-src: 
-	@make -C src
+all: cli
 
-cli: src
-	@make -C cli
+cli:
+	BUILDDIR=$(BUILDDIR) make -C cli
 
 install: cli
-	@make -C cli install
+	BUILDDIR=$(BUILDDIR) make -C cli install
 
 clean:
-	@make -C src clean
-	@make -C cli clean
+	BUILDDIR=$(BUILDDIR) make -C cli clean
+	-rmdir $(BUILDDIR)
+
+wasm:
+	BUILDDIR=`pwd`/build/wasm/ make -C wasm clean all
+
+win32:
+	BUILDDIR=`pwd`/build/win32/ CC=i686-w64-mingw32-gcc AR=i686-w64-mingw32-ar make clean cli
+
+dist: wasm win32
+	mkdir -p dist
+	cp build/wasm/qrean.wasm.js build/win32/*exe ./dist/
 
 test: cli
-	@make -C tests
+	BUILDDIR=$(BUILDDIR) make -C tests

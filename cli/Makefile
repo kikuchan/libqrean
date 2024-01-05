@@ -1,11 +1,13 @@
+BUILDDIR?=`pwd`/../build/system/
+
 all:
-	make -C qrean
-	make -C qrean-detect
+	BUILDDIR=$(BUILDDIR) make -C qrean
+	BUILDDIR=$(BUILDDIR) make -C qrean-detect
 
 clean:
-	make -C qrean clean
-	make -C qrean-detect clean
+	BUILDDIR=$(BUILDDIR) make -C qrean clean
+	BUILDDIR=$(BUILDDIR) make -C qrean-detect clean
 
 install:
-	make -C qrean install
-	make -C qrean-detect install
+	BUILDDIR=$(BUILDDIR) make -C qrean install
+	BUILDDIR=$(BUILDDIR) make -C qrean-detect install

@@ -1,29 +1,29 @@
 PREFIX ?= /usr/bin
-QREAN?=../../src
+BUILDDIR?=`pwd`/../../build/system
+QREAN?=`pwd`/../../src
 
 MAIN=qrean
 
-SRC += $(MAIN).c
-#SRC += pngle.c
-SRC += miniz.c
+SRCS += $(MAIN).c
+#SRCS += pngle.c
+SRCS += miniz.c
 
-CFLAGS += -I$(QREAN)
-LDFLAGS += $(QREAN)/libqrean.a -lm
+CFLAGS+=-I$(QREAN)
+LDFLAGS += $(BUILDDIR)/libqrean.a -lm
 
-all: $(MAIN)
+all: $(BUILDDIR)/$(MAIN)
 
-$(MAIN): $(SRC) $(QREAN)/libqrean.a
-	$(CC) -o $(MAIN) $(CFLAGS) $(SRC) $(LDFLAGS)
+$(BUILDDIR)/$(MAIN): $(SRCS) $(BUILDDIR)/libqrean.a
+	$(CC) -o $(BUILDDIR)/$(MAIN) $(CFLAGS) $(SRCS) $(LDFLAGS)
 
-$(QREAN)/libqrean.a:
-	make -C $(QREAN)
+$(BUILDDIR)/libqrean.a:
+	make -C ../../src
 
 format:
 	clang-format -i $(MAIN).c
 
 clean:
-	rm -f $(MAIN) $(MAIN).exe *.o
-	make -C $(QREAN) clean
+	rm -f $(BUILDDIR)/$(MAIN) $(BUILDDIR)/$(MAIN).exe $(BUILDDIR)/*.[do] $(BUILDDIR)/libqrean.a
 
-install: $(MAIN)
-	install -m 0755 $(MAIN) $(PREFIX)
+install: $(BUILDDIR)/$(MAIN)
+	install -m 0755 $(BUILDDIR)/$(MAIN) $(PREFIX)
