@@ -24,6 +24,7 @@ image_t *detected;
 FILE *debug_out;
 FILE *out;
 int flag_debug = 0;
+int flag_verbose = 0;
 double gamma_value = 1.8;
 
 uint32_t W = 0;
@@ -85,10 +86,15 @@ static void on_found(qrean_detector_perspective_t *warp, void *opaque)
 		qrean_write_qr_payload(warp->qrean, &payload);
 
 		warp->qrean->canvas.write_pixel = backup;
+
+		qrpayload_dump(&payload, stderr);
 	}
 
 	qrean_read_string(warp->qrean, buffer, sizeof(buffer));
 
+	if (flag_verbose) {
+		fprintf(out, "%s: ", qrean_get_code_type_string(warp->qrean->code->type));
+	}
 	fprintf(out, "%s\n", buffer);
 }
 
@@ -151,6 +157,7 @@ int usage(FILE *out)
 	fprintf(out, "  General options:\n");
 	fprintf(out, "    -h                Display this help\n");
 	fprintf(out, "    -o FILENAME       Result text save as FILENAME\n");
+	fprintf(out, "    -v                Verbose\n");
 	fprintf(out, "\n");
 	fprintf(out, "  Image processing options:\n");
 	fprintf(out, "    -g GAMMA          Set gamma value (default: 1.8)\n");
@@ -173,7 +180,7 @@ int main(int argc, char *argv[])
 	int len;
 	int ch;
 
-	while ((ch = getopt(argc, argv, "ho:g:DO:")) != -1) {
+	while ((ch = getopt(argc, argv, "ho:g:DO:v")) != -1) {
 		switch (ch) {
 		case 'h':
 			return usage(stdout);
@@ -201,6 +208,10 @@ int main(int argc, char *argv[])
 				fprintf(stderr, "fopen failed. (%s: %s)", optarg, strerror(errno));
 				return 1;
 			}
+			break;
+
+		case 'v':
+			flag_verbose = 1;
 			break;
 		}
 	}

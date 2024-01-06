@@ -1,0 +1,15 @@
+{
+  "name": "qrean",
+  "type": "module",
+  "version": "0.0.1-alpha.0",
+  "description": "A portable QR and Barcode generation / manipulation library written in C",
+  "module": "./dist/Qrean.js",
+  "types": "./dist/Qrean.d.ts",
+  "files": [
+    "./dist/Qrean.js",
+    "./dist/Qrean.d.ts"
+  ],
+  "author": "kikuchan98@gmail.com",
+  "homepage": "https://github.com/kikuchan/libqrean#readme",
+  "license": "MIT"
+}

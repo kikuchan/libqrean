@@ -3,10 +3,14 @@ QR and Barcode library `libqrean`
 
 # What's this?
 
-A portable QR and Barcode generation / manipulation library written in C.
+A portable QR and Barcode generation / manipulation library written in **C**.
 
 ![animation](https://github.com/kikuchan/libqrean/assets/445223/1fdf9b2f-df63-4c0e-8cd6-a72633f2abc3)
 ![rmqr-animation](https://github.com/kikuchan/libqrean/assets/445223/e56d97b3-24a3-44d2-8ee3-d0f4339c6157)
+
+# DEMO
+
+[WASM](https://kikuchan.github.io/libqrean/wasm/) (thanks @taisukef)
 
 # CLI Usage
 ## Generation
@@ -102,7 +106,7 @@ See [examples/](examples/) directory for working examples.
 As you can see, you can take control.
 I love QR and Barcodes.
 
-The core doesn't rely on `malloc()` for portability. It uses a stack instead of a heap, but you can still use `new_qrean` for example if you prefer.
+The core (encode/decode) doesn't rely on `malloc()` for portability. It uses a stack instead of a heap, but you can still use `new_qrean` for example if you prefer.
 
 You can also configure a callback to draw a pixel directly on a screen for example.
 

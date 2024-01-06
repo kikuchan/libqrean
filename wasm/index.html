@@ -1,17 +1,27 @@
 <!DOCTYPE html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><link rel="icon" href="data:">
-<title>code maker by QRean</title>
+<title>Qrean wasm demo</title>
 </head><body>
-<h1>code maker by QRean</h1>
+<h1>Qrean wasm demo</h1>
+<div>
+(Not exactly the same behavior with CLI yet, but you can feel it what it is like)
+</div>
 
 <main>
-<input id=intext><br>
-<select id=seltype></select><br>
-<select id=seldatatype></select><br>
-<div id=divimg></div>
+<h2>Encode</h2>
+<input id="intext"><br>
+<select id="seltype"></select><br>
+<select id="seldatatype"></select><br>
+<div id="divimg"></div>
+
+<h2>Decode</h2>
+<input id="file" type="file" accept="image/*" /><br />
+<canvas id="canvas" width=600 height=400></canvas><br />
+<textarea id="decodeResult"></textarea>
 </main>
 
 <footer>
-<a href=https://github.com/kikuchan/libqrean>src on GitHub</a>
+<hr />
+<a href="https://github.com/kikuchan/libqrean">Available on GitHub</a>
 </footer>
 
 <style>
@@ -19,13 +29,21 @@ body {
   text-align: center;
 }
 main > * {
-  margin: 1em .2em;
+  margin: .5em .2em;
   font-size: 20px;
+}
+
+canvas {
+  border: 1px solid black;
+}
+
+h2 {
+  margin: 2em .2em 0.5em;
 }
 </style>
 
 <script type="module">
-import { QRean } from "./QRean.js";
+import { Qrean } from "../dist/Qrean.js";
 import { PNG } from "https://code4fukui.github.io/PNG/PNG.js";
 import { encodeData } from "https://code4fukui.github.io/dataencoder/encodeData.js";
 import { removeHash } from "https://js.sabae.cc/removeHash.js";
@@ -33,15 +51,15 @@ import { removeHash } from "https://js.sabae.cc/removeHash.js";
 const setsel = (sel, types) => {
   for (const name in types) {
     const opt = document.createElement("option");
-    opt.value = types[name];
+    opt.value = name;
     opt.textContent = name;
     sel.appendChild(opt);
   }
 };
-setsel(seltype, QRean.TYPES);
-setsel(seldatatype, QRean.DATA_TYPES);
+setsel(seltype, Qrean.CODE_TYPES);
+setsel(seldatatype, Qrean.DATA_TYPES);
 
-const defaultset = "123456789012,2,0";
+const defaultset = "123456789012,tQR,AUTO";
 const set = (location.hash.substring(1) || defaultset).split(",");
 if (set && set.length == 3) {
   intext.value = decodeURIComponent(set[0]);
@@ -49,12 +67,19 @@ if (set && set.length == 3) {
   seldatatype.value = set[2];
 }
 
-const qrean = await QRean.create();
+const qrean = await Qrean.create();
 
 seltype.oninput = seldatatype.oninput = intext.oninput = () => {
   divimg.innerHTML = "";
-  const imgd = qrean.make(intext.value, seltype.value, seldatatype.value);
-  if (!imgd) return;
+  const imgd = qrean.make(intext.value, {
+    code_type: seltype.value,
+    data_type: seldatatype.value
+  });
+  if (!imgd) {
+    console.log("ERROR");
+    return;
+  }
+
   const png = PNG.encode(imgd);
   const img = new Image();
   img.src = encodeData("image/png", png);
@@ -68,6 +93,33 @@ seltype.oninput = seldatatype.oninput = intext.oninput = () => {
   }
 };
 intext.oninput();
+
+file.onchange = (e) => {
+  const f = file.files?.[0];
+  if (!f) return ;
+  const url = URL.createObjectURL(f);
+  const img = new Image();
+
+  decodeResult.value = '';
+  img.onload = function() {
+    URL.revokeObjectURL(img.src);
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
+    const w = img.width * scale;
+    const h = img.height * scale;
+    ctx.drawImage(img, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
+
+    console.log("found: ", qrean.detect(ctx.getImageData(0, 0, canvas.width, canvas.height), (type, result) => {
+      decodeResult.value += type + ": " + result + "\n";
+    }));
+  };
+  img.src = url;
+  file.value = '';
+};
+
+
 </script>
 
 </body></html>

@@ -163,7 +163,7 @@ bit_t qrdata_finalize(qrdata_t *data)
 	size_t pos = bitstream_tell(&data->bs);
 
 	int flip = 0;
-	for (; pos < data->bs.size; pos += 8) {
+	for (; pos < data->bs.size / 8 * 8; pos += 8) {
 		bitstream_write_bits(&data->bs, (flip ^= 1) ? 0xEC : 0x11, 8);
 	}
 

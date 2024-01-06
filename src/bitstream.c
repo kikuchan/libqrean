@@ -91,16 +91,11 @@ static bit_t bitstream_write_bit_at(bitstream_t *bs, bitpos_t pos, bit_t bit)
 #ifndef NO_CALLBACK
 	if (bs->write_bit_at) {
 		bs->write_bit_at(bs, pos, bs->opaque_write, bit);
-	} else
-#endif
-	{
-		if (bit) {
-			bs->bits[pos / 8] |= (0x80 >> (pos % 8));
-		} else {
-			bs->bits[pos / 8] &= ~(0x80 >> (pos % 8));
-		}
+		return 1;
 	}
+#endif
 
+	WRITE_BIT(bs->bits, pos, bit);
 	return 1;
 }
 

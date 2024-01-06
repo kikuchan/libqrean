@@ -250,7 +250,7 @@ bitstream_t qrpayload_get_bitstream(qrpayload_t *payload)
 }
 bitstream_t qrpayload_get_bitstream_for_data(qrpayload_t *payload)
 {
-	return create_bitstream(payload->buffer, payload->total_bits, qrpayload_data_words_iter, payload);
+	return create_bitstream(payload->buffer, payload->data_bits, qrpayload_data_words_iter, payload);
 }
 bitstream_t qrpayload_get_bitstream_for_error(qrpayload_t *payload)
 {

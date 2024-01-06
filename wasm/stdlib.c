@@ -1,11 +1,7 @@
 #include "stdint.h"
 #include "tinymm.h"
 
-//#define BUF_SIZE (1 * 1024 * 1024) // 1MB
-#define MEM_SIZE (640 * 1024) // 640kB
-//#define BUF_SIZE (10 * 1024) // 10kB - ok
-//#define BUF_SIZE (50 * 1024) // 50kB - ok
-//#define BUF_SIZE (50 * 1024) // 100kB - ng
+#define MEM_SIZE (10 * 1024 * 1024)
 
 #define MEM_TOP (256 * 1024)
 #define N_ENTRIES 1000

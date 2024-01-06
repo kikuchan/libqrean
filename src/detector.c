@@ -29,6 +29,7 @@ int qrean_detector_scan_barcodes(image_t *src, void (*on_found)(qrean_detector_p
 {
 	int found = 0;
 	image_t *img = image_clone(src);
+	if (!img) return 0;
 
 	for (int y = 0; y < (int)img->height; y++) {
 		runlength_t rl = create_runlength();
@@ -93,14 +94,14 @@ int qrean_detector_scan_barcodes(image_t *src, void (*on_found)(qrean_detector_p
 			};
 
 			for (size_t i = 0; i < sizeof(codes) / sizeof(codes[0]); i++) {
-				qrean_t *qrean = new_qrean(codes[i]);
-				qrean_detector_perspective_t warp = create_qrean_detector_perspective(qrean, src);
+				qrean_t qrean = create_qrean(codes[i]);
+				qrean_detector_perspective_t warp = create_qrean_detector_perspective(&qrean, src);
 				warp.h = mat;
 				qrean_on_read_pixel(warp.qrean, qrean_detector_perspective_read_image_pixel, &warp);
 				qrean_on_write_pixel(warp.qrean, qrean_detector_perspective_write_image_pixel, &warp);
 
 				char buf[256];
-				if (qrean_read_string(qrean, buf, sizeof(buf))) {
+				if (qrean_read_string(warp.qrean, buf, sizeof(buf))) {
 					on_found(&warp, opaque);
 					found++;
 
@@ -110,7 +111,8 @@ int qrean_detector_scan_barcodes(image_t *src, void (*on_found)(qrean_detector_p
 						if (!v) image_paint(img, POINT(xx, y), PIXEL(255, 0, 0));
 					}
 				}
-				qrean_free(qrean);
+
+				qrean_destroy(&qrean);
 			}
 		}
 	}
@@ -126,6 +128,7 @@ qrean_detector_qr_finder_candidate_t *qrean_detector_scan_qr_finder_pattern(imag
 	int candidx = 0;
 
 	image_t *img = image_clone(src);
+	if (!img) return NULL;
 
 	for (int y = 0; y < (int)img->height; y++) {
 		runlength_t rl = create_runlength();
@@ -373,22 +376,22 @@ int qrean_detector_try_decode_qr(image_t *src, qrean_detector_qr_finder_candidat
 						candidates[idx[l * 3 + 2]].center,
 					};
 
-					qrean_t *qrean = new_qrean(QREAN_CODE_TYPE_QR);
+					qrean_t qrean = create_qrean(QREAN_CODE_TYPE_QR);
 
 					for (int version = QR_VERSION_1; version <= QR_VERSION_40; version++) {
-						qrean_set_qr_version(qrean, (qr_version_t)version);
+						qrean_set_qr_version(&qrean, (qr_version_t)version);
 
-						qrean_detector_perspective_t warp = create_qrean_detector_perspective(qrean, src);
+						qrean_detector_perspective_t warp = create_qrean_detector_perspective(&qrean, src);
 						qrean_detector_perspective_setup_by_qr_finder_pattern_centers(&warp, points, 0);
 
-						if (qrean_read_qr_finder_pattern(qrean, -1) > 10) continue;
+						if (qrean_read_qr_finder_pattern(&qrean, -1) > 10) continue;
 
 						qrean_detector_perspective_fit_for_qr(&warp);
 
-						if (qrean_set_qr_format_info(qrean, qrean_read_qr_format_info(qrean, -1))) {
-							if (qrean_read_qr_version(qrean) != version) continue;
+						if (qrean_set_qr_format_info(&qrean, qrean_read_qr_format_info(&qrean, -1))) {
+							if (qrean_read_qr_version(&qrean) != version) continue;
 
-							if (qrean_fix_errors(qrean) >= 0) {
+							if (qrean_fix_errors(&qrean) >= 0) {
 								on_found(&warp, opaque);
 								found++;
 								break;
@@ -396,7 +399,7 @@ int qrean_detector_try_decode_qr(image_t *src, qrean_detector_qr_finder_candidat
 						}
 					}
 
-					qrean_free(qrean);
+					qrean_destroy(&qrean);
 				}
 			}
 		}
@@ -421,23 +424,23 @@ int qrean_detector_try_decode_tqr(image_t *src, qrean_detector_qr_finder_candida
 						candidates[idx[l * 3 + 2]].center,
 					};
 
-					qrean_t *qrean = new_qrean(QREAN_CODE_TYPE_TQR);
-					qrean_set_qr_version(qrean, QR_VERSION_TQR);
-					qrean_set_qr_maskpattern(qrean, QR_MASKPATTERN_0);
+					qrean_t qrean = create_qrean(QREAN_CODE_TYPE_TQR);
+					qrean_set_qr_version(&qrean, QR_VERSION_TQR);
+					qrean_set_qr_maskpattern(&qrean, QR_MASKPATTERN_0);
 
-					qrean_detector_perspective_t warp = create_qrean_detector_perspective(qrean, src);
+					qrean_detector_perspective_t warp = create_qrean_detector_perspective(&qrean, src);
 					qrean_detector_perspective_setup_by_qr_finder_pattern_centers(&warp, points, 2);
 
-					if (qrean_read_qr_finder_pattern(qrean, -1) > 10) continue;
+					if (qrean_read_qr_finder_pattern(&qrean, -1) <= 10) {
+						// qrean_detector_perspective_fit_for_qr(&warp);
 
-					// qrean_detector_perspective_fit_for_qr(&warp);
-
-					if (qrean_fix_errors(qrean) >= 0) {
-						on_found(&warp, opaque);
-						found++;
+						if (qrean_fix_errors(&qrean) >= 0) {
+							on_found(&warp, opaque);
+							found++;
+						}
 					}
 
-					qrean_free(qrean);
+					qrean_destroy(&qrean);
 				}
 			}
 		}
@@ -562,22 +565,24 @@ int qrean_detector_try_decode_rmqr(image_t *src, qrean_detector_qr_finder_candid
 	int found = 0;
 	for (int i = 0; i < num_candidates; i++) {
 		for (int c = 0; c < 4; c++) {
-			qrean_t *qrean = new_qrean(QREAN_CODE_TYPE_RMQR);
-			qrean_set_qr_version(qrean, QR_VERSION_R17x139); // max size
+			qrean_t qrean = create_qrean(QREAN_CODE_TYPE_RMQR);
+			qrean_set_qr_version(&qrean, QR_VERSION_R17x139); // max size
 
-			qrean_detector_perspective_t warp = create_qrean_detector_perspective(qrean, src);
+			qrean_detector_perspective_t warp = create_qrean_detector_perspective(&qrean, src);
 			qrean_detector_perspective_setup_by_qr_finder_pattern_ring_corners(&warp, candidates[i].corners, c);
 
-			if (!qrean_set_qr_format_info(qrean, qrean_read_qr_format_info(qrean, -1))) continue;
-			qrean_debug_printf("Detected as rMQR version: %s\n", qrspec_get_version_string(qrean->qr.version));
+			if (qrean_set_qr_format_info(&qrean, qrean_read_qr_format_info(&qrean, -1))) {
+				qrean_debug_printf("Detected as rMQR version: %s\n", qrspec_get_version_string(qrean.qr.version));
 
-			qrean_detector_perspective_fit_for_rmqr(&warp);
-			// if (qrean_read_qr_timing_pattern(qrean, -1) > 10) continue;
+				qrean_detector_perspective_fit_for_rmqr(&warp);
 
-			if (qrean_fix_errors(qrean) >= 0) {
-				on_found(&warp, opaque);
-				found++;
+				if (qrean_fix_errors(&qrean) >= 0) {
+					on_found(&warp, opaque);
+					found++;
+				}
 			}
+
+			qrean_destroy(&qrean);
 		}
 	}
 
@@ -590,19 +595,24 @@ int qrean_detector_try_decode_mqr(image_t *src, qrean_detector_qr_finder_candida
 	int found = 0;
 	for (int i = 0; i < num_candidates; i++) {
 		for (int c = 0; c < 4; c++) {
-			qrean_t *qrean = new_qrean(QREAN_CODE_TYPE_MQR);
-			qrean_set_qr_version(qrean, QR_VERSION_M4); // max size
+			qrean_t qrean = create_qrean(QREAN_CODE_TYPE_MQR);
+			qrean_set_qr_version(&qrean, QR_VERSION_M4); // max size
 
-			qrean_detector_perspective_t warp = create_qrean_detector_perspective(qrean, src);
+			qrean_detector_perspective_t warp = create_qrean_detector_perspective(&qrean, src);
 			qrean_detector_perspective_setup_by_qr_finder_pattern_ring_corners(&warp, candidates[i].corners, c);
 
-			if (!qrean_set_qr_format_info(qrean, qrean_read_qr_format_info(qrean, -1))) continue;
-			if (qrean_read_qr_timing_pattern(qrean, -1) > 10) continue;
+			if (qrean_set_qr_format_info(&qrean, qrean_read_qr_format_info(&qrean, -1))) {
+				qrean_debug_printf("Detected as mQR version: %s\n", qrspec_get_version_string(qrean.qr.version));
 
-			if (qrean_fix_errors(qrean) >= 0) {
-				on_found(&warp, opaque);
-				found++;
+				if (qrean_read_qr_timing_pattern(&qrean, -1) <= 10) {
+					if (qrean_fix_errors(&qrean) >= 0) {
+						on_found(&warp, opaque);
+						found++;
+					}
+				}
 			}
+
+			qrean_destroy(&qrean);
 		}
 	}
 

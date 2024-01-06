@@ -2,35 +2,21 @@
 
 ## demo
 
-- https://taisukef.github.io/libqrean/wasm/
+- https://kikuchan.github.io/libqrean/wasm/
 
 ## usage
 
 ```js
-import { QRean } from "https://taisukef.github.io/libqrean/wasm/QRean.js";
+import { Qrean } from "https://kikuchan.github.io/dist/Qrean.js";
 
-const qrean = await QRean.create();
-const imgd = qrean.make("test", QRean.TYPE_MQR, QRean.DATA_TYPE_AUTO);
+const qrean = await Qrean.create();
+const imgd = qrean.make("test", Qrean.CODE_TYPE_MQR);
 console.log(imgd);
 ```
 
 ## build
 
-setup clang
+Setup clang and deno, then
 ```sh
 make
 ```
-
-# Supported codes
-
-| type                | encode | decode | detect
-|---------------------|--------|--------|-----------
-| QR                  | ✓      |        | 
-| mQR                 | ✓      |        | 
-| rMQR                | ✓      |        | 
-| tQR                 |        |        | 
-| UPCA / EAN13 / EAN8 |        |        | 
-| CODE39              |        |        | 
-| CODE93              |        |        | 
-| NW7                 |        |        | 
-| ITF                 |        |        | 

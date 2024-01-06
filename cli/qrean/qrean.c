@@ -135,8 +135,9 @@ int main(int argc, char *argv[])
 	qr_maskpattern_t mask = QR_MASKPATTERN_AUTO;
 	int scale = 4;
 	padding_t padding = create_padding1(4);
+	qrean_data_type_t data_type = QREAN_DATA_TYPE_AUTO;
 
-	while ((ch = getopt(argc, argv, "hi:o:s:f:t:v:l:m:p:")) != -1) {
+	while ((ch = getopt(argc, argv, "hi:o:s:f:t:v:l:m:p:8")) != -1) {
 		int n;
 		switch (ch) {
 		case 'h':
@@ -252,6 +253,10 @@ int main(int argc, char *argv[])
 		case 'p':
 			padding = parse_padding(optarg);
 			break;
+
+		case '8':
+			data_type = QREAN_DATA_TYPE_8BIT;
+			break;
 		}
 	}
 
@@ -297,7 +302,7 @@ int main(int argc, char *argv[])
 
 	if (save_as == SAVE_AS_DEFAULT) save_as = isatty(fileno(out)) ? SAVE_AS_TXT : SAVE_AS_PNG;
 
-	size_t wrote = qrean_write_buffer(qrean, data, len, QREAN_DATA_TYPE_AUTO);
+	size_t wrote = qrean_write_buffer(qrean, data, len, data_type);
 	if (!wrote) {
 		fprintf(stderr, "Size exceed or mismatch\n");
 		return -1;

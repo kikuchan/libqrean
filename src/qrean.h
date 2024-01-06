@@ -228,4 +228,6 @@ bitstream_t qrean_create_bitstream(qrean_t *qrean, bitstream_iterator_t iter);
 
 int qrean_check_qr_combination(qrean_t *qrean);
 
+const char *qrean_get_code_type_string(qrean_code_type_t code);
+
 #endif /* __QR_QREAN_H__ */

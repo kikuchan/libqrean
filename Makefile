@@ -22,7 +22,7 @@ win32:
 
 dist: wasm win32
 	mkdir -p dist
-	cp build/wasm/qrean.wasm.js build/win32/*exe ./dist/
+	cp build/wasm/Qrean.* build/win32/*exe ./dist/
 
 test: cli
 	BUILDDIR=$(BUILDDIR) make -C tests

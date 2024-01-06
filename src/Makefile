@@ -2,7 +2,6 @@ BUILDDIR ?= ../build/system
 
 SRCS += bitstream.c
 SRCS += utils.c
-SRCS += image.c
 SRCS += debug.c
 
 SRCS += galois.c
@@ -16,7 +15,6 @@ SRCS += qrpayload.c
 SRCS += qrversion.c
 
 SRCS += qrean.c
-SRCS += detector.c
 
 SRCS += code_qr.c
 SRCS += code_mqr.c
@@ -28,6 +26,10 @@ SRCS += code_code39.c
 SRCS += code_code93.c
 SRCS += code_itf.c
 SRCS += code_nw7.c
+
+## Works only without NO_MALLOC
+SRCS += image.c
+SRCS += detector.c
 
 #CC=avr-gcc -mmcu=atmega32u4
 #CC=clang
@@ -45,8 +47,7 @@ CFLAGS += -Wno-misleading-indentation
 #CFLAGS += -D NO_MALLOC
 #CFLAGS += -D NO_PRINTF
 #CFLAGS += -D NO_CALLBACK
-#CFLAGS += -D NO_QRMATRIX_BUFFER
-#CFLAGS += -D NO_BARCODE_BUFFER
+#CFLAGS += -D NO_CANVAS_BUFFER
 
 #CFLAGS += -D NO_MQR
 #CFLAGS += -D NO_RMQR

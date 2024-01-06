@@ -37,7 +37,7 @@ bit_t qrean_init(qrean_t *qrean, qrean_code_type_t type)
 			qrean_set_bitmap_scale(qrean, 4);
 			qrean_set_bitmap_color(qrean, 0x00000000, 0xffffffff);
 
-#ifndef NO_QRMATRIX_BUFFER
+#ifndef NO_CANVAS_BUFFER
 #if defined(USE_MALLOC_BUFFER) && !defined(NO_MALLOC)
 			qrean->canvas.buffer = (uint8_t *)malloc(QREAN_CANVAS_MAX_BUFFER_SIZE);
 #endif
@@ -55,7 +55,7 @@ bit_t qrean_init(qrean_t *qrean, qrean_code_type_t type)
 void qrean_deinit(qrean_t *qrean)
 {
 	if (qrean->code && qrean->code->deinit) qrean->code->deinit(qrean);
-#ifndef NO_QRMATRIX_BUFFER
+#ifndef NO_CANVAS_BUFFER
 #ifdef USE_MALLOC_BUFFER
 	free(qrean->canvas.buffer);
 #endif
@@ -214,7 +214,7 @@ static void qrean_write_bit_at(bitstream_t *bs, bitpos_t pos, void *opaque, bit_
 	}
 #endif
 
-#ifndef NO_QRMATRIX_BUFFER
+#ifndef NO_CANVAS_BUFFER
 	WRITE_BIT(qrean->canvas.buffer, pos, v);
 #endif
 }
@@ -230,7 +230,7 @@ static bit_t qrean_read_bit_at(bitstream_t *bs, bitpos_t pos, void *opaque)
 	} else
 #endif
 	{
-#ifndef NO_QRMATRIX_BUFFER
+#ifndef NO_CANVAS_BUFFER
 		return READ_BIT(qrean->canvas.buffer, pos);
 #else
 		return 0;
@@ -593,8 +593,14 @@ size_t qrean_write_qr_data(qrean_t *qrean, const void *buffer, size_t len, qrean
 {
 	int min_v, max_v;
 	if (qrean->qr.version == QR_VERSION_AUTO) {
-		min_v = QREAN_IS_TYPE_QR(qrean) ? QR_VERSION_1 : QREAN_IS_TYPE_MQR(qrean) ? QR_VERSION_M1 : QREAN_IS_TYPE_TQR(qrean) ? QR_VERSION_TQR : QR_VERSION_R7x43;
-		max_v = QREAN_IS_TYPE_QR(qrean) ? QR_VERSION_40 : QREAN_IS_TYPE_MQR(qrean) ? QR_VERSION_M4 : QREAN_IS_TYPE_TQR(qrean) ? QR_VERSION_TQR : QR_VERSION_R17x139;
+		min_v = QREAN_IS_TYPE_QR(qrean) ? QR_VERSION_1
+			: QREAN_IS_TYPE_MQR(qrean)  ? QR_VERSION_M1
+			: QREAN_IS_TYPE_TQR(qrean)  ? QR_VERSION_TQR
+										: QR_VERSION_R7x43;
+		max_v = QREAN_IS_TYPE_QR(qrean) ? QR_VERSION_40
+			: QREAN_IS_TYPE_MQR(qrean)  ? QR_VERSION_M4
+			: QREAN_IS_TYPE_TQR(qrean)  ? QR_VERSION_TQR
+										: QR_VERSION_R17x139;
 	} else {
 		min_v = max_v = qrean->qr.version;
 	}
@@ -659,4 +665,34 @@ int qrean_check_qr_combination(qrean_t *qrean)
 		if (qrspec_is_valid_combination((qr_version_t)v, qrean->qr.level, qrean->qr.mask)) return 1;
 	}
 	return 0;
+}
+
+const char *qrean_get_code_type_string(qrean_code_type_t code)
+{
+	switch (code) {
+	case QREAN_CODE_TYPE_QR:
+		return "QR";
+	case QREAN_CODE_TYPE_MQR:
+		return "mQR";
+	case QREAN_CODE_TYPE_RMQR:
+		return "rMQR";
+	case QREAN_CODE_TYPE_TQR:
+		return "tQR";
+	case QREAN_CODE_TYPE_EAN13:
+		return "EAN13";
+	case QREAN_CODE_TYPE_EAN8:
+		return "EAN8";
+	case QREAN_CODE_TYPE_UPCA:
+		return "UPCA";
+	case QREAN_CODE_TYPE_CODE39:
+		return "CODE39";
+	case QREAN_CODE_TYPE_CODE93:
+		return "CODE93";
+	case QREAN_CODE_TYPE_NW7:
+		return "NW7";
+	case QREAN_CODE_TYPE_ITF:
+		return "ITF";
+	default:
+		return "Unknown";
+	}
 }
