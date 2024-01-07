@@ -1,6 +1,6 @@
 BUILDDIR?=`pwd`/build/system
 
-.PHONY: all clean examples cli wasm win32
+.PHONY: all clean examples cli wasm win32 mac
 
 all: cli
 
@@ -19,6 +19,9 @@ wasm:
 
 win32:
 	BUILDDIR=`pwd`/build/win32/ CC=i686-w64-mingw32-gcc AR=i686-w64-mingw32-ar make clean cli
+
+mac: cli
+	cp build/system/qrean build/system/qrean-detect ./dist/
 
 dist: wasm win32
 	mkdir -p dist
