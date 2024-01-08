@@ -6,10 +6,10 @@
 #include <stdio.h>
 
 typedef uint32_t image_pixel_t;
-#define PIXEL(r, g, b)   ((((uint32_t)(r)) << 16) | ((g) << 8) | ((b) << 0))
-#define PIXEL_GET_R(pix) (((pix) >> 16) & 0xFF)
+#define PIXEL(r, g, b)   ((((uint32_t)(r)) << 0) | ((g) << 8) | ((b) << 16))
+#define PIXEL_GET_R(pix) (((pix) >> 0) & 0xFF)
 #define PIXEL_GET_G(pix) (((pix) >> 8) & 0xFF)
-#define PIXEL_GET_B(pix) (((pix) >> 0) & 0xFF)
+#define PIXEL_GET_B(pix) (((pix) >> 16) & 0xFF)
 
 typedef struct {
 	image_pixel_t *buffer;
@@ -83,7 +83,7 @@ image_point_t image_point_transform(image_point_t p, image_transform_matrix_t ma
 image_transform_matrix_t create_image_transform_matrix(image_point_t src[4], image_point_t dst[4]);
 
 void image_digitize(image_t *dst, image_t *src, float gamma_value);
-void image_monochrome(image_t *dst, image_t *src, float gamma_value, int hist_result[256]);
+void image_monochrome(image_t *dst, image_t *src, float gamma_value, size_t hist_result[256]);
 
 void image_morphology_erode(image_t *img);
 void image_morphology_dilate(image_t *img);

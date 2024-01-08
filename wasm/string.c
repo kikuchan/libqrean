@@ -1,4 +1,5 @@
-#include "stdint.h"
+#include <stddef.h>
+#include <stdint.h>
 
 unsigned long strlen(const char* s) {
 	unsigned long n = 0;

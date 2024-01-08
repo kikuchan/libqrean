@@ -28,7 +28,7 @@ export class Qrean {
   wasm: WebAssembly.WebAssemblyInstantiatedSource;
   on_found?: (type: string, str: string) => void;
 
-  static async create() {
+  static async create(debug?: boolean) {
     let memory: WebAssembly.ExportValue;
     let obj: Qrean;
     const importObject = {
@@ -46,10 +46,19 @@ export class Qrean {
           const typestr = Object.entries(Qrean.CODE_TYPES).find(([_, v]) => v == type)?.[0] ?? 'Unknown';
           if (obj.on_found) obj.on_found.call(obj, typestr, result);
         },
+
+        debug: function (ptr: number) {
+          const result = getText(new Uint8ClampedArray((memory as WebAssembly.Memory).buffer), ptr);
+          console.log("DEBUG:", result);
+        },
       },
     };
     const wasm = await WebAssembly.instantiate(wasmbin, importObject);
     memory = wasm.instance.exports.memory;
+
+    if (debug) {
+      (wasm.instance.exports as any).enable_debug();
+    }
 
     return obj = new Qrean(wasm);
   }
@@ -333,6 +342,7 @@ export class Qrean {
   }
 
   detect(imgdata: ImageData, callback: (type: string, str: string) => void) {
+    const gamma_value = 0.5;
     const exp: any = this.wasm.instance.exports;
     exp.memreset();
     const view = new DataView((exp.memory as WebAssembly.Memory).buffer);
@@ -349,8 +359,17 @@ export class Qrean {
     mem.set(imgdata.data, pbuf);
 
     this.on_found = callback;
-    const r = exp.detect();
+    const r = exp.detect(gamma_value);
     this.on_found = undefined;
+
+/*
+    // write back
+    const mono = mem.slice(pbuf, pbuf + width * height * 4);
+    for (let i = 0; i < width * height * 4; i++) {
+        imgdata.data[i] = i % 4 == 3 ? 0xff : mono[i];
+    }
+*/
+
     return r;
   }
 }

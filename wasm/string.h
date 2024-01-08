@@ -1,5 +1,3 @@
-#include "stdint.h"
-
 unsigned long strlen(const char* s);
 unsigned long strspn(const char* s1, const char* s2);
 unsigned long strcspn(const char* s1, const char* s2);

@@ -1,9 +1,11 @@
 #include <stdio.h>
+#include <stdarg.h>
 
 #include "qrean.h"
 #include "image.h"
 #include "detector.h"
 #include "debug.h"
+#include "printf.h"
 
 char imagebuf[3 * 1024 * 1024];
 char inputbuf[1024];
@@ -45,9 +47,23 @@ static void on_found(qrean_detector_perspective_t *warp, void *opaque) {
 	on_found_js(warp->qrean->code->type, outputbuf);
 }
 
-int detect() {
-	double gamma_value = 1.8;
+__attribute__((import_module("env"), import_name("debug")))
+extern void debug(const char *str);
 
+void _putchar(char ch) {}
+
+static int debug_vfprintf(void *opaque, const char *fmt, va_list ap) {
+	char buf[256];
+	vsnprintf(buf, sizeof(buf), fmt, ap);
+	debug(buf);
+	return 0;
+}
+
+void enable_debug() {
+	qrean_on_debug_vprintf(debug_vfprintf, NULL);
+}
+
+int detect(double gamma_value) {
 	outputbuf[0] = '\0';
 	image_t* img = (image_t*)imagebuf;
 

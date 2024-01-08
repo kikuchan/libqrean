@@ -25,7 +25,7 @@ FILE *debug_out;
 FILE *out;
 int flag_debug = 0;
 int flag_verbose = 0;
-double gamma_value = 1.8;
+double gamma_value = 0.5;
 
 uint32_t W = 0;
 uint32_t H = 0;

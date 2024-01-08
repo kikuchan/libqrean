@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "debug.h"
 #include "image.h"
 #include "qrean.h"
 
@@ -87,6 +88,7 @@ image_pixel_t image_read_pixel(image_t *img, image_point_t p)
 
 void image_save_as_ppm(image_t *img, FILE *out)
 {
+#ifndef NO_PRINTF
 	fprintf(out, "P6\n%zu %zu\n255\n", img->width, img->height);
 
 	for (uint32_t y = 0; y < img->height; y++) {
@@ -97,6 +99,7 @@ void image_save_as_ppm(image_t *img, FILE *out)
 			fputc(PIXEL_GET_B(pix), out);
 		}
 	}
+#endif
 }
 
 void image_dump(image_t *img, FILE *out)
@@ -304,9 +307,9 @@ void image_draw_extent(image_t *img, image_extent_t extent, image_pixel_t pix, i
 	image_draw_polygon(img, 4, points, pix, thickness);
 }
 
-void image_monochrome(image_t *dst, image_t *src, float gamma_value, int hist_result[256])
+void image_monochrome(image_t *dst, image_t *src, float gamma_value, size_t hist_result[256])
 {
-	int hist[256] = { 0 };
+	size_t hist[256] = { 0 };
 	for (int y = 0; y < (int)src->height; y++) {
 		for (int x = 0; x < (int)src->width; x++) {
 			image_pixel_t pix = image_read_pixel(src, POINT(x, y));
@@ -324,7 +327,7 @@ void image_digitize(image_t *dst, image_t *src, float gamma_value)
 {
 	// Using otsu method
 	// https://en.wikipedia.org/wiki/Otsu%27s_method
-	int hist[256] = { 0 };
+	size_t hist[256] = { 0 };
 	uint8_t threshold = 0;
 	float max_sigma = 0.0;
 
@@ -359,10 +362,11 @@ void image_digitize(image_t *dst, image_t *src, float gamma_value)
 			threshold = t;
 		}
 	}
+	qrean_debug_printf("threshold: %d\n", threshold);
 
-	for (int y = 0; y < (int)src->height; y++) {
-		for (int x = 0; x < (int)src->width; x++) {
-			image_pixel_t pix = image_read_pixel(src, POINT(x, y));
+	for (int y = 0; y < (int)dst->height; y++) {
+		for (int x = 0; x < (int)dst->width; x++) {
+			image_pixel_t pix = image_read_pixel(dst, POINT(x, y));
 			image_draw_pixel(dst, POINT(x, y), PIXEL_GET_R(pix) < threshold ? PIXEL(0, 0, 0) : PIXEL(255, 255, 255));
 		}
 	}

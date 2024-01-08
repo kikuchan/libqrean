@@ -1,6 +1,7 @@
+#include <stddef.h>
+
 #define FILE uint32_t
 
-#define vsnprintf(...) (void)0
 #define fprintf(...) (void)0
 #define vfprintf(...) (void)0
 #define fputc(...) (void)0

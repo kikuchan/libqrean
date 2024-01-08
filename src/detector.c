@@ -471,8 +471,10 @@ static image_point_t find_rmqr_corner_finder_pattern(
 
 	image_point_t last_p = POINT_INVALID;
 	int found = 0;
+	float delta = 1 / dist;
 
-	for (float theta = angle - M_PI / 32; theta <= angle + M_PI / 32; theta += 1 / dist) {
+	if (delta < 0.01) delta = 0.01; // XXX:
+	for (float theta = angle - M_PI / 32; theta <= angle + M_PI / 32; theta += delta) {
 		runlength_t rl = create_runlength();
 		for (int i = 0; i < dist * 2; i += 1) {
 			image_point_t p = POINT(a.x + i * cos(theta), a.y + i * sin(theta));

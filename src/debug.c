@@ -1,4 +1,5 @@
 #include <stdarg.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -13,11 +14,11 @@ static void (*qrean_error_cb)(const char *message);
 
 const char *qrean_last_error = NULL;
 
+#ifndef NO_PRINTF
 int safe_vfprintf(FILE *fp, const char *fmt, va_list ap)
 {
 	int retval = 0;
 
-#ifndef NO_PRINTF
 	unsigned char buf[4096];
 	retval = vsnprintf((char *)buf, sizeof(buf), fmt, ap);
 
@@ -29,7 +30,6 @@ int safe_vfprintf(FILE *fp, const char *fmt, va_list ap)
 		else
 			fputs(hex, fp);
 	}
-#endif
 
 	return retval;
 }
@@ -43,6 +43,7 @@ int safe_fprintf(FILE *fp, const char *fmt, ...)
 	va_end(ap);
 	return retval;
 }
+#endif
 
 int qrean_debug_printf(const char *fmt, ...)
 {

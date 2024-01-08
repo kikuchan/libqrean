@@ -1,6 +1,7 @@
 #ifndef __QR_QRSPEC_H__
 #define __QR_QRSPEC_H__
 
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 

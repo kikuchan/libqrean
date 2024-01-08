@@ -7,6 +7,7 @@ SRCS += stdlib.c
 SRCS += math.c
 SRCS += main.c
 SRCS += ./tinymm/tinymm.c
+SRCS += printf.c
 
 CC = clang
 AR = llvm-ar
@@ -39,6 +40,7 @@ $(BUILDDIR)/qrean.wasm.js: $(BUILDDIR)/libqrean.a
 	deno run -A https://code4fukui.github.io/bin2js/bin2js.js $(BUILDDIR)/qrean.wasm
 	deno bundle Qrean.ts $(BUILDDIR)/Qrean.js
 	npx tsc --declaration --emitDeclarationOnly --declarationDir $(BUILDDIR) Qrean.ts
+	cp $(BUILDDIR)/Qrean.js ../dist/
 
 clean:
 	-rm -f $(BUILDDIR)/qrean.wasm $(BUILDDIR)/*.[do] $(BUILDDIR)/libqrean.a
