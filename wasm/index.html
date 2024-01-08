@@ -2,9 +2,6 @@
 <title>Qrean wasm demo</title>
 </head><body>
 <h1>Qrean wasm demo</h1>
-<div>
-(Not exactly the same behavior with CLI yet, but you can feel it what it is like)
-</div>
 
 <main>
 <h2>Encode</h2>
@@ -14,7 +11,9 @@
 <div id="divimg"></div>
 
 <h2>Decode</h2>
-<input id="file" type="file" accept="image/*" /> <button id="camera">Camera</button><br />
+<div>
+  <input id="file" type="file" accept="image/*" /> <button id="camera">Camera</button>
+</div>
 <canvas id="canvas" width=600 height=400></canvas><br />
 <textarea id="decodeResult"></textarea>
 </main>
@@ -30,21 +29,29 @@ body {
   font-family: sans-serif;
 }
 main > * {
-  margin: .5em .2em;
   font-size: 20px;
+  margin: .5em 0;
+  box-sizing: border-box;
 }
-input[type=file] {
+
+main {
+  margin: 0 auto;
   overflow: hidden;
   width: 90vw;
+  max-width: 1024px;
+  padding: .5em 0;
 }
 
 canvas {
   border: 1px solid black;
-  width: 90vw;
+  width: 100%;
+}
+textarea {
+  width: 100%;
 }
 
 h2 {
-  margin: 2em .2em 0.5em;
+  margin: 1em 0 0.5em;
 }
 </style>
 
