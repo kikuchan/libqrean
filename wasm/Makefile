@@ -38,7 +38,7 @@ $(BUILDDIR)/qrean.wasm.js: $(BUILDDIR)/libqrean.a
 	$(CC) $(CFLAGS) -nostartfiles $(SRCS) $(BUILDDIR)/libqrean.a -o $(BUILDDIR)/qrean.wasm $(LDFLAGS)
 	deno run -A https://code4fukui.github.io/bin2js/bin2js.js $(BUILDDIR)/qrean.wasm
 	deno bundle Qrean.ts $(BUILDDIR)/Qrean.js
-	tsc --declaration --emitDeclarationOnly --declarationDir $(BUILDDIR) Qrean.ts
+	npx tsc --declaration --emitDeclarationOnly --declarationDir $(BUILDDIR) Qrean.ts
 
 clean:
 	-rm -f $(BUILDDIR)/qrean.wasm $(BUILDDIR)/*.[do] $(BUILDDIR)/libqrean.a
