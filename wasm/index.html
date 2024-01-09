@@ -15,7 +15,10 @@
   <input id="file" type="file" accept="image/*" /> <button id="camera">Camera</button>
 </div>
 <canvas id="canvas" width=600 height=400></canvas><br />
+<div>
 <label><input id="digitize" type="checkbox" />Show digitized</label>
+/ Gamma <input id="gamma" size="5" type="number" value="1.0" />
+</div>
 <textarea id="decodeResult"></textarea>
 </main>
 
@@ -131,14 +134,25 @@ file.onchange = (e) => {
     const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
     const w = img.width * scale;
     const h = img.height * scale;
+
     ctx.drawImage(img, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
 
-    decodeResult.value = '';
-    const capture = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    console.log("found: ", qrean.detect(capture, (type, result) => {
-      decodeResult.value += type + ": " + result + "\n";
-    }));
-    // ctx.putImageData(capture, 0, 0);
+    try {
+      decodeResult.value = '';
+      const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      qrean.detect(img, (type, result) => {
+        decodeResult.value += type + ": " + result + "\n";
+      }, {
+        gamma: gamma.value,
+        digitized: img.data,
+      });
+
+      if (digitize.checked) {
+        ctx.putImageData(img, 0, 0);
+      }
+    } catch (e) {
+      // console.error(e);
+    }
   };
   img.src = url;
   file.value = '';
@@ -159,6 +173,9 @@ function tick() {
       const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
       qrean.detect(img, (type, result) => {
         decodeResult.value += type + ": " + result + "\n";
+      }, {
+        gamma: gamma.value,
+        digitized: img.data,
       });
 
       if (digitize.checked) {

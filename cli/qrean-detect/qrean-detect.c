@@ -70,10 +70,10 @@ static void on_found(qrean_detector_perspective_t *warp, void *opaque)
 	if (detected) {
 		if (QREAN_IS_TYPE_QRFAMILY(warp->qrean)) {
 			image_point_t points[] = {
-				image_point_transform(POINT(0, 0), warp->h),
-				image_point_transform(POINT(warp->qrean->canvas.symbol_width - 1, 0), warp->h),
-				image_point_transform(POINT(warp->qrean->canvas.symbol_width - 1, warp->qrean->canvas.symbol_height - 1), warp->h),
-				image_point_transform(POINT(0, warp->qrean->canvas.symbol_height - 1), warp->h),
+				image_point_transform(POINT(-0.5, -0.5), warp->h),
+				image_point_transform(POINT(warp->qrean->canvas.symbol_width - 0.5, -0.5), warp->h),
+				image_point_transform(POINT(warp->qrean->canvas.symbol_width - 0.5, warp->qrean->canvas.symbol_height - 0.5), warp->h),
+				image_point_transform(POINT(-0.5, warp->qrean->canvas.symbol_height - 0.5), warp->h),
 			};
 			image_draw_polygon(detected, 4, points, PIXEL(0, 255, 0), 1);
 

@@ -62,6 +62,7 @@ void bitstream_rewind(bitstream_t *bs);
 bitpos_t bitstream_tell(bitstream_t *bs);
 
 bitpos_t bitstream_loop_iter(bitstream_t *bs, bitpos_t i, void *opaque);
+bitpos_t bitstream_reverse_iter(bitstream_t *bs, bitpos_t i, void *opaque);
 
 bitpos_t bitstream_write(bitstream_t *dst, const void *buffer, bitpos_t size, bitpos_t n);
 bitpos_t bitstream_read(bitstream_t *src, void *buffer, bitpos_t size, bitpos_t n);

@@ -273,6 +273,12 @@ bitpos_t bitstream_loop_iter(bitstream_t *bs, bitpos_t i, void *opaque)
 	return i % bs->size;
 }
 
+bitpos_t bitstream_reverse_iter(bitstream_t *bs, bitpos_t i, void *opaque)
+{
+	if (i >= bs->size) return BITPOS_END;
+	return bs->size - 1 - i;
+}
+
 void bitstream_on_write_bit(bitstream_t *bs, bitstream_write_bit_callback_t cb, void *opaque)
 {
 #ifndef NO_CALLBACK

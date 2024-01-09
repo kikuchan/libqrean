@@ -8,7 +8,7 @@
 #include "runlength.h"
 #include "utils.h"
 
-#define BARCODE_DETECTION_METHOD_2
+//#define BARCODE_DETECTION_METHOD_2
 
 bit_t qrean_detector_perspective_read_image_pixel(qrean_t *qrean, bitpos_t x, bitpos_t y, bitpos_t pos, void *opaque)
 {
@@ -27,143 +27,170 @@ bit_t qrean_detector_perspective_write_image_pixel(qrean_t *qrean, bitpos_t x, b
 	return 0;
 }
 
+static int scan_barcode(runlength_t *rl, image_t *img, image_t *src, int x, int y, int dx, int dy, void (*on_found)(qrean_detector_perspective_t *warp, void *opaque), void *opaque)
+{
+	uint32_t v = image_read_pixel(img, POINT(x, y)) & 0xFFFFFF; // drop alpha channel
+	if (v != 0 && v != PIXEL(255, 255, 255)) {
+		runlength_init(rl);
+		return 0;
+	}
+	if (!runlength_push_value(rl, v)) return 0;
+	if (!v) return 0;
+
+	int n = 0;
+	float barsize = 0;
+
+	// EAN: 101                     1, 1, 1
+	// CODE39: 100010111011101      1, 3, 1, 1, 3, 1, 3, 1, 1
+	// CODE93: 10101111             1, 1, 1, 1, 4
+	// ITF: 101                     1, 1, 1
+	// NW7-A: 1011100010001         1, 1, 3, 3, 1, 3, 1
+	// NW7-B: 1000100010111         1, 3, 1, 3, 1, 1, 3
+	// NW7-C: 1010001000111         1, 1, 1, 3, 1, 3, 3
+	// NW7-D: 1010001110001         1, 1, 1, 3, 3, 3, 1
+
+	if (runlength_match_ratio(rl, 1, 3, 1, 1, 3, 1, 3, 1, 1, 0, -1)) {
+		// CODE39
+		n = runlength_sum(rl, 1, 9);
+		barsize = n / (6.0 + 3 * 3);
+		if (runlength_get_count(rl, 10) < 2 * barsize) return 0; // quiet zone required
+	} else if (runlength_match_ratio(rl, 1, 1, 3, 3, 1, 3, 1, 0, -1) || runlength_match_ratio(rl, 1, 3, 1, 3, 1, 1, 3, 0, -1)
+		|| runlength_match_ratio(rl, 1, 1, 1, 3, 1, 3, 3, 0, -1) || runlength_match_ratio(rl, 1, 1, 1, 3, 3, 3, 1, 0, -1)) {
+		// NW7
+		n = runlength_sum(rl, 1, 7);
+		barsize = n / (4.0 + 3 * 3);
+		if (runlength_get_count(rl, 8) < 2 * barsize) return 0; // quiet zone required
+	} else if (runlength_match_ratio(rl, 1, 1, 1, 1, 4, 0, -1)) {
+		// CODE93
+		n = runlength_sum(rl, 1, 5);
+		barsize = n / 8.0;
+		if (runlength_get_count(rl, 6) < 2 * barsize) return 0; // quiet zone required
+	} else if (runlength_match_ratio(rl, 1, 1, 1, 0, -1)) {
+		// EAN or ITF
+		n = runlength_sum(rl, 1, 3);
+		barsize = n / 3.0;
+		if (runlength_get_count(rl, 4) < 2 * barsize) return 0; // quiet zone required
+	}
+
+	qrean_code_type_t codes[] = {
+		QREAN_CODE_TYPE_EAN13,
+		QREAN_CODE_TYPE_EAN8,
+		QREAN_CODE_TYPE_UPCA,
+		QREAN_CODE_TYPE_CODE39,
+		QREAN_CODE_TYPE_CODE93,
+		QREAN_CODE_TYPE_ITF,
+		QREAN_CODE_TYPE_NW7,
+	};
+
+	int sx = x - (n + 1) * dx;
+	int sy = y - (n + 1) * dy;
+	int ex = sx;
+	int ey = sy;
+	int found = 0;
+
+#ifdef BARCODE_DETECTION_METHOD_2
+	char buf[128] = {};
+	bitstream_t bs = create_bitstream(buf, sizeof(buf) * 8, NULL, NULL);
+#endif
+	runlength_t rl2 = create_runlength();
+	int bars = 0;
+	for (int yy = sy, xx = sx; 0 <= xx && xx < img->width && 0 <= yy && yy < img->height; xx += dx, yy += dy) {
+		uint32_t v = image_read_pixel(img, POINT(xx, yy)) & 0xFFFFFF; // drop alpha channel
+		if (runlength_push_value(&rl2, v)) {
+			runlength_count_t last_count = runlength_get_count(&rl2, 1);
+			int c = round(last_count / barsize);
+			bars += c;
+
+#ifdef BARCODE_DETECTION_METHOD_2
+			if (c <= 32) {
+				bitstream_write_bits(&bs, v ? 0xffffffff : 0, c);
+			}
+#endif
+
+			continue;
+		}
+
+		if (v && runlength_get_count(&rl2, 0) >= barsize * 10) {
+			// stop
+			ex = xx - (runlength_get_count(&rl2, 0) - 1) * dx;
+			ey = yy - (runlength_get_count(&rl2, 0) - 1) * dy;
+			barsize = sqrt((ex - sx) * (ex - sx) + (ey - sy) * (ey - sy)) / (float)bars;
+			break;
+		}
+	}
+
+	if (ex == sx && ey == sy) return 0; // not found
+
+	image_transform_matrix_t mat = {
+		{barsize * dx, 0, sx + dx * barsize / 2.0, barsize * dy, 0, sy + dy * barsize / 2.0, 0, 0}
+	};
+
+#ifdef BARCODE_DETECTION_METHOD_2
+	bitstream_rewind(&bs);
+#endif
+
+	for (size_t i = 0; i < sizeof(codes) / sizeof(codes[0]); i++) {
+		qrean_t qrean = create_qrean(codes[i]);
+
+		qrean_detector_perspective_t warp = create_qrean_detector_perspective(&qrean, src);
+		warp.h = mat;
+
+#ifndef BARCODE_DETECTION_METHOD_2
+		qrean_on_read_pixel(&qrean, qrean_detector_perspective_read_image_pixel, &warp);
+		qrean_on_write_pixel(&qrean, qrean_detector_perspective_write_image_pixel, &warp);
+#else
+		qrean_write_bitstream(&qrean, bs);
+#endif
+
+		char buf[256];
+		if (qrean_read_string(&qrean, buf, sizeof(buf))) {
+			qrean_debug_printf("Detected as %s\n", qrean_get_code_type_string(qrean.code->type));
+
+			// TODO: XXX: the warp is not accurate
+			on_found(&warp, opaque);
+			found++;
+
+			// paint dark bar to prevent the bar to be detected twice
+			for (int yy = sy, xx = sx; xx != ex || yy != ey; xx += dx, yy += dy) {
+				uint32_t v = image_read_pixel(img, POINT(xx, yy)) & 0xFFFFFF; // drop alpha channel
+				if (!v) image_paint(img, POINT(xx, yy), PIXEL(255, 0, 0));
+			}
+
+		}
+
+		qrean_destroy(&qrean);
+	}
+
+	return found;
+}
+
 int qrean_detector_scan_barcodes(image_t *src, void (*on_found)(qrean_detector_perspective_t *warp, void *opaque), void *opaque)
 {
 	int found = 0;
 	image_t *img = image_clone(src);
 	if (!img) return 0;
 
+	runlength_t rl = create_runlength();
 	for (int y = 0; y < (int)img->height; y++) {
-		runlength_t rl = create_runlength();
+		runlength_init(&rl);
 		for (int x = 0; x < (int)img->width; x++) {
-			uint32_t v = image_read_pixel(img, POINT(x, y)) & 0xFFFFFF; // drop alpha channel
-			if (v != 0 && v != PIXEL(255, 255, 255)) {
-				runlength_init(&rl);
-				continue;
-			}
-			if (!runlength_push_value(&rl, v)) continue;
-			if (!v) continue;
+			scan_barcode(&rl, img, src, x, y, 1, 0, on_found, opaque);
+		}
+		runlength_init(&rl);
+		for (int x = 0; x < (int)img->width; x++) {
+			scan_barcode(&rl, img, src, img->width - 1 - x, y, -1, 0, on_found, opaque);
+		}
+	}
 
-			// EAN: 101                     1, 1, 1
-			// CODE39: 100010111011101      1, 3, 1, 1, 3, 1, 3, 1, 1
-			// CODE93: 10101111             1, 1, 1, 1, 4
-			// ITF: 101                     1, 1, 1
-			// NW7-A: 1011100010001         1, 1, 3, 3, 1, 3, 1
-			// NW7-B: 1000100010111         1, 3, 1, 3, 1, 1, 3
-			// NW7-C: 1010001000111         1, 1, 1, 3, 1, 3, 3
-			// NW7-D: 1010001110001         1, 1, 1, 3, 3, 3, 1
+	for (int x = 0; x < (int)img->width; x++) {
+		runlength_init(&rl);
+		for (int y = 0; y < (int)img->height; y++) {
+			scan_barcode(&rl, img, src, x, y, 0, 1, on_found, opaque);
+		}
 
-			int n = 0;
-			float barsize = 0;
-
-			if (runlength_match_ratio(&rl, 1, 3, 1, 1, 3, 1, 3, 1, 1, 0, -1)) {
-				// CODE39
-				n = runlength_sum(&rl, 1, 9);
-				barsize = n / (6.0 + 3 * 3);
-				if (runlength_get_count(&rl, 10) < 2 * barsize) continue; // quiet zone required
-			} else if (runlength_match_ratio(&rl, 1, 1, 3, 3, 1, 3, 1, 0, -1) || runlength_match_ratio(&rl, 1, 3, 1, 3, 1, 1, 3, 0, -1)
-				|| runlength_match_ratio(&rl, 1, 1, 1, 3, 1, 3, 3, 0, -1) || runlength_match_ratio(&rl, 1, 1, 1, 3, 3, 3, 1, 0, -1)) {
-				// NW7
-				n = runlength_sum(&rl, 1, 7);
-				barsize = n / (4.0 + 3 * 3);
-				if (runlength_get_count(&rl, 8) < 2 * barsize) continue; // quiet zone required
-			} else if (runlength_match_ratio(&rl, 1, 1, 1, 1, 4, 0, -1)) {
-				// CODE93
-				n = runlength_sum(&rl, 1, 5);
-				barsize = n / 8.0;
-				if (runlength_get_count(&rl, 6) < 2 * barsize) continue; // quiet zone required
-			} else if (runlength_match_ratio(&rl, 1, 1, 1, 0, -1)) {
-				// EAN or ITF
-				n = runlength_sum(&rl, 1, 3);
-				barsize = n / 3.0;
-				if (runlength_get_count(&rl, 4) < 2 * barsize) continue; // quiet zone required
-			} else {
-				continue;
-			}
-
-			qrean_code_type_t codes[] = {
-				QREAN_CODE_TYPE_EAN13,
-				QREAN_CODE_TYPE_EAN8,
-				QREAN_CODE_TYPE_UPCA,
-				QREAN_CODE_TYPE_CODE39,
-				QREAN_CODE_TYPE_CODE93,
-				QREAN_CODE_TYPE_ITF,
-				QREAN_CODE_TYPE_NW7,
-			};
-
-			float sx = (x - n - 1);
-			float ex = sx;
-
-#ifdef BARCODE_DETECTION_METHOD_2
-			char buf[128] = {};
-			bitstream_t bs = create_bitstream(buf, sizeof(buf) * 8, NULL, NULL);
-#endif
-			runlength_t rl2 = create_runlength();
-			int bars = 0;
-			for (int xx = sx; xx < img->width; xx++) {
-				uint32_t v = image_read_pixel(img, POINT(xx, y)) & 0xFFFFFF; // drop alpha channel
-				if (runlength_push_value(&rl2, v)) {
-					runlength_count_t last_count = runlength_get_count(&rl2, 1);
-					int c = round(last_count / barsize);
-					bars += c;
-
-#ifdef BARCODE_DETECTION_METHOD_2
-					if (c <= 32) {
-						bitstream_write_bits(&bs, v ? 0xffffffff : 0, c);
-					}
-#endif
-
-					continue;
-				}
-
-				if (v && runlength_get_count(&rl2, 0) >= barsize * 10) {
-					// stop
-					ex = xx - runlength_get_count(&rl2, 0);
-					barsize = (ex - sx) / (float)bars;
-					break;
-				}
-			}
-
-			if (ex == sx) continue;
-
-			image_transform_matrix_t mat = {
-				{barsize, 0, sx + barsize / 2.0, 0, 0, (float)y, 0, 0}
-			};
-
-#ifdef BARCODE_DETECTION_METHOD_2
-			bitstream_rewind(&bs);
-#endif
-
-			for (size_t i = 0; i < sizeof(codes) / sizeof(codes[0]); i++) {
-				qrean_t qrean = create_qrean(codes[i]);
-
-				qrean_detector_perspective_t warp = create_qrean_detector_perspective(&qrean, src);
-				warp.h = mat;
-
-#ifndef BARCODE_DETECTION_METHOD_2
-				qrean_on_read_pixel(&qrean, qrean_detector_perspective_read_image_pixel, &warp);
-				qrean_on_write_pixel(&qrean, qrean_detector_perspective_write_image_pixel, &warp);
-#else
-				qrean_write_bitstream(&qrean, bs);
-#endif
-
-				char buf[256];
-				if (qrean_read_string(&qrean, buf, sizeof(buf))) {
-					qrean_debug_printf("Detected as %s\n", qrean_get_code_type_string(qrean.code->type));
-
-					// TODO: XXX: the warp is not accurate
-					on_found(&warp, opaque);
-					found++;
-
-					// paint dark bar to prevent the bar to be detected twice
-					for (int xx = sx; xx < ex; xx++) {
-						uint32_t v = image_read_pixel(img, POINT(xx, y)) & 0xFFFFFF; // drop alpha channel
-						if (!v) image_paint(img, POINT(xx, y), PIXEL(255, 0, 0));
-					}
-				}
-
-				qrean_destroy(&qrean);
-			}
+		runlength_init(&rl);
+		for (int y = 0; y < (int)img->height; y++) {
+			scan_barcode(&rl, img, src, x, img->height - 1 - y, 0, -1, on_found, opaque);
 		}
 	}
 
@@ -319,15 +346,15 @@ void qrean_detector_perspective_setup_by_qr_finder_pattern_centers(
 {
 	warp->src[0] = POINT(3 + border_offset, 3 + border_offset); // center of the 1st keystone
 	warp->src[1] = POINT(warp->qrean->canvas.symbol_width - 4 - border_offset, 3 + border_offset); // center of the 2nd keystone
-	warp->src[2] = POINT(3 + border_offset, warp->qrean->canvas.symbol_height - 4 - border_offset); // center of the 3rd keystone
-	warp->src[3] = POINT(warp->qrean->canvas.symbol_width - 4 - border_offset,
+	warp->src[2] = POINT(warp->qrean->canvas.symbol_width - 4 - border_offset,
 		warp->qrean->canvas.symbol_height - 4 - border_offset); // center of the 4th estimated pseudo keystone
+	warp->src[3] = POINT(3 + border_offset, warp->qrean->canvas.symbol_height - 4 - border_offset); // center of the 3rd keystone
 
 	warp->dst[0] = src[0];
 	warp->dst[1] = src[1];
-	warp->dst[2] = src[2];
-	warp->dst[3] = POINT(POINT_X(src[0]) + (POINT_X(src[1]) - POINT_X(src[0])) + (POINT_X(src[2]) - POINT_X(src[0])),
+	warp->dst[2] = POINT(POINT_X(src[0]) + (POINT_X(src[1]) - POINT_X(src[0])) + (POINT_X(src[2]) - POINT_X(src[0])),
 		POINT_Y(src[0]) + (POINT_Y(src[1]) - POINT_Y(src[0])) + (POINT_Y(src[2]) - POINT_Y(src[0])));
+	warp->dst[3] = src[2];
 
 	warp->h = create_image_transform_matrix(warp->src, warp->dst);
 
@@ -385,8 +412,8 @@ int qrean_detector_perspective_fit_for_qr(qrean_detector_perspective_t *warp)
 
 						qrean_detector_perspective_t backup = *warp;
 
-						warp->src[3] = POINT(cx, cy);
-						warp->dst[3] = new_center;
+						warp->src[2] = POINT(cx, cy);
+						warp->dst[2] = new_center;
 						warp->h = create_image_transform_matrix(warp->src, warp->dst);
 
 						if (qrean_read_qr_alignment_pattern(warp->qrean, i) < 10) {

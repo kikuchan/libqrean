@@ -24,6 +24,11 @@ type MakeOptions = {
   padding?: number;
 };
 
+type DetectOptions = {
+  gamma?: number;
+  digitized?: Uint8ClampedArray;
+};
+
 export class Qrean {
   wasm: WebAssembly.WebAssemblyInstantiatedSource;
   on_found?: (type: string, str: string) => void;
@@ -341,8 +346,8 @@ export class Qrean {
     return imgdata;
   }
 
-  detect(imgdata: ImageData, callback: (type: string, str: string) => void) {
-    const gamma_value = 0.5;
+  detect(imgdata: ImageData, callback: (type: string, str: string) => void, opts: DetectOptions = {}) {
+    const gamma_value = opts.gamma ?? 1.0;
     const exp: any = this.wasm.instance.exports;
     exp.memreset();
     const view = new DataView((exp.memory as WebAssembly.Memory).buffer);
@@ -363,9 +368,11 @@ export class Qrean {
     this.on_found = undefined;
 
     // write back
-    const mono = mem.slice(pbuf, pbuf + width * height * 4);
-    for (let i = 0; i < width * height * 4; i++) {
-        imgdata.data[i] = i % 4 == 3 ? 0xff : mono[i];
+    if (opts.digitized) {
+      const mono = mem.slice(pbuf, pbuf + width * height * 4);
+      for (let i = 0; i < width * height * 4; i++) {
+          opts.digitized[i] = i % 4 == 3 ? 0xff : mono[i];
+      }
     }
 
     return r;
