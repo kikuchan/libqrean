@@ -37,8 +37,9 @@ static const char *symbol_lookup = "0123456789-$./:+";
 
 static int8_t read_symbol(bitstream_t *bs)
 {
-	while (bitstream_peek_bit(bs, NULL) == 0)
+	while (!bitstream_is_end(bs) && bitstream_peek_bit(bs, NULL) == 0) {
 		bitstream_skip_bits(bs, 1);
+	}
 
 	uint16_t v = bitstream_peek_bits(bs, 13);
 
