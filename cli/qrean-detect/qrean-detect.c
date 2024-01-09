@@ -67,27 +67,38 @@ static void on_found(qrean_detector_perspective_t *warp, void *opaque)
 {
 	char buffer[1024];
 
-	if (detected && QREAN_IS_TYPE_QRFAMILY(warp->qrean)) {
-		image_point_t points[] = {
-			image_point_transform(POINT(0, 0), warp->h),
-			image_point_transform(POINT(warp->qrean->canvas.symbol_width - 1, 0), warp->h),
-			image_point_transform(POINT(warp->qrean->canvas.symbol_width - 1, warp->qrean->canvas.symbol_height - 1), warp->h),
-			image_point_transform(POINT(0, warp->qrean->canvas.symbol_height - 1), warp->h),
-		};
-		image_draw_polygon(detected, 4, points, PIXEL(0, 255, 0), 1);
+	if (detected) {
+		if (QREAN_IS_TYPE_QRFAMILY(warp->qrean)) {
+			image_point_t points[] = {
+				image_point_transform(POINT(0, 0), warp->h),
+				image_point_transform(POINT(warp->qrean->canvas.symbol_width - 1, 0), warp->h),
+				image_point_transform(POINT(warp->qrean->canvas.symbol_width - 1, warp->qrean->canvas.symbol_height - 1), warp->h),
+				image_point_transform(POINT(0, warp->qrean->canvas.symbol_height - 1), warp->h),
+			};
+			image_draw_polygon(detected, 4, points, PIXEL(0, 255, 0), 1);
 
-		// XXX: backup
-		bit_t (*backup)(qrean_t *qrean, bitpos_t x, bitpos_t y, bitpos_t pos, bit_t v, void *opaque) = warp->qrean->canvas.write_pixel;
-		qrean_on_write_pixel(warp->qrean, write_image_pixel, warp);
+			// XXX: backup
+			bit_t (*backup)(qrean_t *qrean, bitpos_t x, bitpos_t y, bitpos_t pos, bit_t v, void *opaque) = warp->qrean->canvas.write_pixel;
+			qrean_on_write_pixel(warp->qrean, write_image_pixel, warp);
 
-		qrpayload_t payload = create_qrpayload(warp->qrean->qr.version, warp->qrean->qr.level);
-		qrean_read_qr_payload(warp->qrean, &payload);
-		qrean_write_frame(warp->qrean);
-		qrean_write_qr_payload(warp->qrean, &payload);
+			qrpayload_t payload = create_qrpayload(warp->qrean->qr.version, warp->qrean->qr.level);
+			qrean_read_qr_payload(warp->qrean, &payload);
+			qrean_write_frame(warp->qrean);
+			qrean_write_qr_payload(warp->qrean, &payload);
 
-		warp->qrean->canvas.write_pixel = backup;
+			warp->qrean->canvas.write_pixel = backup;
 
-		qrpayload_dump(&payload, stderr);
+			qrpayload_dump(&payload, stderr);
+		} else {
+			// XXX: backup
+			bit_t (*backup)(qrean_t *qrean, bitpos_t x, bitpos_t y, bitpos_t pos, bit_t v, void *opaque) = warp->qrean->canvas.write_pixel;
+			qrean_on_write_pixel(warp->qrean, write_image_pixel, warp);
+
+			size_t len = qrean_read_string(warp->qrean, buffer, sizeof(buffer));
+			qrean_write_string(warp->qrean, buffer, len);
+
+			warp->qrean->canvas.write_pixel = backup;
+		}
 	}
 
 	qrean_read_string(warp->qrean, buffer, sizeof(buffer));

@@ -8,6 +8,8 @@
 #include "runlength.h"
 #include "utils.h"
 
+#define BARCODE_DETECTION_METHOD_2
+
 bit_t qrean_detector_perspective_read_image_pixel(qrean_t *qrean, bitpos_t x, bitpos_t y, bitpos_t pos, void *opaque)
 {
 	qrean_detector_perspective_t *warp = (qrean_detector_perspective_t *)opaque;
@@ -89,9 +91,13 @@ int qrean_detector_scan_barcodes(image_t *src, void (*on_found)(qrean_detector_p
 				QREAN_CODE_TYPE_NW7,
 			};
 
-			float sx = (x - n - 1) + barsize / 2.0;
+			float sx = (x - n - 1);
 			float ex = sx;
 
+#ifdef BARCODE_DETECTION_METHOD_2
+			char buf[128] = {};
+			bitstream_t bs = create_bitstream(buf, sizeof(buf) * 8, NULL, NULL);
+#endif
 			runlength_t rl2 = create_runlength();
 			int bars = 0;
 			for (int xx = sx; xx < img->width; xx++) {
@@ -101,13 +107,18 @@ int qrean_detector_scan_barcodes(image_t *src, void (*on_found)(qrean_detector_p
 					int c = round(last_count / barsize);
 					bars += c;
 
+#ifdef BARCODE_DETECTION_METHOD_2
+					if (c <= 32) {
+						bitstream_write_bits(&bs, v ? 0xffffffff : 0, c);
+					}
+#endif
+
 					continue;
 				}
 
 				if (v && runlength_get_count(&rl2, 0) >= barsize * 10) {
 					// stop
-					ex = (xx - barsize * 9.5);
-
+					ex = xx - runlength_get_count(&rl2, 0);
 					barsize = (ex - sx) / (float)bars;
 					break;
 				}
@@ -116,19 +127,31 @@ int qrean_detector_scan_barcodes(image_t *src, void (*on_found)(qrean_detector_p
 			if (ex == sx) continue;
 
 			image_transform_matrix_t mat = {
-				{barsize, 0, sx, 0, 0, (float)y, 0, 0}
+				{barsize, 0, sx + barsize / 2.0, 0, 0, (float)y, 0, 0}
 			};
+
+#ifdef BARCODE_DETECTION_METHOD_2
+			bitstream_rewind(&bs);
+#endif
 
 			for (size_t i = 0; i < sizeof(codes) / sizeof(codes[0]); i++) {
 				qrean_t qrean = create_qrean(codes[i]);
+
 				qrean_detector_perspective_t warp = create_qrean_detector_perspective(&qrean, src);
 				warp.h = mat;
-				qrean_on_read_pixel(warp.qrean, qrean_detector_perspective_read_image_pixel, &warp);
-				qrean_on_write_pixel(warp.qrean, qrean_detector_perspective_write_image_pixel, &warp);
+
+#ifndef BARCODE_DETECTION_METHOD_2
+				qrean_on_read_pixel(&qrean, qrean_detector_perspective_read_image_pixel, &warp);
+				qrean_on_write_pixel(&qrean, qrean_detector_perspective_write_image_pixel, &warp);
+#else
+				qrean_write_bitstream(&qrean, bs);
+#endif
 
 				char buf[256];
-				if (qrean_read_string(warp.qrean, buf, sizeof(buf))) {
+				if (qrean_read_string(&qrean, buf, sizeof(buf))) {
 					qrean_debug_printf("Detected as %s\n", qrean_get_code_type_string(qrean.code->type));
+
+					// TODO: XXX: the warp is not accurate
 					on_found(&warp, opaque);
 					found++;
 
