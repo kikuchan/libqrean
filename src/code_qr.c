@@ -216,8 +216,8 @@ static const uint8_t timing_pattern_bits[] = { 0xAA };
 
 static bit_t check_N3(runlength_t *rl, bit_t v)
 {
-	if (!v && runlength_match_ratio(rl, 6, 1, 1, 3, 1, 1, 0) && runlength_get_count(rl, 0) / 4 >= runlength_get_count(rl, 1)) return 1;
-	if (v && runlength_match_ratio(rl, 6, 0, 1, 1, 3, 1, 1) && runlength_get_count(rl, 5) / 4 >= runlength_get_count(rl, 4)) return 1;
+	if (!v && runlength_match_ratio(rl, 1, 1, 3, 1, 1, 0, -1) && runlength_get_count(rl, 0) / 4 >= runlength_get_count(rl, 1)) return 1;
+	if (v && runlength_match_ratio(rl, 0, 1, 1, 3, 1, 1, -1) && runlength_get_count(rl, 5) / 4 >= runlength_get_count(rl, 4)) return 1;
 
 	return 0;
 }

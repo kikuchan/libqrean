@@ -56,23 +56,23 @@ int qrean_detector_scan_barcodes(image_t *src, void (*on_found)(qrean_detector_p
 			int n = 0;
 			float barsize = 0;
 
-			if (runlength_match_ratio(&rl, 10, 1, 3, 1, 1, 3, 1, 3, 1, 1, 0)) {
+			if (runlength_match_ratio(&rl, 1, 3, 1, 1, 3, 1, 3, 1, 1, 0, -1)) {
 				// CODE39
 				n = runlength_sum(&rl, 1, 9);
 				barsize = n / (6.0 + 3 * 3);
 				if (runlength_get_count(&rl, 10) < 2 * barsize) continue; // quiet zone required
-			} else if (runlength_match_ratio(&rl, 8, 1, 1, 3, 3, 1, 3, 1, 0) || runlength_match_ratio(&rl, 8, 1, 3, 1, 3, 1, 1, 3, 0)
-				|| runlength_match_ratio(&rl, 8, 1, 1, 1, 3, 1, 3, 3, 0) || runlength_match_ratio(&rl, 8, 1, 1, 1, 3, 3, 3, 1, 0)) {
+			} else if (runlength_match_ratio(&rl, 1, 1, 3, 3, 1, 3, 1, 0, -1) || runlength_match_ratio(&rl, 1, 3, 1, 3, 1, 1, 3, 0, -1)
+				|| runlength_match_ratio(&rl, 1, 1, 1, 3, 1, 3, 3, 0, -1) || runlength_match_ratio(&rl, 1, 1, 1, 3, 3, 3, 1, 0, -1)) {
 				// NW7
 				n = runlength_sum(&rl, 1, 7);
 				barsize = n / (4.0 + 3 * 3);
 				if (runlength_get_count(&rl, 8) < 2 * barsize) continue; // quiet zone required
-			} else if (runlength_match_ratio(&rl, 6, 1, 1, 1, 1, 4, 0)) {
+			} else if (runlength_match_ratio(&rl, 1, 1, 1, 1, 4, 0, -1)) {
 				// CODE93
 				n = runlength_sum(&rl, 1, 5);
 				barsize = n / 8.0;
 				if (runlength_get_count(&rl, 6) < 2 * barsize) continue; // quiet zone required
-			} else if (runlength_match_ratio(&rl, 4, 1, 1, 1, 0)) {
+			} else if (runlength_match_ratio(&rl, 1, 1, 1, 0, -1)) {
 				// EAN or ITF
 				n = runlength_sum(&rl, 1, 3);
 				barsize = n / 3.0;
@@ -191,7 +191,7 @@ qrean_detector_qr_finder_candidate_t *qrean_detector_scan_qr_finder_pattern(imag
 			}
 			if (!runlength_push_value(&rl, v)) continue;
 
-			if (!v || !runlength_match_ratio(&rl, 6, 1, 1, 3, 1, 1, 0)) continue;
+			if (!v || !runlength_match_ratio(&rl, 1, 1, 3, 1, 1, 0, -1)) continue;
 
 			// assert almost [n, n, 3n, n, n, 1]
 
@@ -213,20 +213,20 @@ qrean_detector_qr_finder_candidate_t *qrean_detector_scan_qr_finder_pattern(imag
 			int found_u = 0, found_d = 0;
 			for (int yy = 0; yy < len; yy++) {
 				if (!found_u && runlength_push_value(&rlvu, image_read_pixel(img, POINT(cx, cy - yy)))) {
-					if (runlength_match_ratio(&rlvu, 4, 3, 2, 2, 0)) {
+					if (runlength_match_ratio(&rlvu, 3, 2, 2, 0, -1)) {
 						found_u = runlength_sum(&rlvu, 1, 3);
 					}
 				}
 				if (!found_d && runlength_push_value(&rlvd, image_read_pixel(img, POINT(cx, cy + yy)))) {
-					if (runlength_match_ratio(&rlvd, 4, 3, 2, 2, 0)) {
+					if (runlength_match_ratio(&rlvd, 3, 2, 2, 0, -1)) {
 						found_d = runlength_sum(&rlvd, 1, 3);
 					}
 				}
 			}
-			if (!found_u && runlength_match_ratio(&rlvu, 4, 3, 2, 2, 0)) {
+			if (!found_u && runlength_match_ratio(&rlvu, 3, 2, 2, 0, -1)) {
 				found_u = runlength_sum(&rlvu, 1, 3);
 			}
-			if (!found_d && runlength_match_ratio(&rlvd, 4, 3, 2, 2, 0)) {
+			if (!found_d && runlength_match_ratio(&rlvd, 3, 2, 2, 0, -1)) {
 				found_d = runlength_sum(&rlvd, 1, 3);
 			}
 
@@ -538,7 +538,7 @@ static image_point_t find_rmqr_corner_finder_pattern(
 				}
 			}
 
-			if (runlength_match_ratio(&rl, 7, 1, 1, 1, 1, 1, corner_size, 2) && !pix) {
+			if (runlength_match_ratio(&rl, 1, 1, 1, 1, 1, corner_size, 2, -1) && !pix) {
 				float n = i - runlength_get_count(&rl, 0) - runlength_get_count(&rl, 0) / 2.0;
 				image_point_t p = POINT(a.x + n * cos(theta), a.y + n * sin(theta));
 

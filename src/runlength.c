@@ -79,47 +79,31 @@ void runlength_next_and_count_add(runlength_t *rl, runlength_count_t n)
 	runlength_count_add(rl, n);
 }
 
-// eg; 1 2 0 2 1 matches 1 2 X 2 1
-int runlength_match_exact(runlength_t *rl, float div, runlength_size_t N, ...)
-{
-	va_list ap;
-
-	assert(0 < N && N <= MAX_RUNLENGTH);
-
-	va_start(ap, N);
-
-	for (runlength_size_t i = 0; i < N; i++) {
-		runlength_count_t arg = va_arg(ap, runlength_size_t);
-		if (arg && round(runlength_get_count(rl, N - i - 1) / div) != arg) {
-			va_end(ap);
-			return 0;
-		}
-	}
-
-	va_end(ap);
-	return 1;
-}
-
 // eg; 2 0 1 3 1 matches 4 X 2 6 2
-int runlength_match_ratio(runlength_t *rl, runlength_size_t N, ...)
+int runlength_match_ratio(runlength_t *rl, ...)
 {
 	va_list ap;
-
-	assert(0 < N && N <= MAX_RUNLENGTH);
-
-	va_start(ap, N);
 
 	runlength_count_t total_count = 0, total_ratio = 0;
-	runlength_count_t ratio[N];
-	for (runlength_size_t i = 0; i < N; i++) {
-		ratio[i] = va_arg(ap, int);
-		if (!ratio[i]) continue;
+	runlength_count_t ratio[MAX_RUNLENGTH];
+	runlength_size_t N = 0;
 
+	va_start(ap, rl);
+	for (runlength_size_t i = 0; ; i++) {
+		int r = va_arg(ap, int);
+		if (r < 0) {
+			N = i;
+			break;
+		}
+		ratio[i] = r;
+	}
+	va_end(ap);
+
+	for (runlength_size_t i = 0; i < N; i++) {
+		if (!ratio[i]) continue;
 		total_ratio += ratio[i];
 		total_count += runlength_get_count(rl, N - i - 1);
 	}
-
-	va_end(ap);
 
 	if (!total_ratio || !total_count) return 0;
 
