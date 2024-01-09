@@ -15,6 +15,7 @@
   <input id="file" type="file" accept="image/*" /> <button id="camera">Camera</button>
 </div>
 <canvas id="canvas" width=600 height=400></canvas><br />
+<label><input id="digitize" type="checkbox" />Show digitized</label>
 <textarea id="decodeResult"></textarea>
 </main>
 
@@ -52,6 +53,10 @@ textarea {
 
 h2 {
   margin: 1em 0 0.5em;
+}
+
+label {
+  user-select: none;
 }
 </style>
 
@@ -151,9 +156,14 @@ function tick() {
 
     try {
       decodeResult.value = '';
-      qrean.detect(ctx.getImageData(0, 0, canvas.width, canvas.height), (type, result) => {
+      const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      qrean.detect(img, (type, result) => {
         decodeResult.value += type + ": " + result + "\n";
       });
+
+      if (digitize.checked) {
+        ctx.putImageData(img, 0, 0);
+      }
     } catch (e) {
       // console.error(e);
     }

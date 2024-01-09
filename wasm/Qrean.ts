@@ -362,13 +362,11 @@ export class Qrean {
     const r = exp.detect(gamma_value);
     this.on_found = undefined;
 
-/*
     // write back
     const mono = mem.slice(pbuf, pbuf + width * height * 4);
     for (let i = 0; i < width * height * 4; i++) {
         imgdata.data[i] = i % 4 == 3 ? 0xff : mono[i];
     }
-*/
 
     return r;
   }

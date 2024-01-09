@@ -435,6 +435,10 @@ class Qrean {
         this.on_found = callback;
         const r = exp.detect(0.5);
         this.on_found = undefined;
+        const mono = mem.slice(pbuf, pbuf + width * height * 4);
+        for(let i = 0; i < width * height * 4; i++){
+            imgdata.data[i] = i % 4 == 3 ? 0xff : mono[i];
+        }
         return r;
     }
 }
