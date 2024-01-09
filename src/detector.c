@@ -89,8 +89,34 @@ int qrean_detector_scan_barcodes(image_t *src, void (*on_found)(qrean_detector_p
 				QREAN_CODE_TYPE_NW7,
 			};
 
+			float sx = (x - n - 1) + barsize / 2.0;
+			float ex = sx;
+
+			runlength_t rl2 = create_runlength();
+			int bars = 0;
+			for (int xx = sx; xx < img->width; xx++) {
+				uint32_t v = image_read_pixel(img, POINT(xx, y)) & 0xFFFFFF; // drop alpha channel
+				if (runlength_push_value(&rl2, v)) {
+					runlength_count_t last_count = runlength_get_count(&rl2, 1);
+					int c = round(last_count / barsize);
+					bars += c;
+
+					continue;
+				}
+
+				if (v && runlength_get_count(&rl2, 0) >= barsize * 10) {
+					// stop
+					ex = (xx - barsize * 9.5);
+
+					barsize = (ex - sx) / (float)bars;
+					break;
+				}
+			}
+
+			if (ex == sx) continue;
+
 			image_transform_matrix_t mat = {
-				{barsize, 0, x - n - 1 + barsize / 2, 0, 0, (float)y, 0, 0}
+				{barsize, 0, sx, 0, 0, (float)y, 0, 0}
 			};
 
 			for (size_t i = 0; i < sizeof(codes) / sizeof(codes[0]); i++) {
@@ -102,11 +128,12 @@ int qrean_detector_scan_barcodes(image_t *src, void (*on_found)(qrean_detector_p
 
 				char buf[256];
 				if (qrean_read_string(warp.qrean, buf, sizeof(buf))) {
+					qrean_debug_printf("Detected as %s\n", qrean_get_code_type_string(qrean.code->type));
 					on_found(&warp, opaque);
 					found++;
 
 					// paint dark bar to prevent the bar to be detected twice
-					for (int xx = x - n - 1; xx < x; xx++) {
+					for (int xx = sx; xx < ex; xx++) {
 						uint32_t v = image_read_pixel(img, POINT(xx, y)) & 0xFFFFFF; // drop alpha channel
 						if (!v) image_paint(img, POINT(xx, y), PIXEL(255, 0, 0));
 					}
@@ -392,6 +419,7 @@ int qrean_detector_try_decode_qr(image_t *src, qrean_detector_qr_finder_candidat
 							if (qrean_read_qr_version(&qrean) != version) continue;
 
 							if (qrean_fix_errors(&qrean) >= 0) {
+								qrean_debug_printf("Detected as QR version: %s\n", qrspec_get_version_string(qrean.qr.version));
 								on_found(&warp, opaque);
 								found++;
 								break;
@@ -433,6 +461,7 @@ int qrean_detector_try_decode_tqr(image_t *src, qrean_detector_qr_finder_candida
 
 					if (qrean_read_qr_finder_pattern(&qrean, -1) <= 10) {
 						// qrean_detector_perspective_fit_for_qr(&warp);
+						qrean_debug_printf("Detected as tQR\n");
 
 						if (qrean_fix_errors(&qrean) >= 0) {
 							on_found(&warp, opaque);
