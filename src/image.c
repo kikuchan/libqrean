@@ -166,7 +166,7 @@ void image_draw_line(image_t *img, image_point_t s, image_point_t e, image_pixel
 			}
 		} else {
 			if (thickness > 0) {
-				image_draw_filled_rectangle(img, POINT(x, y), thickness, 1, pix);
+				image_draw_filled_rectangle(img, POINT(x, y), 1, thickness, pix);
 			} else {
 				image_draw_pixel(img, POINT(x, y), pix);
 			}
