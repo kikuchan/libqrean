@@ -166,12 +166,13 @@ static int scan_barcode(runlength_t *rl, image_t *img, image_t *src, int x, int 
 
 int qrean_detector_scan_barcodes(image_t *src, void (*on_found)(qrean_detector_perspective_t *warp, void *opaque), void *opaque)
 {
+	int step = 10; // XXX: reduce CPU time...
 	int found = 0;
 	image_t *img = image_clone(src);
 	if (!img) return 0;
 
 	runlength_t rl = create_runlength();
-	for (int y = 0; y < (int)img->height; y++) {
+	for (int y = 0; y < (int)img->height; y += step) {
 		runlength_init(&rl);
 		for (int x = 0; x < (int)img->width; x++) {
 			scan_barcode(&rl, img, src, x, y, 1, 0, on_found, opaque);
@@ -182,7 +183,7 @@ int qrean_detector_scan_barcodes(image_t *src, void (*on_found)(qrean_detector_p
 		}
 	}
 
-	for (int x = 0; x < (int)img->width; x++) {
+	for (int x = 0; x < (int)img->width; x += step) {
 		runlength_init(&rl);
 		for (int y = 0; y < (int)img->height; y++) {
 			scan_barcode(&rl, img, src, x, y, 0, 1, on_found, opaque);
