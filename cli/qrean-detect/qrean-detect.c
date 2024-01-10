@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/time.h>
 
 #include "miniz.h"
 #include "pngle.h"
@@ -25,7 +26,8 @@ FILE *debug_out;
 FILE *out;
 int flag_debug = 0;
 int flag_verbose = 0;
-double gamma_value = 0.5;
+int flag_bench = 0;
+double gamma_value = 1.0;
 
 uint32_t W = 0;
 uint32_t H = 0;
@@ -109,6 +111,10 @@ static void on_found(qrean_detector_perspective_t *warp, void *opaque)
 	fprintf(out, "%s\n", buffer);
 }
 
+void decode(image_t* img)
+{
+}
+
 void done(pngle_t *pngle)
 {
 	image_t *mono = image_clone(img);
@@ -117,25 +123,36 @@ void done(pngle_t *pngle)
 	// image_morphology_open(mono);
 	// image_morphology_close(mono);
 
-	int num_candidates;
-	qrean_detector_qr_finder_candidate_t *candidates = qrean_detector_scan_qr_finder_pattern(mono, &num_candidates);
 	int found = 0;
+	int n = flag_bench ? 10 : 1;
 
-	if (flag_debug) {
-		// detected = image_clone(img);
-		detected = image_clone(mono);
-		for (int i = 0; i < num_candidates; i++) {
-			image_draw_filled_ellipse(detected, candidates[i].center, 5, 5, PIXEL(255, 0, 0));
-			image_draw_extent(detected, candidates[i].extent, PIXEL(255, 0, 0), 1);
+	struct timeval tv, tv2;
+	gettimeofday(&tv, NULL);
+	for (int i = 0; i < n; i++) {
+		int num_candidates;
+		qrean_detector_qr_finder_candidate_t *candidates = qrean_detector_scan_qr_finder_pattern(mono, &num_candidates);
+
+		if (flag_debug) {
+			// detected = image_clone(img);
+			detected = image_clone(mono);
+			for (int i = 0; i < num_candidates; i++) {
+				image_draw_filled_ellipse(detected, candidates[i].center, 5, 5, PIXEL(255, 0, 0));
+				image_draw_extent(detected, candidates[i].extent, PIXEL(255, 0, 0), 1);
+			}
 		}
+
+		found += qrean_detector_try_decode_qr(mono, candidates, num_candidates, on_found, NULL);
+		found += qrean_detector_try_decode_mqr(mono, candidates, num_candidates, on_found, NULL);
+		found += qrean_detector_try_decode_rmqr(mono, candidates, num_candidates, on_found, NULL);
+		found += qrean_detector_try_decode_tqr(mono, candidates, num_candidates, on_found, NULL);
+
+		found += qrean_detector_scan_barcodes(mono, on_found, NULL);
 	}
+	gettimeofday(&tv2, NULL);
 
-	found += qrean_detector_try_decode_qr(mono, candidates, num_candidates, on_found, NULL);
-	found += qrean_detector_try_decode_mqr(mono, candidates, num_candidates, on_found, NULL);
-	found += qrean_detector_try_decode_rmqr(mono, candidates, num_candidates, on_found, NULL);
-	found += qrean_detector_try_decode_tqr(mono, candidates, num_candidates, on_found, NULL);
-
-	found += qrean_detector_scan_barcodes(mono, on_found, NULL);
+	if (flag_bench) {
+		fprintf(stderr, "%.1f ms\n", ((tv2.tv_sec - tv.tv_sec) * 1000.0 + (tv2.tv_usec - tv.tv_usec) / 1000.0) / n);
+	}
 
 	if (flag_debug && !found) {
 		fprintf(stderr, "Not found\n");
@@ -191,7 +208,7 @@ int main(int argc, char *argv[])
 	int len;
 	int ch;
 
-	while ((ch = getopt(argc, argv, "ho:g:DO:v")) != -1) {
+	while ((ch = getopt(argc, argv, "ho:g:DO:vB")) != -1) {
 		switch (ch) {
 		case 'h':
 			return usage(stdout);
@@ -219,6 +236,10 @@ int main(int argc, char *argv[])
 				fprintf(stderr, "fopen failed. (%s: %s)", optarg, strerror(errno));
 				return 1;
 			}
+			break;
+
+		case 'B':
+			flag_bench = 1;
 			break;
 
 		case 'v':
