@@ -89,7 +89,7 @@ int runlength_match_ratio(runlength_t *rl, ...)
 	runlength_size_t N = 0;
 
 	va_start(ap, rl);
-	for (runlength_size_t i = 0; ; i++) {
+	for (runlength_size_t i = 0;; i++) {
 		int r = va_arg(ap, int);
 		if (r < 0) {
 			N = i;

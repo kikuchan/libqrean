@@ -260,7 +260,7 @@ bitstream_t qrpayload_get_bitstream_for_error(qrpayload_t *payload)
 static void qrdata_parse_on_letter(qr_data_mode_t mode, uint32_t letter, void *opaque)
 {
 	bitstream_t *bs = (bitstream_t *)opaque;
-	if (mode != QR_DATA_MODE_KANJI) {
+	if (mode != QR_DATA_MODE_ECI) {
 		bitstream_write_bits(bs, letter, 8);
 	}
 }

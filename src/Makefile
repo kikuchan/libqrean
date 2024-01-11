@@ -13,6 +13,7 @@ SRCS += qrdata.c
 SRCS += qrformat.c
 SRCS += qrpayload.c
 SRCS += qrversion.c
+SRCS += qrkanji.c
 
 SRCS += qrean.c
 

@@ -8,7 +8,7 @@
 #include "runlength.h"
 #include "utils.h"
 
-//#define BARCODE_DETECTION_METHOD_2
+// #define BARCODE_DETECTION_METHOD_2
 
 bit_t qrean_detector_perspective_read_image_pixel(qrean_t *qrean, bitpos_t x, bitpos_t y, bitpos_t pos, void *opaque)
 {
@@ -27,7 +27,8 @@ bit_t qrean_detector_perspective_write_image_pixel(qrean_t *qrean, bitpos_t x, b
 	return 0;
 }
 
-static int scan_barcode(runlength_t *rl, image_t *img, image_t *src, int x, int y, int dx, int dy, void (*on_found)(qrean_detector_perspective_t *warp, void *opaque), void *opaque)
+static int scan_barcode(runlength_t *rl, image_t *img, image_t *src, int x, int y, int dx, int dy,
+	void (*on_found)(qrean_detector_perspective_t *warp, void *opaque), void *opaque)
 {
 	uint32_t v = image_read_pixel(img, POINT(x, y)) & 0xFFFFFF; // drop alpha channel
 	if (v != 0 && v != PIXEL(255, 255, 255)) {
@@ -155,7 +156,6 @@ static int scan_barcode(runlength_t *rl, image_t *img, image_t *src, int x, int 
 				uint32_t v = image_read_pixel(img, POINT(xx, yy)) & 0xFFFFFF; // drop alpha channel
 				if (!v) image_paint(img, POINT(xx, yy), PIXEL(255, 0, 0));
 			}
-
 		}
 
 		qrean_destroy(&qrean);

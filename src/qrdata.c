@@ -1,9 +1,11 @@
+#include <string.h>
+
 #include "qrdata.h"
 #include "bitstream.h"
 #include "debug.h"
 #include "qrspec.h"
 #include "utils.h"
-#include <string.h>
+#include "qrkanji.h"
 
 qrdata_t create_qrdata_for(bitstream_t bs, qr_version_t version)
 {
@@ -385,12 +387,19 @@ size_t qrdata_parse(qrdata_t *data, void (*on_letter_cb)(qr_data_mode_t mode, co
 			}
 			break;
 		case QR_DATA_MODE_KANJI:
-			len = bitstream_read_bits(r, LENGTH_BIT_SIZE_FOR_8BIT(data->version));
+			len = bitstream_read_bits(r, LENGTH_BIT_SIZE_FOR_KANJI(data->version));
 			if (len == 0) goto mode_end;
 			while (len-- > 0) {
-				int code = bitstream_read_bits(r, 13);
-				on_letter_cb(mode, code, opaque);
-				wrote++;
+				uint16_t uni = qrkanji_to_unicode(bitstream_read_bits(r, 13));
+				if (!uni) continue;
+
+				char buf[4] = {};
+				unicode_to_utf8(uni, buf);
+
+				for (char *p = buf; *p; p++) {
+					on_letter_cb(mode, *p, opaque);
+					wrote++;
+				}
 			}
 			break;
 
