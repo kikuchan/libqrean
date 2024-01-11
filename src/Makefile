@@ -1,4 +1,4 @@
-BUILDDIR ?= ../build/system
+BUILDDIR ?= $(abspath ../build/system)
 
 SRCS += bitstream.c
 SRCS += utils.c

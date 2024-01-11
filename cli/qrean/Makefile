@@ -1,6 +1,6 @@
 PREFIX ?= /usr/bin
-BUILDDIR?=`pwd`/../../build/system
-QREAN?=`pwd`/../../src
+BUILDDIR?=$(abspath ../../build/system)
+QREAN?=$(abspath ../../src)
 
 MAIN=qrean
 
@@ -16,8 +16,8 @@ all: $(BUILDDIR)/$(MAIN)
 $(BUILDDIR)/$(MAIN): $(SRCS) $(BUILDDIR)/libqrean.a
 	$(CC) -o $(BUILDDIR)/$(MAIN) $(CFLAGS) $(SRCS) $(LDFLAGS)
 
-$(BUILDDIR)/libqrean.a:
-	make -C ../../src
+$(BUILDDIR)/libqrean.a: $(QREAN)
+	@$(MAKE) -C ../../src
 
 format:
 	clang-format -i $(MAIN).c
