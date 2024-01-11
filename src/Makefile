@@ -50,6 +50,8 @@ CFLAGS += -Wno-misleading-indentation
 #CFLAGS += -D NO_CALLBACK
 #CFLAGS += -D NO_CANVAS_BUFFER
 
+#CFLAGS += -D NO_KANJI
+
 #CFLAGS += -D NO_MQR
 #CFLAGS += -D NO_RMQR
 
@@ -64,12 +66,12 @@ TARGET = $(BUILDDIR)/libqrean.a
 
 all: $(TARGET)
 
-$(TARGET): $(OBJS)
+$(TARGET): $(OBJS) Makefile
 	$(AR) rcs $@ $^
 
 -include $(DEPS)
 
-$(BUILDDIR)/%.o: %.c
+$(BUILDDIR)/%.o: %.c Makefile
 	@mkdir -p $(BUILDDIR)
 	$(CC) $(CFLAGS) -c -MMD -MP $< -o $@
 

@@ -554,8 +554,7 @@ static size_t qrean_try_write_qr_data(qrean_t *qrean, const void *buffer, size_t
 		writer = qrdata_write_8bit_string;
 		break;
 	case QREAN_DATA_TYPE_KANJI:
-		writer = qrdata_write_8bit_string;
-		// writer = qrdata_write_kanji_string; // TODO
+		writer = qrdata_write_kanji_string;
 		break;
 	}
 

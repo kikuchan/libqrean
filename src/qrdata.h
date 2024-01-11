@@ -31,6 +31,7 @@ void qrdata_free(qrdata_t *data);
 typedef size_t (*qrdata_writer_t)(qrdata_t *data, const char *src, size_t len);
 
 size_t qrdata_write_8bit_string(qrdata_t *data, const char *src, size_t len);
+size_t qrdata_write_kanji_string(qrdata_t *data, const char *src, size_t len);
 size_t qrdata_write_numeric_string(qrdata_t *data, const char *src, size_t len);
 size_t qrdata_write_alnum_string(qrdata_t *data, const char *src, size_t len);
 size_t qrdata_write_string(qrdata_t *data, const char *src, size_t len);

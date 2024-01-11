@@ -59,6 +59,10 @@ int usage(FILE *out)
 	fprintf(out, "                          L, M, Q, H         (for QR)\n");
 	fprintf(out, "                          L, M, Q            (for mQR)\n");
 	fprintf(out, "                             M,    H         (for rMQR)\n");
+	fprintf(out, "    -N                Use Numeric mode only\n");
+	fprintf(out, "    -A                Use Alpha numeric mode only\n");
+	fprintf(out, "    -K                Use Kanji mode only\n");
+	fprintf(out, "    -8                Use 8bit mode only\n");
 
 	return 1;
 }
@@ -137,7 +141,7 @@ int main(int argc, char *argv[])
 	padding_t padding = create_padding1(4);
 	qrean_data_type_t data_type = QREAN_DATA_TYPE_AUTO;
 
-	while ((ch = getopt(argc, argv, "hi:o:s:f:t:v:l:m:p:8")) != -1) {
+	while ((ch = getopt(argc, argv, "hi:o:s:f:t:v:l:m:p:8KAN")) != -1) {
 		int n;
 		switch (ch) {
 		case 'h':
@@ -256,6 +260,15 @@ int main(int argc, char *argv[])
 
 		case '8':
 			data_type = QREAN_DATA_TYPE_8BIT;
+			break;
+		case 'K':
+			data_type = QREAN_DATA_TYPE_KANJI;
+			break;
+		case 'A':
+			data_type = QREAN_DATA_TYPE_ALNUM;
+			break;
+		case 'N':
+			data_type = QREAN_DATA_TYPE_NUMERIC;
 			break;
 		}
 	}
