@@ -13,7 +13,7 @@
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
-    "allowJs": true
+    "allowJs": true,
     "include": ["./wasm/**/*"]
   }
 }
