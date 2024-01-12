@@ -7,11 +7,13 @@
 #include "qrspec.h"
 #include "utils.h"
 
-qrdata_t create_qrdata_for(bitstream_t bs, qr_version_t version)
+qrdata_t create_qrdata_for(bitstream_t bs, qr_version_t version, qr_eci_code_t eci_code)
 {
 	qrdata_t data = {
 		.bs = bs,
 		.version = version,
+		.eci_code = eci_code,
+		.eci_last = QR_ECI_CODE_LATIN1,
 	};
 	return data;
 }
@@ -45,26 +47,38 @@ static size_t measure_alnum(const char *src)
 	return strspn(src, alnum);
 }
 
-static size_t measure_kanji(const char *src, size_t *byte_consumed)
+static size_t measure_kanji(const char *src, size_t *byte_consumed, qr_eci_code_t code)
 {
 	const char *ptr = src;
 	int len = 0;
 
+	int (*qrkanji_lookup)(const char *str, size_t *consumed);
+	if (code == QR_ECI_CODE_UTF8) {
+		qrkanji_lookup = qrkanji_index_from_utf8;
+	} else if (code == QR_ECI_CODE_SJIS) {
+		qrkanji_lookup = qrkanji_index_from_sjis;
+	} else {
+		// Not supported
+		return 0;
+	}
+
 	while (*ptr) {
-		int consumed = qrkanji_from_utf8(ptr, NULL);
-		if (consumed < 0) break;
+		size_t consumed;
+		int idx = qrkanji_lookup(ptr, &consumed);
+		if (idx < 0 || idx >= 0x1fff) break;
 		ptr += consumed;
 		len++;
 	}
+
 	if (byte_consumed) *byte_consumed = ptr - src;
 	return len;
 }
 
-#define LEN_CMP_8BIT(ch)  (strcspn((ch), alnum))
-#define LEN_CMP_ALNUM(ch) (strspn((ch), alnum_cmp))
-#define LEN_NUMERIC(ch)   (measure_numeric(ch))
-#define LEN_ALNUM(ch)     (measure_alnum(ch))
-#define LEN_KANJI(ch, bytelen)     (measure_kanji((ch), (bytelen)))
+#define LEN_CMP_8BIT(ch)             (strcspn((ch), alnum))
+#define LEN_CMP_ALNUM(ch)            (strspn((ch), alnum_cmp))
+#define LEN_NUMERIC(ch)              (measure_numeric(ch))
+#define LEN_ALNUM(ch)                (measure_alnum(ch))
+#define LEN_KANJI(ch, bytelen, data) (measure_kanji((ch), (bytelen), (data)->eci_code))
 
 #define MQR_DATA_MODE_NUMERIC (0)
 #define MQR_DATA_MODE_ALNUM   (1)
@@ -76,6 +90,38 @@ static size_t measure_kanji(const char *src, size_t *byte_consumed)
 #define RMQR_DATA_MODE_ALNUM   (2)
 #define RMQR_DATA_MODE_8BIT    (3)
 #define RMQR_DATA_MODE_KANJI   (4)
+
+bitpos_t qrdata_write_eci_code(qrdata_t *data, qr_eci_code_t eci)
+{
+	if (eci < 0) return 0;
+
+	if (IS_MQR(data->version)) {
+		// unsupported
+		return 0;
+	} else if (IS_RMQR(data->version)) {
+		// Not supported yet
+		// bitstream_write_bits(&data->bs, RMQR_DATA_MODE_ECI, 3);
+		return 0;
+	} else if (IS_QR(data->version)) {
+		bitstream_write_bits(&data->bs, QR_DATA_MODE_ECI, 4);
+	} else {
+		return 0;
+	}
+
+	if (eci <= 127) {
+		bitstream_write_bits(&data->bs, eci, 8);
+		return 4 + 8;
+	} else if (eci <= 16383) {
+		bitstream_write_bits(&data->bs, 0b10, 2);
+		bitstream_write_bits(&data->bs, eci, 14);
+		return 4 + 16;
+	} else if (eci <= 999999) {
+		bitstream_write_bits(&data->bs, 0b100, 3);
+		bitstream_write_bits(&data->bs, eci, 21);
+		return 4 + 24;
+	}
+	return 0;
+}
 
 size_t qrdata_write_numeric_string(qrdata_t *data, const char *src, size_t len)
 {
@@ -145,6 +191,11 @@ size_t qrdata_write_8bit_string(qrdata_t *data, const char *src, size_t len)
 {
 	if (len == 0) return 0;
 
+	if (data->eci_last != data->eci_code) {
+		qrdata_write_eci_code(data, data->eci_code);
+		data->eci_last = data->eci_code;
+	}
+
 	if (IS_MQR(data->version)) {
 		if (data->version <= QR_VERSION_M2) return 0;
 		bitstream_write_bits(&data->bs, MQR_DATA_MODE_8BIT, data->version - QR_VERSION_M1);
@@ -169,7 +220,7 @@ size_t qrdata_write_8bit_string(qrdata_t *data, const char *src, size_t len)
 size_t qrdata_write_kanji_string(qrdata_t *data, const char *src, size_t srclen)
 {
 	size_t bytelen;
-	size_t kanjilen = measure_kanji(src, &bytelen);
+	size_t kanjilen = measure_kanji(src, &bytelen, data->eci_code);
 	if (bytelen < srclen) return 0;
 
 	if (IS_MQR(data->version)) {
@@ -186,15 +237,23 @@ size_t qrdata_write_kanji_string(qrdata_t *data, const char *src, size_t srclen)
 
 	bitstream_write_bits(&data->bs, kanjilen, LENGTH_BIT_SIZE_FOR_KANJI(data->version));
 
+	int (*qrkanji_lookup)(const char *str, size_t *consumed);
+	if (data->eci_code == QR_ECI_CODE_UTF8) {
+		qrkanji_lookup = qrkanji_index_from_utf8;
+	} else if (data->eci_code == QR_ECI_CODE_SJIS) {
+		qrkanji_lookup = qrkanji_index_from_sjis;
+	} else {
+		// Not supported
+		return 0;
+	}
+
 	size_t i;
-	for (i = 0; i < srclen && !bitstream_is_end(&data->bs);) {
-		uint16_t code;
-		int consumed = qrkanji_from_utf8(src + i, &code);
-		if (consumed < 0) break; // XXX:
+	size_t consumed = 0;
+	for (i = 0; i < srclen && !bitstream_is_end(&data->bs); i += consumed) {
+		int_fast16_t idx = qrkanji_lookup(src + i, &consumed);
+		if (idx < 0 || idx >= 0x1fff) break; // XXX:
 
-		bitstream_write_bits(&data->bs, code, 13);
-
-		i += consumed;
+		bitstream_write_bits(&data->bs, idx, 13);
 	}
 	return i;
 }
@@ -254,7 +313,7 @@ size_t qrdata_write_string(qrdata_t *data, const char *src, size_t len)
 	qr_data_mode_t mode;
 
 	// initial mode
-	if (LEN_KANJI(src, NULL) > 0) {
+	if (LEN_KANJI(src, NULL, data) > 0) {
 		mode = QR_DATA_MODE_KANJI;
 	} else if (LEN_CMP_8BIT(src) > 0) {
 		mode = QR_DATA_MODE_8BIT;
@@ -281,7 +340,7 @@ size_t qrdata_write_string(qrdata_t *data, const char *src, size_t len)
 	i = 0;
 	while (i < len) {
 		size_t bytelen;
-		if (LEN_KANJI(src + i, &bytelen) > 0) {
+		if (LEN_KANJI(src + i, &bytelen, data) > 0) {
 			mode = QR_DATA_MODE_KANJI;
 		} else {
 			bytelen = 1;
@@ -323,11 +382,12 @@ size_t qrdata_write_string(qrdata_t *data, const char *src, size_t len)
 	return r;
 }
 
-size_t qrdata_parse(qrdata_t *data, void (*on_letter_cb)(qr_data_mode_t mode, const uint32_t letter, void *opaque), void *opaque)
+size_t qrdata_parse(qrdata_t *data, qrdata_parse_callback_t on_letter_cb, void *opaque)
 {
 	bitstream_t *r = &data->bs;
 	size_t len;
 	size_t wrote = 0;
+	qr_eci_code_t eci = data->eci_code;
 
 	qr_data_mode_t mode = QR_DATA_MODE_NUMERIC; // for mQR
 	while (!bitstream_is_end(r)) {
@@ -376,7 +436,7 @@ size_t qrdata_parse(qrdata_t *data, void (*on_letter_cb)(qr_data_mode_t mode, co
 		switch (mode) {
 		case QR_DATA_MODE_END:
 		mode_end:
-			on_letter_cb(QR_DATA_MODE_END, 0, opaque);
+			wrote += on_letter_cb(QR_DATA_LETTER_TYPE_END, 0, opaque);
 			goto end;
 
 		case QR_DATA_MODE_NUMERIC:
@@ -390,17 +450,14 @@ size_t qrdata_parse(qrdata_t *data, void (*on_letter_cb)(qr_data_mode_t mode, co
 					if (v / 100 >= 10) {
 						qrean_debug_printf("Warning: out of code founds on NUMERIC %d\n", v);
 					}
-					on_letter_cb(mode, '0' + v / 100 % 10, opaque);
-					wrote++;
+					wrote += on_letter_cb(QR_DATA_LETTER_TYPE_RAW, '0' + v / 100 % 10, opaque);
 					len--;
 				}
 				if (len >= 2) {
-					on_letter_cb(mode, '0' + v / 10 % 10, opaque);
-					wrote++;
+					wrote += on_letter_cb(QR_DATA_LETTER_TYPE_RAW, '0' + v / 10 % 10, opaque);
 					len--;
 				}
-				on_letter_cb(mode, '0' + v % 10, opaque);
-				wrote++;
+				wrote += on_letter_cb(QR_DATA_LETTER_TYPE_RAW, '0' + v % 10, opaque);
 				len--;
 			}
 			break;
@@ -414,12 +471,10 @@ size_t qrdata_parse(qrdata_t *data, void (*on_letter_cb)(qr_data_mode_t mode, co
 					if (v / 45 >= 45) {
 						qrean_debug_printf("Warning: out of code founds on ALNUM %d\n", v);
 					}
-					on_letter_cb(mode, alnum[v / 45 % 45], opaque);
-					wrote++;
+					wrote += on_letter_cb(QR_DATA_LETTER_TYPE_RAW, alnum[v / 45 % 45], opaque);
 					if (--len == 0) break;
 				}
-				on_letter_cb(mode, alnum[v % 45], opaque);
-				wrote++;
+				wrote += on_letter_cb(QR_DATA_LETTER_TYPE_RAW, alnum[v % 45], opaque);
 				if (--len == 0) break;
 			}
 			break;
@@ -427,9 +482,37 @@ size_t qrdata_parse(qrdata_t *data, void (*on_letter_cb)(qr_data_mode_t mode, co
 		case QR_DATA_MODE_8BIT:
 			len = bitstream_read_bits(r, LENGTH_BIT_SIZE_FOR_8BIT(data->version));
 			if (len == 0) goto mode_end;
-			while (len-- > 0) {
-				on_letter_cb(mode, bitstream_read_bits(r, 8), opaque);
-				wrote++;
+
+			while (len > 0) {
+				int32_t ch;
+
+#ifndef NO_KANJI_TABLE
+				if (eci == QR_ECI_CODE_UTF8) {
+					size_t consumed;
+					ch = bitstream_read_unicode_from_utf8(r, len, &consumed);
+					len -= consumed;
+					if (ch > 0) {
+						wrote += on_letter_cb(QR_DATA_LETTER_TYPE_UNICODE, ch, opaque);
+					}
+				} else if (eci == QR_ECI_CODE_SJIS) {
+					ch = bitstream_read_bits(r, 8);
+					uint8_t next = bitstream_peek_bits(r, 8);
+					size_t consumed;
+					ch = qrkanji_sjis_to_unicode(ch, next, &consumed);
+					if (consumed == 2) {
+						bitstream_skip_bits(r, 8);
+					}
+					len -= consumed;
+
+					wrote += on_letter_cb(QR_DATA_LETTER_TYPE_UNICODE, ch, opaque);
+				} else {
+#endif
+					ch = bitstream_read_bits(r, 8);
+					len--;
+					wrote += on_letter_cb(QR_DATA_LETTER_TYPE_RAW, ch, opaque);
+#ifndef NO_KANJI_TABLE
+				}
+#endif
 			}
 			break;
 
@@ -437,44 +520,40 @@ size_t qrdata_parse(qrdata_t *data, void (*on_letter_cb)(qr_data_mode_t mode, co
 			len = bitstream_read_bits(r, LENGTH_BIT_SIZE_FOR_KANJI(data->version));
 			if (len == 0) goto mode_end;
 			while (len-- > 0) {
-				char buf[4] = {};
-
-				uint16_t uni = qrkanji_to_utf8(bitstream_read_bits(r, 13), buf);
-				if (!uni) continue;
-
-				for (char *p = buf; *p; p++) {
-					on_letter_cb(mode, *p, opaque);
-					wrote++;
+#ifndef NO_KANJI_TABLE
+				uint16_t uni = qrkanji_index_to_unicode(bitstream_read_bits(r, 13));
+				if (uni) wrote += on_letter_cb(QR_DATA_LETTER_TYPE_UNICODE, uni, opaque);
+#else
+				uint16_t sjis = qrkanji_index_to_sjis(bitstream_read_bits(r, 13));
+				if (sjis) {
+					wrote += on_letter_cb(QR_DATA_LETTER_TYPE_RAW, (sjis >> 8) & 0xff, opaque);
+					wrote += on_letter_cb(QR_DATA_LETTER_TYPE_RAW, (sjis >> 0) & 0xff, opaque);
 				}
+#endif
 			}
 			break;
 
-		case QR_DATA_MODE_ECI:;
-			{
-				uint_fast32_t eci;
-				if (!bitstream_read_bit(r)) {
-					// 0
-					eci = bitstream_read_bits(r, 7);
-				} else if (!bitstream_read_bit(r)) {
-					// 10
-					eci = bitstream_read_bits(r, 14);
-				} else if (!bitstream_read_bit(r)) {
-					// 110
-					eci = bitstream_read_bits(r, 21);
-				} else {
-					// unsupported
-					goto end;
-				}
-
-				on_letter_cb(mode, eci, opaque);
-
-				// TODO:
+		case QR_DATA_MODE_ECI: {
+			if (!bitstream_read_bit(r)) {
+				// 0
+				eci = (qr_eci_code_t)bitstream_read_bits(r, 7);
+			} else if (!bitstream_read_bit(r)) {
+				// 10
+				eci = (qr_eci_code_t)bitstream_read_bits(r, 14);
+			} else if (!bitstream_read_bit(r)) {
+				// 110
+				eci = (qr_eci_code_t)bitstream_read_bits(r, 21);
+			} else {
+				// unsupported
+				goto end;
 			}
-			break;
+			wrote += on_letter_cb(QR_DATA_LETTER_TYPE_ECI_CHANGE, eci, opaque);
+		} break;
 
 		case QR_DATA_MODE_STRUCTURED: {
 			int a = bitstream_read_bits(r, 8);
 			int b = bitstream_read_bits(r, 8);
+
 			qrean_debug_printf("Warning: structured data %d %d\n", a, b);
 		} break;
 

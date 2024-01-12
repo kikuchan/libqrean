@@ -12,6 +12,7 @@ type MakeOptions = {
 type DetectOptions = {
     gamma?: number;
     digitized?: Uint8ClampedArray;
+    eci_code?: 'UTF-8' | 'ShiftJIS' | 'Latin1';
 };
 export declare class Qrean {
     wasm: WebAssembly.WebAssemblyInstantiatedSource;
@@ -241,6 +242,14 @@ export declare class Qrean {
         "6": 6;
         "7": 7;
         AUTO: 10;
+    };
+    static QR_ECI_CODE_LATIN1: "Latin1";
+    static QR_ECI_CODE_SJIS: "ShiftJIS";
+    static QR_ECI_CODE_UTF8: "UTF-8";
+    static QR_ECI_CODES: {
+        Latin1: 3;
+        ShiftJIS: 20;
+        "UTF-8": 26;
     };
     make(text: string, opts?: MakeOptions | keyof typeof Qrean.CODE_TYPES): ImageData;
     detect(imgdata: ImageData, callback: (type: string, str: string) => void, opts?: DetectOptions): any;

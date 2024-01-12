@@ -27,6 +27,7 @@ bit_t qrean_init(qrean_t *qrean, qrean_code_type_t type)
 				qrean_set_qr_version(qrean, QR_VERSION_AUTO);
 				qrean_set_qr_errorlevel(qrean, QR_ERRORLEVEL_M);
 				qrean_set_qr_maskpattern(qrean, QR_MASKPATTERN_AUTO);
+				qrean_set_eci_code(qrean, QR_ECI_CODE_LATIN1);
 				qrean->canvas.stride = 177;
 			} else {
 				qrean_set_symbol_height(qrean, 10);
@@ -558,7 +559,7 @@ static size_t qrean_try_write_qr_data(qrean_t *qrean, const void *buffer, size_t
 		break;
 	}
 
-	if (writer && qrpayload_write_string(&payload, (const char *)buffer, len, writer)) {
+	if (writer && qrpayload_write_string(&payload, (const char *)buffer, len, writer, qrean->eci_code)) {
 		qr_maskpattern_t min_mask = qrean->qr.mask;
 		if (qrean->qr.mask == QR_MASKPATTERN_AUTO) {
 			unsigned int min_score = UINT_MAX;
@@ -622,7 +623,7 @@ size_t qrean_read_qr_data(qrean_t *qrean, void *buffer, size_t size)
 	qrpayload_init(&payload, qrean->qr.version, qrean->qr.level);
 	qrean_read_qr_payload(qrean, &payload);
 
-	size_t len = qrpayload_read_string(&payload, (char *)buffer, size);
+	size_t len = qrpayload_read_string(&payload, (char *)buffer, size, qrean->eci_code);
 
 	qrpayload_deinit(&payload);
 	return len;
@@ -694,4 +695,15 @@ const char *qrean_get_code_type_string(qrean_code_type_t code)
 	default:
 		return "Unknown";
 	}
+}
+
+bit_t qrean_set_eci_code(qrean_t *qrean, qr_eci_code_t code)
+{
+	qrean->eci_code = code;
+	return 1;
+}
+
+qr_eci_code_t qrean_get_eci_code(qrean_t *qrean)
+{
+	return qrean->eci_code;
 }

@@ -38,7 +38,7 @@ SRCS += detector.c
 
 SIZE = size
 
-CFLAGS += -g
+#CFLAGS += -g
 #CFLAGS += -std=c2x
 CFLAGS += -Wall # -Werror
 
@@ -50,7 +50,7 @@ CFLAGS += -Wno-misleading-indentation
 #CFLAGS += -D NO_CALLBACK
 #CFLAGS += -D NO_CANVAS_BUFFER
 
-#CFLAGS += -D NO_KANJI
+#CFLAGS += -D NO_KANJI_TABLE
 
 #CFLAGS += -D NO_MQR
 #CFLAGS += -D NO_RMQR

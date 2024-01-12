@@ -56,6 +56,8 @@ uint_fast8_t bitstream_skip_bits(bitstream_t *bs, uint_fast8_t num_bits);
 bit_t bitstream_write_bit(bitstream_t *bs, bit_t bit);
 bit_t bitstream_write_bits(bitstream_t *bs, uint_fast32_t value, uint_fast8_t num_bits);
 bitpos_t bitstream_write_string(bitstream_t *bs, const char *fmt, ...);
+bitpos_t bitstream_write_unicode_as_utf8(bitstream_t *bs, uint32_t code);
+int32_t bitstream_read_unicode_from_utf8(bitstream_t *bs, size_t len, size_t *consumed);
 
 void bitstream_seek(bitstream_t *bs, bitpos_t pos);
 void bitstream_rewind(bitstream_t *bs);

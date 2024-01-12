@@ -75,21 +75,3 @@ int calc_pattern_mismatch_error_rate(bitstream_t *bs, const void *pattern, bitpo
 
 	return total ? error * 100 / total : 0;
 }
-
-const char *unicode_to_utf8(uint16_t code, char *dst)
-{
-	if (code < 0x80) {
-		dst[0] = code;
-		dst[1] = 0;
-	} else if (code < 0x800) {
-		dst[0] = 0xc0 | (code >> 6);
-		dst[1] = 0x80 | (code & 0x3f);
-		dst[2] = 0;
-	} else {
-		dst[0] = 0xe0 | (code >> 12);
-		dst[1] = 0x80 | ((code >> 6) & 0x3f);
-		dst[2] = 0x80 | (code & 0x3f);
-		dst[3] = 0;
-	}
-	return dst;
-}

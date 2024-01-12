@@ -1,3 +1,4 @@
+#include "qrdata.h"
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -63,6 +64,11 @@ int usage(FILE *out)
 	fprintf(out, "    -A                Use Alpha numeric mode only\n");
 	fprintf(out, "    -K                Use Kanji mode only\n");
 	fprintf(out, "    -8                Use 8bit mode only\n");
+	fprintf(out, "\n");
+	fprintf(out, "  ECI options:\n");
+	fprintf(out, "    -E ECI            Set ECI code\n");
+	fprintf(out, "    -S                Set ECI code to ShiftJIS (-E 20)\n");
+	fprintf(out, "    -U                Set ECI code to UTF-8 (-E 26)\n");
 
 	return 1;
 }
@@ -140,8 +146,9 @@ int main(int argc, char *argv[])
 	int scale = 4;
 	padding_t padding = create_padding1(4);
 	qrean_data_type_t data_type = QREAN_DATA_TYPE_AUTO;
+	int eci_code = QR_ECI_CODE_LATIN1;
 
-	while ((ch = getopt(argc, argv, "hi:o:s:f:t:v:l:m:p:8KAN")) != -1) {
+	while ((ch = getopt(argc, argv, "hi:o:s:f:t:v:l:m:p:8KANUSE:")) != -1) {
 		int n;
 		switch (ch) {
 		case 'h':
@@ -270,6 +277,18 @@ int main(int argc, char *argv[])
 		case 'N':
 			data_type = QREAN_DATA_TYPE_NUMERIC;
 			break;
+
+		case 'U':
+			eci_code = QR_ECI_CODE_UTF8;
+			break;
+
+		case 'S':
+			eci_code = QR_ECI_CODE_SJIS;
+			break;
+
+		case 'E':
+			eci_code = atoi(optarg);
+			break;
 		}
 	}
 
@@ -311,6 +330,8 @@ int main(int argc, char *argv[])
 			fprintf(stderr, "Invalid combination of VERSION/LEVEL/MASK\n");
 			return -1;
 		}
+
+		qrean_set_eci_code(qrean, eci_code);
 	}
 
 	if (save_as == SAVE_AS_DEFAULT) save_as = isatty(fileno(out)) ? SAVE_AS_TXT : SAVE_AS_PNG;

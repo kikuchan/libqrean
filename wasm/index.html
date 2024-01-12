@@ -19,7 +19,8 @@
 <label><input id="digitize" type="checkbox" />Show digitized</label>
 / Gamma <input id="gamma" size="5" type="number" value="1.0" />
 </div>
-<textarea id="decodeResult"></textarea>
+<select id="seleci"></select><br>
+<textarea id="decodeResult" rows=10></textarea>
 </main>
 
 <footer>
@@ -79,13 +80,15 @@ const setsel = (sel, types) => {
 };
 setsel(seltype, Qrean.CODE_TYPES);
 setsel(seldatatype, Qrean.DATA_TYPES);
+setsel(seleci, Qrean.QR_ECI_CODES);
 
-const defaultset = "123456789012,tQR,AUTO";
+const defaultset = "123456789012,tQR,AUTO,ShiftJIS";
 const set = (location.hash.substring(1) || defaultset).split(",");
-if (set && set.length == 3) {
+if (set && set.length == 4) {
   intext.value = decodeURIComponent(set[0]);
   seltype.value = set[1];
   seldatatype.value = set[2];
+  seleci.value = set[3];
 }
 
 const qrean = await Qrean.create(true);
@@ -106,13 +109,22 @@ seltype.oninput = seldatatype.oninput = intext.oninput = () => {
   img.src = encodeData("image/png", png);
   divimg.appendChild(img);
 
-  const set = `${encodeURIComponent(intext.value)},${seltype.value},${seldatatype.value}`;
+  const set = `${encodeURIComponent(intext.value)},${seltype.value},${seldatatype.value},${seleci.value}`;
   if (set == defaultset) {
     removeHash();
   } else {
     location.hash = set;
   }
 };
+seleci.oninput = () => {
+  const set = `${encodeURIComponent(intext.value)},${seltype.value},${seldatatype.value},${seleci.value}`;
+  if (set == defaultset) {
+    removeHash();
+  } else {
+    location.hash = set;
+  }
+};
+
 intext.oninput();
 
 let recording = false;
@@ -145,6 +157,7 @@ file.onchange = (e) => {
       }, {
         gamma: gamma.value,
         digitized: img.data,
+        eci_code: seleci.value,
       });
 
       if (digitize.checked) {
@@ -176,6 +189,7 @@ function tick() {
       }, {
         gamma: gamma.value,
         digitized: img.data,
+        eci_code: seleci.value,
       });
 
       if (digitize.checked) {

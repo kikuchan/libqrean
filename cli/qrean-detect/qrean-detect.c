@@ -28,6 +28,7 @@ int flag_debug = 0;
 int flag_verbose = 0;
 int flag_bench = 0;
 double gamma_value = 1.0;
+int eci_code = QR_ECI_CODE_LATIN1;
 
 uint32_t W = 0;
 uint32_t H = 0;
@@ -103,6 +104,7 @@ static void on_found(qrean_detector_perspective_t *warp, void *opaque)
 		}
 	}
 
+	if (eci_code >= 0) qrean_set_eci_code(warp->qrean, eci_code);
 	qrean_read_string(warp->qrean, buffer, sizeof(buffer));
 
 	if (flag_verbose) {
@@ -190,6 +192,11 @@ int usage(FILE *out)
 	fprintf(out, "  Image processing options:\n");
 	fprintf(out, "    -g GAMMA          Set gamma value (default: 1.8)\n");
 	fprintf(out, "\n");
+	fprintf(out, "  ECI options:\n");
+	fprintf(out, "    -E CODE           Set initial ECI code\n");
+	fprintf(out, "    -S                ShiftJIS mode (-E 20)\n");
+	fprintf(out, "    -U                UTF-8 mode (-E 26)\n");
+	fprintf(out, "\n");
 	fprintf(out, "  Debug options:\n");
 	fprintf(out, "    -D                Enable debug output\n");
 	fprintf(out, "    -O FILENAME       Debug image save as FILENAME\n");
@@ -208,7 +215,7 @@ int main(int argc, char *argv[])
 	int len;
 	int ch;
 
-	while ((ch = getopt(argc, argv, "ho:g:DO:vB")) != -1) {
+	while ((ch = getopt(argc, argv, "ho:g:DO:vBUSE:")) != -1) {
 		switch (ch) {
 		case 'h':
 			return usage(stdout);
@@ -244,6 +251,18 @@ int main(int argc, char *argv[])
 
 		case 'v':
 			flag_verbose = 1;
+			break;
+
+		case 'U':
+			eci_code = QR_ECI_CODE_UTF8;
+			break;
+
+		case 'S':
+			eci_code = QR_ECI_CODE_SJIS;
+			break;
+
+		case 'E':
+			eci_code = atoi(optarg);
 			break;
 		}
 	}

@@ -27,6 +27,7 @@ type MakeOptions = {
 type DetectOptions = {
   gamma?: number;
   digitized?: Uint8ClampedArray;
+  eci_code?: 'UTF-8' | 'ShiftJIS' | 'Latin1';
 };
 
 export class Qrean {
@@ -306,6 +307,15 @@ export class Qrean {
     [Qrean.QR_MASKPATTERN_AUTO]: 10 as const,
   };
 
+  static QR_ECI_CODE_LATIN1 = 'Latin1' as const;
+  static QR_ECI_CODE_SJIS = 'ShiftJIS' as const;
+  static QR_ECI_CODE_UTF8 = 'UTF-8' as const;
+  static QR_ECI_CODES = {
+    [Qrean.QR_ECI_CODE_LATIN1]: 3 as const,
+    [Qrean.QR_ECI_CODE_SJIS]: 20 as const,
+    [Qrean.QR_ECI_CODE_UTF8]: 26 as const,
+  };
+
   make(text: string, opts: MakeOptions | keyof typeof Qrean.CODE_TYPES = {}) {
     if (typeof opts == 'string') {
       opts = { code_type: opts };
@@ -364,7 +374,10 @@ export class Qrean {
     mem.set(imgdata.data, pbuf);
 
     this.on_found = callback;
-    const r = exp.detect(gamma_value);
+    const r = exp.detect(
+      gamma_value,
+      Qrean.QR_ECI_CODES[opts.eci_code ?? Qrean.QR_ECI_CODE_LATIN1],
+    );
     this.on_found = undefined;
 
     // write back

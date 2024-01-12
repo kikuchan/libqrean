@@ -294,3 +294,76 @@ void bitstream_on_read_bit(bitstream_t *bs, bitstream_read_bit_callback_t cb, vo
 	bs->opaque_read = opaque;
 #endif
 }
+
+bitpos_t bitstream_write_unicode_as_utf8(bitstream_t *bs, uint32_t code)
+{
+	if (code < 0x80) {
+		bitstream_write_bits(bs, code, 8);
+		return 8 * 1;
+	} else if (code < 0x800) {
+		bitstream_write_bits(bs, 0xc0 | (code >> 6), 8);
+		bitstream_write_bits(bs, 0x80 | (code & 0x3f), 8);
+		return 8 * 2;
+	} else if (code < 0x10000) {
+		bitstream_write_bits(bs, 0xe0 | (code >> 12), 8);
+		bitstream_write_bits(bs, 0x80 | ((code >> 6) & 0x3f), 8);
+		bitstream_write_bits(bs, 0x80 | (code & 0x3f), 8);
+		return 8 * 3;
+	} else if (code < 0x200000) {
+		bitstream_write_bits(bs, 0xf0 | (code >> 18), 8);
+		bitstream_write_bits(bs, 0x80 | ((code >> 12) & 0x3f), 8);
+		bitstream_write_bits(bs, 0x80 | ((code >> 6) & 0x3f), 8);
+		bitstream_write_bits(bs, 0x80 | (code & 0x3f), 8);
+		return 8 * 4;
+	}
+
+	return 0;
+}
+
+int32_t bitstream_read_unicode_from_utf8(bitstream_t *bs, size_t len, size_t *consumed)
+{
+	if (len < 1) return -1;
+	uint8_t ch1 = bitstream_read_bits(bs, 8);
+	int32_t code = -1;
+
+	if (consumed) *consumed = 1;
+
+	if (ch1 < 0x80) {
+		code = ch1;
+		if (consumed) *consumed = 1;
+	} else if (ch1 < 0xc0) {
+		// invalid
+		return -1;
+	} else if (ch1 < 0xe0) {
+		if (len < 2) return -1;
+		uint8_t ch2 = bitstream_read_bits(bs, 8);
+		if (0x80 <= ch2 && ch2 <= 0xbf) {
+			code = (ch1 & 0x1f) << 6;
+			code |= (ch2 & 0x3f);
+		}
+		if (consumed) *consumed = 2;
+	} else if (ch1 < 0xf0) {
+		if (len < 3) return -1;
+		uint8_t ch2 = bitstream_read_bits(bs, 8);
+		uint8_t ch3 = bitstream_read_bits(bs, 8);
+		if (0x80 <= ch2 && ch2 <= 0xbf && 0x80 <= ch3 && ch3 <= 0xbf) {
+			code = (ch1 & 0xf) << 12;
+			code |= (ch2 & 0x3f) << 6;
+			code |= (ch3 & 0x3f);
+		}
+		if (consumed) *consumed = 3;
+	} else if (ch1 < 0xf8) {
+		if (len < 4) return -1;
+		uint8_t ch2 = bitstream_read_bits(bs, 8);
+		uint8_t ch3 = bitstream_read_bits(bs, 8);
+		uint8_t ch4 = bitstream_read_bits(bs, 8);
+		if (0x80 <= ch2 && ch2 <= 0xbf && 0x80 <= ch3 && ch3 <= 0xbf && 0x80 <= ch4 && ch4 <= 0xbf) {
+			code = (ch1 & 0x7) << 18;
+			code |= (ch2 & 0x3f) << 12;
+			code |= (ch3 & 0x3f) << 6;
+			code |= (ch4 & 0x3f);
+		}
+		if (consumed) *consumed = 4;
+	}
+	return code;
+}

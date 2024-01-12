@@ -124,6 +124,8 @@ struct _qrean_t {
 			qr_maskpattern_t mask;
 		} qr;
 	};
+
+	qr_eci_code_t eci_code;
 };
 
 // ========= creation / free
@@ -229,5 +231,8 @@ bitstream_t qrean_create_bitstream(qrean_t *qrean, bitstream_iterator_t iter);
 int qrean_check_qr_combination(qrean_t *qrean);
 
 const char *qrean_get_code_type_string(qrean_code_type_t code);
+
+bit_t qrean_set_eci_code(qrean_t *qrean, qr_eci_code_t code);
+qr_eci_code_t qrean_get_eci_code(qrean_t *qrean);
 
 #endif /* __QR_QREAN_H__ */

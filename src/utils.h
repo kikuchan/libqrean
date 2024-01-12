@@ -28,7 +28,6 @@ uint_fast8_t hamming_distance_mem(const uint8_t *mem1, const uint8_t *mem2, bitp
 int calc_pattern_mismatch_error_rate(bitstream_t *bs, const void *pattern, bitpos_t size, bitpos_t start_idx, bitpos_t n);
 
 int safe_fprintf(FILE *fp, const char *fmt, ...);
-const char *unicode_to_utf8(uint16_t code, char *dst);
 
 #define READ_BIT(buffer, pos) (((uint8_t *)(buffer))[(pos) / 8] & (0x80 >> ((pos) % 8)) ? 1 : 0)
 #define WRITE_BIT(buffer, pos, v)                          \

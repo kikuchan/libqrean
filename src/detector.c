@@ -95,7 +95,7 @@ static int scan_barcode(runlength_t *rl, image_t *img, image_t *src, int x, int 
 #endif
 	runlength_t rl2 = create_runlength();
 	int bars = 0;
-	for (int yy = sy, xx = sx; 0 <= xx && xx < img->width && 0 <= yy && yy < img->height; xx += dx, yy += dy) {
+	for (int yy = sy, xx = sx; 0 <= xx && xx < (int)img->width && 0 <= yy && yy < (int)img->height; xx += dx, yy += dy) {
 		uint32_t v = image_read_pixel(img, POINT(xx, yy)) & 0xFFFFFF; // drop alpha channel
 		if (runlength_push_value(&rl2, v)) {
 			runlength_count_t last_count = runlength_get_count(&rl2, 1);
@@ -123,7 +123,7 @@ static int scan_barcode(runlength_t *rl, image_t *img, image_t *src, int x, int 
 	if (ex == sx && ey == sy) return 0; // not found
 
 	image_transform_matrix_t mat = {
-		{barsize * dx, 0, sx + dx * barsize / 2.0, barsize * dy, 0, sy + dy * barsize / 2.0, 0, 0}
+		{barsize * dx, 0, sx + dx * barsize / 2.0f, barsize * dy, 0, sy + dy * barsize / 2.0f, 0, 0}
 	};
 
 #ifdef BARCODE_DETECTION_METHOD_2

@@ -37,4 +37,6 @@ ${QREAN_DETECT} PXL_20240109_050512422.png | check_contains - PXL_20240109_05051
 ${QREAN_DETECT} PXL_20240109_050512422_lr.png | check_contains - PXL_20240109_050512422_lr.txt
 ${QREAN_DETECT} PXL_20240109_050512422_r90.png | check_contains - PXL_20240109_050512422_r90.txt
 
+echo "Kanji:"
+${QREAN} -UK 漢字の文章 | ${QREAN_DETECT} | check - kanji.txt
 exit ${error}

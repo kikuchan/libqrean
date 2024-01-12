@@ -61,8 +61,10 @@ bitstream_t qrpayload_get_bitstream_for_error(qrpayload_t *payload);
 void qrpayload_set_error_words(qrpayload_t *payload);
 int qrpayload_fix_errors(qrpayload_t *payload);
 
-size_t qrpayload_read_string(qrpayload_t *payload, char *buffer, size_t size);
-bit_t qrpayload_write_string(qrpayload_t *payload, const char *src, size_t len, qrdata_writer_t writer);
+size_t qrpayload_read_string_with_cb(qrpayload_t *payload, qrdata_parse_callback_t parser, void *opaque, qr_eci_code_t eci_code);
+size_t qrpayload_read_string(qrpayload_t *payload, char *buffer, size_t size, qr_eci_code_t eci_code);
+bit_t qrpayload_write_string(qrpayload_t *payload, const char *src, size_t len, qrdata_writer_t writer, qr_eci_code_t eci_code);
+bit_t qrpayload_write_binary(qrpayload_t *payload, const char *src, size_t len, qrdata_writer_t writer);
 
 void qrpayload_dump(qrpayload_t *payload, FILE *out);
 void qrpayload_dump_data(qrpayload_t *payload, FILE *out);

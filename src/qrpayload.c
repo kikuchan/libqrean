@@ -6,6 +6,7 @@
 #include "debug.h"
 #include "galois.h"
 #include "qrdata.h"
+#include "qrkanji.h"
 #include "qrpayload.h"
 #include "qrspec.h"
 #include "reedsolomon.h"
@@ -248,38 +249,53 @@ bitstream_t qrpayload_get_bitstream(qrpayload_t *payload)
 {
 	return create_bitstream(payload->buffer, payload->total_bits, NULL, NULL);
 }
+
 bitstream_t qrpayload_get_bitstream_for_data(qrpayload_t *payload)
 {
 	return create_bitstream(payload->buffer, payload->data_bits, qrpayload_data_words_iter, payload);
 }
+
 bitstream_t qrpayload_get_bitstream_for_error(qrpayload_t *payload)
 {
 	return create_bitstream(payload->buffer, payload->total_bits, qrpayload_error_words_iter, payload);
 }
 
-static void qrdata_parse_on_letter(qr_data_mode_t mode, uint32_t letter, void *opaque)
+static size_t qrpayload_parse_qrdata_letter(qr_data_letter_type_t type, uint32_t letter, void *opaque)
 {
 	bitstream_t *bs = (bitstream_t *)opaque;
-	if (mode != QR_DATA_MODE_ECI) {
-		bitstream_write_bits(bs, letter, 8);
+
+	switch (type) {
+	case QR_DATA_LETTER_TYPE_RAW:
+		return bitstream_write_bits(bs, letter, 8) ? 1 : 0;
+
+	case QR_DATA_LETTER_TYPE_UNICODE:
+		return bitstream_write_unicode_as_utf8(bs, letter) / 8;
+
+	default:
+		return 0;
 	}
 }
 
-size_t qrpayload_read_string(qrpayload_t *payload, char *buffer, size_t size)
+size_t qrpayload_read_string_with_cb(qrpayload_t *payload, qrdata_parse_callback_t parser, void *opaque, qr_eci_code_t eci_code)
 {
-	qrdata_t qrdata = create_qrdata_for(qrpayload_get_bitstream_for_data(payload), payload->version);
+	qrdata_t qrdata = create_qrdata_for(qrpayload_get_bitstream_for_data(payload), payload->version, eci_code);
+	return qrdata_parse(&qrdata, parser, opaque);
+}
+
+size_t qrpayload_read_string(qrpayload_t *payload, char *buffer, size_t size, qr_eci_code_t eci_code)
+{
 	bitstream_t bs = create_bitstream(buffer, size * 8, NULL, NULL);
 
-	size_t len = qrdata_parse(&qrdata, qrdata_parse_on_letter, &bs);
+	size_t len = qrpayload_read_string_with_cb(payload, qrpayload_parse_qrdata_letter, &bs, eci_code);
 	if (len >= size) len = size - 1;
 	buffer[len] = '\0';
 
 	return len;
 }
 
-bit_t qrpayload_write_string(qrpayload_t *payload, const char *src, size_t len, qrdata_writer_t writer)
+bit_t qrpayload_write_string(qrpayload_t *payload, const char *src, size_t len, qrdata_writer_t writer, qr_eci_code_t eci_code)
 {
-	qrdata_t data = create_qrdata_for(qrpayload_get_bitstream_for_data(payload), payload->version);
+	qrdata_t data = create_qrdata_for(qrpayload_get_bitstream_for_data(payload), payload->version, eci_code);
 	if (writer(&data, src, len) == len && qrdata_finalize(&data)) {
 		qrpayload_set_error_words(payload);
 		return 1;
