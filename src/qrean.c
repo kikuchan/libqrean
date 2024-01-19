@@ -103,7 +103,7 @@ bit_t qrean_set_qr_version(qrean_t *qrean, qr_version_t version)
 	if (!QREAN_IS_TYPE_QRFAMILY(qrean)) return 0;
 
 	if (version == QR_VERSION_INVALID) {
-		error("Invalid version");
+		qrean_error("Invalid version");
 		return 0;
 	}
 	qrean->qr.version = version;
@@ -116,7 +116,7 @@ bit_t qrean_set_qr_maskpattern(qrean_t *qrean, qr_maskpattern_t mask)
 	if (!QREAN_IS_TYPE_QRFAMILY(qrean)) return 0;
 
 	if (mask == QR_MASKPATTERN_INVALID) {
-		error("Invalid maskpattern");
+		qrean_error("Invalid maskpattern");
 		return 0;
 	}
 	qrean->qr.mask = mask;
@@ -153,6 +153,16 @@ bit_t qrean_set_symbol_height(qrean_t *qrean, uint8_t height)
 	qrean->canvas.symbol_height = height;
 	qrean->canvas.bitmap_height = qrean->canvas.bitmap_padding.t + qrean->canvas.symbol_height + qrean->canvas.bitmap_padding.b;
 	return 1;
+}
+
+uint8_t qrean_get_symbol_width(qrean_t *qrean)
+{
+	return qrean->canvas.symbol_width;
+}
+
+uint8_t qrean_get_symbol_height(qrean_t *qrean)
+{
+	return qrean->canvas.symbol_height;
 }
 
 bit_t qrean_set_bitmap_padding(qrean_t *qrean, padding_t padding)
@@ -697,6 +707,35 @@ const char *qrean_get_code_type_string(qrean_code_type_t code)
 	}
 }
 
+qrean_code_type_t qrean_get_code_type_by_string(const char *str)
+{
+	if (!strcasecmp(str, "qr")) {
+		return QREAN_CODE_TYPE_QR;
+	} else if (!strcasecmp(str, "mqr")) {
+		return QREAN_CODE_TYPE_MQR;
+	} else if (!strcasecmp(str, "rmqr")) {
+		return QREAN_CODE_TYPE_RMQR;
+	} else if (!strcasecmp(str, "tqr")) {
+		return QREAN_CODE_TYPE_TQR;
+	} else if (!strcasecmp(str, "ean8") || !strcasecmp(str, "jan8") || !strcasecmp(str, "ean-8") || !strcasecmp(str, "jan-8")) {
+		return QREAN_CODE_TYPE_EAN8;
+	} else if (!strcasecmp(str, "ean13") || !strcasecmp(str, "jan13") || !strcasecmp(str, "ean-13") || !strcasecmp(str, "jan-13")) {
+		return QREAN_CODE_TYPE_EAN13;
+	} else if (!strcasecmp(str, "upca")) {
+		return QREAN_CODE_TYPE_UPCA;
+	} else if (!strcasecmp(str, "code39")) {
+		return QREAN_CODE_TYPE_CODE39;
+	} else if (!strcasecmp(str, "code93")) {
+		return QREAN_CODE_TYPE_CODE93;
+	} else if (!strcasecmp(str, "itf") || !strcasecmp(str, "i25")) {
+		return QREAN_CODE_TYPE_ITF;
+	} else if (!strcasecmp(str, "nw7") || !strcasecmp(str, "nw-7") || !strcasecmp(str, "codabar")) {
+		return QREAN_CODE_TYPE_NW7;
+	} else {
+		return QREAN_CODE_TYPE_INVALID;
+	}
+}
+
 bit_t qrean_set_eci_code(qrean_t *qrean, qr_eci_code_t code)
 {
 	qrean->eci_code = code;
@@ -710,5 +749,25 @@ qr_eci_code_t qrean_get_eci_code(qrean_t *qrean)
 
 const char *qrean_version()
 {
-	return QREAN_VERSION;
+	return QREAN_VERSION; // defined in CFLAGS
+}
+
+bit_t qrean_set_qr_version_by_string(qrean_t *qrean, const char *version)
+{
+	qr_version_t v =  qrspec_get_version_by_string(version);
+	if (v) return qrean_set_qr_version(qrean, v);
+	return 0;
+}
+
+bit_t qrean_set_qr_errorlevel_by_string(qrean_t *qrean, const char *level)
+{
+	if (level) {
+		switch (level[0]) {
+		case 'l': case 'L': return qrean_set_qr_errorlevel(qrean, QR_ERRORLEVEL_L);
+		case 'm': case 'M': return qrean_set_qr_errorlevel(qrean, QR_ERRORLEVEL_M);
+		case 'h': case 'H': return qrean_set_qr_errorlevel(qrean, QR_ERRORLEVEL_H);
+		case 'q': case 'Q': return qrean_set_qr_errorlevel(qrean, QR_ERRORLEVEL_Q);
+		}
+	}
+	return 0;
 }

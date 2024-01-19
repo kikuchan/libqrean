@@ -136,22 +136,22 @@ qrean_t *new_qrean(qrean_code_type_t type);
 void qrean_free(qrean_t *qrean);
 
 // ========= code operation (QR)
-bit_t qrean_set_symbol_size(qrean_t *qrean, uint8_t width, uint8_t height);
-bit_t qrean_set_symbol_width(qrean_t *qrean, uint8_t width);
-bit_t qrean_set_symbol_height(qrean_t *qrean, uint8_t width);
-
 bit_t qrean_set_qr_version(qrean_t *qrean, qr_version_t version);
 bit_t qrean_set_qr_errorlevel(qrean_t *qrean, qr_errorlevel_t level);
 bit_t qrean_set_qr_maskpattern(qrean_t *qrean, qr_maskpattern_t mask);
 bit_t qrean_set_qr_format_info(qrean_t *qrean, qrformat_t fi);
 bit_t qrean_set_qr_version_info(qrean_t *qrean, qrversion_t vi);
 
-// ========= code operation (Barcode)
-bit_t qrean_set_barcode_height(uint8_t height);
-bit_t qrean_get_barcode_height(uint8_t height);
-// TODO: qrean_set_barcode_XXX
+bit_t qrean_set_qr_version_by_string(qrean_t *qrean, const char *version);
+bit_t qrean_set_qr_errorlevel_by_string(qrean_t *qrean, const char *level);
 
 // ========= code operation (Common)
+bit_t qrean_set_symbol_size(qrean_t *qrean, uint8_t width, uint8_t height);
+bit_t qrean_set_symbol_width(qrean_t *qrean, uint8_t width);
+bit_t qrean_set_symbol_height(qrean_t *qrean, uint8_t width);
+uint8_t qrean_get_symbol_width(qrean_t *qrean);
+uint8_t qrean_get_symbol_height(qrean_t *qrean);
+
 int qrean_fix_errors(qrean_t *qrean);
 int qrean_check_errors(qrean_t *qrean);
 
@@ -231,6 +231,7 @@ bitstream_t qrean_create_bitstream(qrean_t *qrean, bitstream_iterator_t iter);
 int qrean_check_qr_combination(qrean_t *qrean);
 
 const char *qrean_get_code_type_string(qrean_code_type_t code);
+qrean_code_type_t qrean_get_code_type_by_string(const char *str);
 
 bit_t qrean_set_eci_code(qrean_t *qrean, qr_eci_code_t code);
 qr_eci_code_t qrean_get_eci_code(qrean_t *qrean);

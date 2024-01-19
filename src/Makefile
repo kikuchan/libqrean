@@ -39,7 +39,6 @@ SRCS += detector.c
 
 SIZE = size
 
-#CFLAGS += -g
 #CFLAGS += -std=c2x
 CFLAGS += -Wall # -Werror
 
@@ -60,6 +59,9 @@ CFLAGS += -fPIC
 #CFLAGS += -D NO_DEBUG
 
 LDFLAGS += -lm
+ifndef NO_DEBUG
+CFLAGS += -g
+endif
 
 OBJS = $(addprefix $(BUILDDIR)/,$(SRCS:.c=.o))
 DEPS = $(OBJS:.o=.d)

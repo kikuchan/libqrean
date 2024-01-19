@@ -200,30 +200,8 @@ int main(int argc, char *argv[])
 			break;
 
 		case 't':
-			if (!strcasecmp(optarg, "qr")) {
-				code = QREAN_CODE_TYPE_QR;
-			} else if (!strcasecmp(optarg, "mqr")) {
-				code = QREAN_CODE_TYPE_MQR;
-			} else if (!strcasecmp(optarg, "rmqr")) {
-				code = QREAN_CODE_TYPE_RMQR;
-			} else if (!strcasecmp(optarg, "tqr")) {
-				code = QREAN_CODE_TYPE_TQR;
-				version = QR_VERSION_TQR;
-			} else if (!strcasecmp(optarg, "ean8")) {
-				code = QREAN_CODE_TYPE_EAN8;
-			} else if (!strcasecmp(optarg, "ean13")) {
-				code = QREAN_CODE_TYPE_EAN13;
-			} else if (!strcasecmp(optarg, "upca")) {
-				code = QREAN_CODE_TYPE_UPCA;
-			} else if (!strcasecmp(optarg, "code39")) {
-				code = QREAN_CODE_TYPE_CODE39;
-			} else if (!strcasecmp(optarg, "code93")) {
-				code = QREAN_CODE_TYPE_CODE93;
-			} else if (!strcasecmp(optarg, "itf")) {
-				code = QREAN_CODE_TYPE_ITF;
-			} else if (!strcasecmp(optarg, "nw7")) {
-				code = QREAN_CODE_TYPE_NW7;
-			} else {
+			code = qrean_get_code_type_by_string(optarg);
+			if (code == QREAN_CODE_TYPE_INVALID) {
 				fprintf(stderr, "Unknown code '%s' is specified\n", optarg);
 				return -1;
 			}

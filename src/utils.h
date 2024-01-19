@@ -39,8 +39,6 @@ int safe_fprintf(FILE *fp, const char *fmt, ...);
 		}                                                  \
 	} while (0)
 
-#define error(x) assert(!(x))
-
 #define BYTE_SIZE(bits) (((bits) + 7) / 8)
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
