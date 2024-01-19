@@ -148,11 +148,15 @@ int main(int argc, char *argv[])
 	qrean_data_type_t data_type = QREAN_DATA_TYPE_AUTO;
 	int eci_code = QR_ECI_CODE_LATIN1;
 
-	while ((ch = getopt(argc, argv, "hi:o:s:f:t:v:l:m:p:8KANUSE:")) != -1) {
+	while ((ch = getopt(argc, argv, "hVi:o:s:f:t:v:l:m:p:8KANUSE:")) != -1) {
 		int n;
 		switch (ch) {
 		case 'h':
 			return usage(stdout);
+
+		case 'V':
+			printf("qrean version %s\n", qrean_version());
+			return 0;
 
 		case 'i':
 			in = fopen(optarg, "rb");

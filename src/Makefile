@@ -1,4 +1,5 @@
 BUILDDIR ?= $(abspath ../build/system)
+DESTDIR ?= /usr
 
 SRCS += bitstream.c
 SRCS += utils.c
@@ -43,6 +44,7 @@ SIZE = size
 CFLAGS += -Wall # -Werror
 
 CFLAGS += -Wno-misleading-indentation
+CFLAGS += -fPIC
 
 #CFLAGS += -D USE_MALLOC_BUFFER
 #CFLAGS += -D NO_MALLOC
@@ -62,12 +64,40 @@ LDFLAGS += -lm
 OBJS = $(addprefix $(BUILDDIR)/,$(SRCS:.c=.o))
 DEPS = $(OBJS:.o=.d)
 
-TARGET = $(BUILDDIR)/libqrean.a
+VERSION := $(shell jq -r .version $(abspath ../package.json))
+MAJORVERSION := $(shell echo "$(VERSION)" | sed 's,\..*,,')
+LIBRARY = libqrean
+TARGET = $(BUILDDIR)/$(LIBRARY)
 
-all: $(TARGET)
+CFLAGS += -DQREAN_VERSION=\"$(VERSION)\"
 
-$(TARGET): $(OBJS) Makefile
+all: libs
+
+libs:
+	@$(MAKE) $(TARGET).a
+ifndef NO_SHLIB
+	@$(MAKE) $(TARGET).so.$(VERSION)
+endif
+ifdef DLL
+	@$(MAKE) $(TARGET)-$(VERSION).dll
+endif
+
+$(TARGET).a: $(OBJS) Makefile
 	$(AR) rcs $@ $^
+
+$(TARGET).so.$(VERSION): $(OBJS) Makefile
+ifndef NO_SHLIB
+	$(CC) -shared -Wl,-soname,$(LIBRARY).so.$(MAJORVERSION) -o $@ $(OBJS)
+	-ln -sf $(LIBRARY).so.$(VERSION) $(TARGET).so.$(MAJORVERSION)
+	-ln -sf $(LIBRARY).so.$(VERSION) $(TARGET).so
+endif
+
+ifdef DLL
+$(TARGET)-$(VERSION).dll: $(OBJS) Makefile
+	$(CC) -shared -o $@ $(OBJS)
+	-ln -sf $(LIBRARY)-$(VERSION).dll $(TARGET)-$(MAJORVERSION).dll
+	-ln -sf $(LIBRARY)-$(VERSION).dll $(TARGET).dll
+endif
 
 -include $(DEPS)
 
@@ -77,6 +107,13 @@ $(BUILDDIR)/%.o: %.c Makefile
 
 clean:
 	rm -f $(BUILDDIR)/*.[do] $(TARGET)
+
+install: libs
+	install -s $(TARGET).so.$(VERSION) $(DESTDIR)/lib/
+	install -m 644 $(TARGET).a $(DESTDIR)/lib/
+	-ln -sf $(LIBRARY).so.$(VERSION) $(DESTDIR)/lib/$(LIBRARY).so.$(MAJORVERSION)
+	-ln -sf $(LIBRARY).so.$(VERSION) $(DESTDIR)/lib/$(LIBRARY).so
+	mkdir -p $(DESTDIR)/include/qrean/ && install -m 644 *.h $(DESTDIR)/include/qrean/
 
 format:
 	clang-format -i *.[ch]

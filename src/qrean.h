@@ -235,4 +235,6 @@ const char *qrean_get_code_type_string(qrean_code_type_t code);
 bit_t qrean_set_eci_code(qrean_t *qrean, qr_eci_code_t code);
 qr_eci_code_t qrean_get_eci_code(qrean_t *qrean);
 
+const char *qrean_version();
+
 #endif /* __QR_QREAN_H__ */

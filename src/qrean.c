@@ -707,3 +707,8 @@ qr_eci_code_t qrean_get_eci_code(qrean_t *qrean)
 {
 	return qrean->eci_code;
 }
+
+const char *qrean_version()
+{
+	return QREAN_VERSION;
+}

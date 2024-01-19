@@ -215,10 +215,14 @@ int main(int argc, char *argv[])
 	int len;
 	int ch;
 
-	while ((ch = getopt(argc, argv, "ho:g:DO:vBUSE:")) != -1) {
+	while ((ch = getopt(argc, argv, "hVo:g:DO:vBUSE:")) != -1) {
 		switch (ch) {
 		case 'h':
 			return usage(stdout);
+
+		case 'V':
+			printf("qrean-detect version %s\n", qrean_version());
+			return 0;
 
 		case 'o':
 			out = fopen(optarg, "w+t");
