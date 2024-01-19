@@ -14,7 +14,7 @@ export const getText = (mem: Uint8ClampedArray, idx: number) => {
   }
 };
 
-type MakeOptions = {
+type EncodeOptions = {
   code_type?: keyof typeof Qrean.CODE_TYPES;
   data_type?: keyof typeof Qrean.DATA_TYPES;
   qr_version?: keyof typeof Qrean.QR_VERSIONS;
@@ -316,7 +316,7 @@ export class Qrean {
     [Qrean.QR_ECI_CODE_UTF8]: 26 as const,
   };
 
-  make(text: string, opts: MakeOptions | keyof typeof Qrean.CODE_TYPES = {}) {
+  encode(text: string, opts: EncodeOptions | keyof typeof Qrean.CODE_TYPES = {}) {
     if (typeof opts == 'string') {
       opts = { code_type: opts };
     }
@@ -328,7 +328,7 @@ export class Qrean {
 
     setText(mem, exp.inputbuf.value, text);
 
-    const pimage = exp.make(
+    const pimage = exp.encode(
       Qrean.CODE_TYPES[opts.code_type ?? Qrean.CODE_TYPE_QR],
       Qrean.DATA_TYPES[opts.data_type ?? Qrean.DATA_TYPE_AUTO],
       Qrean.QR_ERRORLEVELS[opts.qr_errorlevel ?? Qrean.QR_ERRORLEVEL_M],

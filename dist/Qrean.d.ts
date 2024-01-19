@@ -1,6 +1,6 @@
 export declare const setText: (mem: Uint8ClampedArray, idx: number, s: string) => void;
 export declare const getText: (mem: Uint8ClampedArray, idx: number) => string;
-type MakeOptions = {
+type EncodeOptions = {
     code_type?: keyof typeof Qrean.CODE_TYPES;
     data_type?: keyof typeof Qrean.DATA_TYPES;
     qr_version?: keyof typeof Qrean.QR_VERSIONS;
@@ -251,7 +251,7 @@ export declare class Qrean {
         ShiftJIS: 20;
         "UTF-8": 26;
     };
-    make(text: string, opts?: MakeOptions | keyof typeof Qrean.CODE_TYPES): ImageData;
+    encode(text: string, opts?: EncodeOptions | keyof typeof Qrean.CODE_TYPES): ImageData;
     detect(imgdata: ImageData, callback: (type: string, str: string) => void, opts?: DetectOptions): any;
 }
 export {};

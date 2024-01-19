@@ -95,7 +95,7 @@ const qrean = await Qrean.create(true);
 
 seltype.oninput = seldatatype.oninput = intext.oninput = () => {
   divimg.innerHTML = "";
-  const imgd = qrean.make(intext.value, {
+  const imgd = qrean.encode(intext.value, {
     code_type: seltype.value,
     data_type: seldatatype.value
   });

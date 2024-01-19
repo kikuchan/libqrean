@@ -12,7 +12,7 @@ char imagebuf[3 * 1024 * 1024];
 char inputbuf[1024];
 char outputbuf[1024];
 
-image_t* make(int type, int datatype, int qr_errorlevel, int qr_version, int qr_maskpattern, int padding, int scale) {
+image_t* encode(int type, int datatype, int qr_errorlevel, int qr_version, int qr_maskpattern, int padding, int scale) {
 	qrean_t qrean = create_qrean(type);
 
 	qrean_set_qr_version(&qrean, qr_version);
