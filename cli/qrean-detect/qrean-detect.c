@@ -179,8 +179,16 @@ void init_screen(pngle_t *pngle, uint32_t w, uint32_t h)
 }
 
 const char *progname;
+
+void print_version(FILE *out)
+{
+	fprintf(out, "qrean-detect version %s\n", qrean_version());
+	fprintf(out, "Copyright (c) 2023-2024 kikuchan\n");
+}
+
 int usage(FILE *out)
 {
+	print_version(out);
 	fprintf(out, "Usage: %s [OPTION]... [FILE]\n", progname);
 	fprintf(out, "Read QR/Barcode from PNG image file\n");
 	fprintf(out, "\n");
@@ -221,7 +229,7 @@ int main(int argc, char *argv[])
 			return usage(stdout);
 
 		case 'V':
-			printf("qrean-detect version %s\n", qrean_version());
+			print_version(stdout);
 			return 0;
 
 		case 'o':

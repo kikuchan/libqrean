@@ -24,8 +24,16 @@ enum {
 };
 
 const char *progname;
+
+void print_version(FILE *out)
+{
+	fprintf(out, "qrean version %s\n", qrean_version());
+	fprintf(out, "Copyright (c) 2023-2024 kikuchan\n");
+}
+
 int usage(FILE *out)
 {
+	print_version(out);
 	fprintf(out, "Usage: %s [OPTION]... [STRING]\n", progname);
 	fprintf(out, "Generate QR/Barcode image\n");
 	fprintf(out, "\n");
@@ -155,7 +163,7 @@ int main(int argc, char *argv[])
 			return usage(stdout);
 
 		case 'V':
-			printf("qrean version %s\n", qrean_version());
+			print_version(stdout);
 			return 0;
 
 		case 'i':

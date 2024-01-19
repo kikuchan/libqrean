@@ -64,8 +64,8 @@ LDFLAGS += -lm
 OBJS = $(addprefix $(BUILDDIR)/,$(SRCS:.c=.o))
 DEPS = $(OBJS:.o=.d)
 
-VERSION := $(shell jq -r .version $(abspath ../package.json))
-MAJORVERSION := $(shell echo "$(VERSION)" | sed 's,\..*,,')
+VERSION := $(shell grep version $(abspath ../package.json) | awk '{print $$2}' | tr -d ',"')
+MAJORVERSION := $(word 1,$(subst ., ,$(VERSION)))
 LIBRARY = libqrean
 TARGET = $(BUILDDIR)/$(LIBRARY)
 

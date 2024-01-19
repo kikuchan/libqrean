@@ -1,8 +1,8 @@
 {
   "name": "libqrean",
-  "version": "0.0.1-alpha.0",
-  "description": "A portable QR and Barcode manipulation library with a small footprint",
-  "keywords": "qr, qrcode, mqr, microqr, rmqr, barcode, c, arduino, ean, jan, nw7, code39, code93, itf",
+  "version": "0.0.1",
+  "description": "A portable QR and Barcode generation / manipulation library written in C",
+  "keywords": "qr, qrcode, mqr, microqr, rmqr, tqr, barcode, c, arduino, ean, jan, nw7, code39, code93, itf",
   "repository": {
     "type": "git",
     "url": "https://github.com/kikuchan/libqrean.git"
