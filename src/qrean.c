@@ -78,7 +78,7 @@ void qrean_destroy(qrean_t *qrean)
 qrean_t *new_qrean(qrean_code_type_t type)
 {
 #ifndef NO_MALLOC
-	qrean_t *qrean = (qrean_t *)malloc(sizeof(qrean_t));
+	qrean_t *qrean = (qrean_t *)calloc(1, sizeof(qrean_t));
 	if (!qrean) return NULL;
 	if (!qrean_init(qrean, type)) {
 		free(qrean);
