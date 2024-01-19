@@ -109,10 +109,15 @@ clean:
 	rm -f $(BUILDDIR)/*.[do] $(TARGET)
 
 install: libs
+ifndef NO_PKGCONFIG
+	mkdir -p $(DESTDIR)/lib/pkgconfig
+	sed 's,@prefix@,$(DESTDIR),' libqrean.pc.in > $(DESTDIR)/lib/pkgconfig/libqrean.pc
+endif
 	install -s $(TARGET).so.$(VERSION) $(DESTDIR)/lib/
 	install -m 644 $(TARGET).a $(DESTDIR)/lib/
 	-ln -sf $(LIBRARY).so.$(VERSION) $(DESTDIR)/lib/$(LIBRARY).so.$(MAJORVERSION)
 	-ln -sf $(LIBRARY).so.$(VERSION) $(DESTDIR)/lib/$(LIBRARY).so
+	echo '#include "qrean/qrean.h"' > $(DESTDIR)/include/qrean.h
 	mkdir -p $(DESTDIR)/include/qrean/ && install -m 644 *.h $(DESTDIR)/include/qrean/
 
 format:
