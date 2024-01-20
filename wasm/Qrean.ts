@@ -334,7 +334,7 @@ export class Qrean {
       Qrean.QR_ERRORLEVELS[opts.qr_errorlevel ?? Qrean.QR_ERRORLEVEL_M],
       Qrean.QR_VERSIONS[opts.qr_version ?? Qrean.QR_VERSION_AUTO],
       Qrean.QR_MASKPATTERNS[opts.qr_maskpattern ?? Qrean.QR_MASKPATTERN_AUTO],
-      opts.padding || 4,
+      opts.padding || 0,
       opts.scale || 4,
     );
 

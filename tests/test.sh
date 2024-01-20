@@ -28,8 +28,8 @@ check_contains() {
 echo "Generation:"
 ${QREAN} -t qr   -f txt -l L -8 -p 4 -p 4 "Hello" | check - qr-1.txt
 ${QREAN} -t mqr  -f txt -l L -8 -m 1 -p 2 "test"  | check - mqr-1.txt
-${QREAN} -t rmqr -f txt "Hello" | check - rmqr-1.txt
-${QREAN} -t tqr  -f txt "000000000000" | check - tqr-000000000000.txt
+${QREAN} -t rmqr -f txt -p 4 "Hello" | check - rmqr-1.txt
+${QREAN} -t tqr  -f txt -p 4 "000000000000" | check - tqr-000000000000.txt
 
 echo "Detection:"
 ${QREAN_DETECT} github-libqrean-qr.png | check_contains - github-libqrean-qr.txt

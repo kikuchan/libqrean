@@ -164,4 +164,5 @@ qrean_code_t qrean_code_code93 = {
 	.type = QREAN_CODE_TYPE_CODE93,
 	.write_data = qrean_write_code93_string,
 	.read_data = qrean_read_code93_string,
+	.padding = { { 4, 10, 4, 10 } },
 };

@@ -33,8 +33,8 @@ bit_t qrean_init(qrean_t *qrean, qrean_code_type_t type)
 				qrean_set_symbol_height(qrean, 10);
 				qrean->canvas.stride = 0;
 			}
+			qrean_set_bitmap_padding(qrean, qrean->code->padding);
 
-			qrean_set_bitmap_padding(qrean, create_padding1(4));
 			qrean_set_bitmap_scale(qrean, 4);
 			qrean_set_bitmap_color(qrean, 0x00000000, 0xffffffff);
 

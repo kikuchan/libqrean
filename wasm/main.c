@@ -19,7 +19,8 @@ image_t* encode(int type, int datatype, int qr_errorlevel, int qr_version, int q
 	qrean_set_qr_maskpattern(&qrean, qr_maskpattern);
 	qrean_set_qr_errorlevel(&qrean, qr_errorlevel);
 	qrean_set_eci_code(&qrean, QR_ECI_CODE_UTF8);
-	qrean_set_bitmap_padding(&qrean, create_padding1(padding));
+
+	if (padding > 0) qrean_set_bitmap_padding(&qrean, create_padding1(padding));
 	qrean_set_bitmap_scale(&qrean, scale);
 
 	int res = qrean_write_string(&qrean, inputbuf, datatype);

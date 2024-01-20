@@ -106,4 +106,5 @@ qrean_code_t qrean_code_itf = {
 	.type = QREAN_CODE_TYPE_ITF,
 	.write_data = qrean_write_itf_string,
 	.read_data = qrean_read_itf_string,
+	.padding = { { 4, 10, 4, 10 } },
 };

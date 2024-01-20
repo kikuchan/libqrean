@@ -139,4 +139,5 @@ qrean_code_t qrean_code_nw7 = {
 	.type = QREAN_CODE_TYPE_NW7,
 	.write_data = qrean_write_nw7_string,
 	.read_data = qrean_read_nw7_string,
+	.padding = { { 4, 10, 4, 10 } },
 };

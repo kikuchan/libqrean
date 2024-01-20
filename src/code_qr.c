@@ -288,6 +288,8 @@ qrean_code_t qrean_code_qr = {
 	.score = qr_score,
 	.data_iter = composed_data_iter,
 
+	.padding = { { 4, 4, 4, 4 } },
+
 	.qr = {
 		.finder_pattern = {finder_pattern_iter, finder_pattern_bits, QR_FINDER_PATTERN_SIZE},
 		.timing_pattern = {timing_pattern_iter, timing_pattern_bits, 8},

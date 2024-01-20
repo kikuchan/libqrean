@@ -107,9 +107,8 @@ void image_save_as_png(image_t *img, FILE *out)
 	free(buf);
 }
 
-padding_t parse_padding(const char *src)
+padding_t *parse_padding(const char *src, padding_t *padding)
 {
-	padding_t padding = create_padding1(4);
 	const char *p = src;
 	unsigned long v;
 
@@ -119,16 +118,16 @@ padding_t parse_padding(const char *src)
 
 		switch (i) {
 		case 0:
-			padding.t = padding.r = padding.b = padding.l = v;
+			padding->t = padding->r = padding->b = padding->l = v;
 			break;
 		case 1:
-			padding.r = padding.l = v;
+			padding->r = padding->l = v;
 			break;
 		case 2:
-			padding.b = v;
+			padding->b = v;
 			break;
 		case 3:
-			padding.l = v;
+			padding->l = v;
 			break;
 		}
 
@@ -152,7 +151,7 @@ int main(int argc, char *argv[])
 	qr_errorlevel_t level = QR_ERRORLEVEL_M;
 	qr_maskpattern_t mask = QR_MASKPATTERN_AUTO;
 	int scale = 4;
-	padding_t padding = create_padding1(4);
+	padding_t default_padding = create_padding1(4), *padding = NULL;
 	qrean_data_type_t data_type = QREAN_DATA_TYPE_AUTO;
 	int eci_code = QR_ECI_CODE_LATIN1;
 
@@ -252,7 +251,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'p':
-			padding = parse_padding(optarg);
+			padding = parse_padding(optarg, &default_padding);
 			break;
 
 		case '8':
@@ -310,7 +309,7 @@ int main(int argc, char *argv[])
 	}
 
 	qrean_set_bitmap_scale(qrean, scale);
-	qrean_set_bitmap_padding(qrean, padding);
+	if (padding) qrean_set_bitmap_padding(qrean, *padding);
 	if (QREAN_IS_TYPE_QRFAMILY(qrean)) {
 		qrean_set_qr_version(qrean, version);
 		qrean_set_qr_errorlevel(qrean, level);

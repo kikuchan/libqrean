@@ -60,6 +60,8 @@ typedef struct {
 
 	bitstream_iterator_t data_iter;
 
+	padding_t padding;
+
 	// QR related bitpatterns
 	union {
 		struct {

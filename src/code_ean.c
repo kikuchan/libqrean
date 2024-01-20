@@ -224,15 +224,18 @@ qrean_code_t qrean_code_ean13 = {
 	.type = QREAN_CODE_TYPE_EAN13,
 	.write_data = qrean_write_ean13_like_string,
 	.read_data = qrean_read_ean13_like_string,
+	.padding = { { 4, 10, 4, 10 } },
 };
 
 qrean_code_t qrean_code_ean8 = {
 	.type = QREAN_CODE_TYPE_EAN8,
 	.write_data = qrean_write_ean13_like_string,
 	.read_data = qrean_read_ean13_like_string,
+	.padding = { { 4, 10, 4, 10 } },
 };
 qrean_code_t qrean_code_upca = {
 	.type = QREAN_CODE_TYPE_UPCA,
 	.write_data = qrean_write_ean13_like_string,
 	.read_data = qrean_read_ean13_like_string,
+	.padding = { { 4, 10, 4, 10 } },
 };

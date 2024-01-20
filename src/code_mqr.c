@@ -143,6 +143,8 @@ qrean_code_t qrean_code_mqr = {
 	.init = NULL,
 	.data_iter = composed_data_iter,
 
+	.padding = { { 2, 2, 2, 2 } },
+
 	.qr = {
 		 .finder_pattern = {finder_pattern_iter, finder_pattern_bits, QR_FINDER_PATTERN_SIZE},
 		 .timing_pattern = {timing_pattern_iter, timing_pattern_bits, 8},
