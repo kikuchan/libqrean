@@ -168,34 +168,34 @@ int qrean_detector_scan_barcodes(image_t *src, void (*on_found)(qrean_detector_p
 {
 	int step = 10; // XXX: reduce CPU time...
 	int found = 0;
-	image_t *img = image_clone(src);
-	if (!img) return 0;
+
+	CREATE_IMAGE_BY_CLONE(work, src);
 
 	runlength_t rl = create_runlength();
-	for (int y = 0; y < (int)img->height; y += step) {
+	for (int y = 0; y < (int)work.height; y += step) {
 		runlength_init(&rl);
-		for (int x = 0; x < (int)img->width; x++) {
-			scan_barcode(&rl, img, src, x, y, 1, 0, on_found, opaque);
+		for (int x = 0; x < (int)work.width; x++) {
+			scan_barcode(&rl, &work, src, x, y, 1, 0, on_found, opaque);
 		}
 		runlength_init(&rl);
-		for (int x = 0; x < (int)img->width; x++) {
-			scan_barcode(&rl, img, src, img->width - 1 - x, y, -1, 0, on_found, opaque);
-		}
-	}
-
-	for (int x = 0; x < (int)img->width; x += step) {
-		runlength_init(&rl);
-		for (int y = 0; y < (int)img->height; y++) {
-			scan_barcode(&rl, img, src, x, y, 0, 1, on_found, opaque);
-		}
-
-		runlength_init(&rl);
-		for (int y = 0; y < (int)img->height; y++) {
-			scan_barcode(&rl, img, src, x, img->height - 1 - y, 0, -1, on_found, opaque);
+		for (int x = 0; x < (int)work.width; x++) {
+			scan_barcode(&rl, &work, src, work.width - 1 - x, y, -1, 0, on_found, opaque);
 		}
 	}
 
-	image_free(img);
+	for (int x = 0; x < (int)work.width; x += step) {
+		runlength_init(&rl);
+		for (int y = 0; y < (int)work.height; y++) {
+			scan_barcode(&rl, &work, src, x, y, 0, 1, on_found, opaque);
+		}
+
+		runlength_init(&rl);
+		for (int y = 0; y < (int)work.height; y++) {
+			scan_barcode(&rl, &work, src, x, work.height - 1 - y, 0, -1, on_found, opaque);
+		}
+	}
+
+	DESTROY_IMAGE(work);
 
 	return found;
 }
@@ -205,14 +205,13 @@ qrean_detector_qr_finder_candidate_t *qrean_detector_scan_qr_finder_pattern(imag
 	static qrean_detector_qr_finder_candidate_t candidates[MAX_CANDIDATES];
 	int candidx = 0;
 
-	image_t *img = image_clone(src);
-	if (!img) return NULL;
+	CREATE_IMAGE_BY_CLONE(img, src);
 
-	for (int y = 0; y < (int)img->height; y++) {
+	for (int y = 0; y < (int)img.height; y++) {
 		runlength_t rl = create_runlength();
 
-		for (int x = 0; x < (int)img->width; x++) {
-			uint32_t v = image_read_pixel(img, POINT(x, y));
+		for (int x = 0; x < (int)img.width; x++) {
+			uint32_t v = image_read_pixel(&img, POINT(x, y));
 			if (v != 0 && v != PIXEL(255, 255, 255)) {
 				runlength_init(&rl);
 				continue;
@@ -231,21 +230,21 @@ qrean_detector_qr_finder_candidate_t *qrean_detector_scan_qr_finder_pattern(imag
 			int cy = y;
 
 			// not a dark module
-			if (image_read_pixel(img, POINT(cx, cy)) != 0) continue;
-			if (image_read_pixel(img, POINT(lx, cy)) != 0) continue;
-			if (image_read_pixel(img, POINT(rx, cy)) != 0) continue;
+			if (image_read_pixel(&img, POINT(cx, cy)) != 0) continue;
+			if (image_read_pixel(&img, POINT(lx, cy)) != 0) continue;
+			if (image_read_pixel(&img, POINT(rx, cy)) != 0) continue;
 
 			// check vertical runlength
 			runlength_t rlvu = create_runlength();
 			runlength_t rlvd = create_runlength();
 			int found_u = 0, found_d = 0;
 			for (int yy = 0; yy < len; yy++) {
-				if (!found_u && runlength_push_value(&rlvu, image_read_pixel(img, POINT(cx, cy - yy)))) {
+				if (!found_u && runlength_push_value(&rlvu, image_read_pixel(&img, POINT(cx, cy - yy)))) {
 					if (runlength_match_ratio(&rlvu, 3, 2, 2, 0, -1)) {
 						found_u = runlength_sum(&rlvu, 1, 3);
 					}
 				}
-				if (!found_d && runlength_push_value(&rlvd, image_read_pixel(img, POINT(cx, cy + yy)))) {
+				if (!found_d && runlength_push_value(&rlvd, image_read_pixel(&img, POINT(cx, cy + yy)))) {
 					if (runlength_match_ratio(&rlvd, 3, 2, 2, 0, -1)) {
 						found_d = runlength_sum(&rlvd, 1, 3);
 					}
@@ -263,27 +262,27 @@ qrean_detector_qr_finder_candidate_t *qrean_detector_scan_qr_finder_pattern(imag
 				image_pixel_t ring_color = PIXEL(255, 0, 0);
 
 				// mark visit flag by painting inner most block
-				image_paint_result_t inner_block = image_paint(img, POINT(cx, cy), inner_block_color);
+				image_paint_result_t inner_block = image_paint(&img, POINT(cx, cy), inner_block_color);
 
 				// let's make sure they are disconnected from the inner most block
-				if (image_read_pixel(img, POINT(lx, cy)) != PIXEL(0, 0, 0)) {
+				if (image_read_pixel(&img, POINT(lx, cy)) != PIXEL(0, 0, 0)) {
 					continue;
 				}
-				if (image_read_pixel(img, POINT(rx, cy)) != PIXEL(0, 0, 0)) {
+				if (image_read_pixel(&img, POINT(rx, cy)) != PIXEL(0, 0, 0)) {
 					continue;
 				}
 
 				// let's make sure they are connected
-				image_paint_result_t ring = image_paint(img, POINT(lx, cy), ring_color);
-				if (image_read_pixel(img, POINT(lx, cy)) != image_read_pixel(img, POINT(rx, cy))) {
+				image_paint_result_t ring = image_paint(&img, POINT(lx, cy), ring_color);
+				if (image_read_pixel(&img, POINT(lx, cy)) != image_read_pixel(&img, POINT(rx, cy))) {
 					// paint it back ;)
-					image_paint(img, POINT(lx, cy), PIXEL(0, 0, 0));
+					image_paint(&img, POINT(lx, cy), PIXEL(0, 0, 0));
 					continue;
 				}
 
 				float real_cx = (ring.extent.left + ring.extent.right) / 2.0f;
 				float real_cy = (ring.extent.top + ring.extent.bottom) / 2.0f;
-				if (image_read_pixel(img, POINT(real_cx, real_cy)) != inner_block_color) continue;
+				if (image_read_pixel(&img, POINT(real_cx, real_cy)) != inner_block_color) continue;
 
 				// find ring corners
 				int w = ring.extent.right - ring.extent.left;
@@ -296,7 +295,7 @@ qrean_detector_qr_finder_candidate_t *qrean_detector_scan_qr_finder_pattern(imag
 						float x = floor(cx + r * sin(theta));
 						float y = floor(cy - r * cos(theta));
 
-						if (image_read_pixel(img, POINT(x, y)) == ring_color) {
+						if (image_read_pixel(&img, POINT(x, y)) == ring_color) {
 							int slot = !cidx ? 0 : floor(fmod(theta + 2 * M_PI + M_PI_4 - corners[0], 2 * M_PI) / M_PI_2);
 							assert(0 <= slot && slot < 4);
 
@@ -311,7 +310,7 @@ qrean_detector_qr_finder_candidate_t *qrean_detector_scan_qr_finder_pattern(imag
 
 				if (cidx < 4) {
 					// No corners... paint it back
-					image_paint(img, POINT(lx, cy), PIXEL(0, 0, 0));
+					image_paint(&img, POINT(lx, cy), PIXEL(0, 0, 0));
 					continue;
 				}
 
@@ -323,7 +322,7 @@ qrean_detector_qr_finder_candidate_t *qrean_detector_scan_qr_finder_pattern(imag
 		}
 	}
 
-	image_free(img);
+	DESTROY_IMAGE(img);
 
 	// guardian
 	candidates[candidx].center = POINT(NAN, NAN);
@@ -387,8 +386,8 @@ void qrean_detector_perspective_setup_by_qr_finder_pattern_ring_corners(
 
 int qrean_detector_perspective_fit_for_qr(qrean_detector_perspective_t *warp)
 {
-	image_t *img = image_clone(warp->img);
-	// image_t *img = warp->img;
+	CREATE_IMAGE_BY_CLONE(img, warp->img);
+
 	int adjusted = 0;
 
 	int N = qrspec_get_alignment_num(warp->qrean->qr.version);
@@ -406,8 +405,8 @@ int qrean_detector_perspective_fit_for_qr(qrean_detector_perspective_t *warp)
 			for (float x = cx - dist; x < cx + dist; x += 0.2) {
 				image_point_t p = image_point_transform(POINT(x, y), warp->h);
 				image_point_t ring = image_point_transform(POINT(x + 1, y), warp->h);
-				if (image_read_pixel(img, p) == 0 && image_read_pixel(img, ring) == PIXEL(255, 255, 255)) {
-					image_paint_result_t result = image_paint(img, ring, PIXEL(255, 0, 0));
+				if (image_read_pixel(&img, p) == 0 && image_read_pixel(&img, ring) == PIXEL(255, 255, 255)) {
+					image_paint_result_t result = image_paint(&img, ring, PIXEL(255, 0, 0));
 					if (module_size * module_size < result.area && result.area < module_size * module_size * 16) {
 						image_point_t new_center = image_extent_center(&result.extent);
 
@@ -418,7 +417,7 @@ int qrean_detector_perspective_fit_for_qr(qrean_detector_perspective_t *warp)
 						warp->h = create_image_transform_matrix(warp->src, warp->dst);
 
 						if (qrean_read_qr_alignment_pattern(warp->qrean, i) < 10) {
-							image_paint(img, ring, PIXEL(0, 255, 0));
+							image_paint(&img, ring, PIXEL(0, 255, 0));
 							adjusted = 1;
 
 							goto next;
@@ -433,7 +432,7 @@ int qrean_detector_perspective_fit_for_qr(qrean_detector_perspective_t *warp)
 	next:;
 	}
 
-	image_free(img);
+	DESTROY_IMAGE(img);
 
 	return adjusted;
 }
@@ -573,12 +572,14 @@ static image_point_t find_rmqr_corner_finder_pattern(
 				if (image_read_pixel(warp->img, p) != 0) continue;
 
 				if (found < n) {
-					image_t *work = image_clone(warp->img);
-					image_paint_result_t painted = image_paint(work, p, PIXEL(255, 0, 0));
+					CREATE_IMAGE_BY_CLONE(work, warp->img);
+
+					image_paint_result_t painted = image_paint(&work, p, PIXEL(255, 0, 0));
 					image_point_t c = image_extent_center(&painted.extent);
 					float dist = image_point_distance(c, p) * 1.2;
-					p = find_corner(work, c, PIXEL(255, 0, 0), dist, image_point_angle(c, p), modsize * 1.5 / dist);
-					image_free(work);
+					p = find_corner(&work, c, PIXEL(255, 0, 0), dist, image_point_angle(c, p), modsize * 1.5 / dist);
+
+					DESTROY_IMAGE(work);
 
 					found = n;
 					last_p = p;

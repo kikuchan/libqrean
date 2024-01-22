@@ -29,7 +29,6 @@ SRCS += code_code93.c
 SRCS += code_itf.c
 SRCS += code_nw7.c
 
-## Works only without NO_MALLOC
 SRCS += image.c
 SRCS += detector.c
 
@@ -44,19 +43,6 @@ CFLAGS += -Wall # -Werror
 
 CFLAGS += -Wno-misleading-indentation
 CFLAGS += -fPIC
-
-#CFLAGS += -D USE_MALLOC_BUFFER
-#CFLAGS += -D NO_MALLOC
-#CFLAGS += -D NO_PRINTF
-#CFLAGS += -D NO_CALLBACK
-#CFLAGS += -D NO_CANVAS_BUFFER
-
-#CFLAGS += -D NO_KANJI_TABLE
-
-#CFLAGS += -D NO_MQR
-#CFLAGS += -D NO_RMQR
-
-#CFLAGS += -D NO_DEBUG
 
 LDFLAGS += -lm
 ifndef NO_DEBUG

@@ -98,6 +98,11 @@ void qrean_free(qrean_t *qrean)
 #endif
 }
 
+bit_t qrean_is_valid(qrean_t *qrean)
+{
+	return qrean && qrean->code ? 1 : 0;
+}
+
 bit_t qrean_set_qr_version(qrean_t *qrean, qr_version_t version)
 {
 	if (!QREAN_IS_TYPE_QRFAMILY(qrean)) return 0;

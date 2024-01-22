@@ -4,6 +4,7 @@
 #include "qrean.h"
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
 typedef uint32_t image_pixel_t;
 #define PIXEL(r, g, b)   ((((uint32_t)(r)) << 0) | ((g) << 8) | ((b) << 16))
@@ -12,10 +13,10 @@ typedef uint32_t image_pixel_t;
 #define PIXEL_GET_B(pix) (((pix) >> 16) & 0xFF)
 
 typedef struct {
-	image_pixel_t *buffer;
-
 	size_t width;
 	size_t height;
+
+	image_pixel_t *buffer;
 } image_t;
 
 typedef struct {
@@ -39,10 +40,38 @@ typedef struct {
 	float m[8];
 } image_transform_matrix_t;
 
+image_t create_image(size_t width, size_t height, void *buffer);
+image_t *image_copy(image_t *dst, image_t *src);
+
+// malloc version
 image_t *new_image(size_t width, size_t height);
 void image_free(image_t *img);
 image_t *image_clone(image_t *img);
-image_t *new_image_from_qrean(qrean_t *qrean);
+image_pixel_t *new_image_buffer(size_t width, size_t height);
+void image_buffer_free(image_pixel_t *buffer);
+
+// internal
+void image_init(image_t *img, size_t width, size_t height, void *buffer);
+
+#ifdef NO_MALLOC
+// stack version
+#define CREATE_IMAGE(name, width, height) \
+	image_pixel_t _##name##__buffer[(width) * (height)] = {}; \
+	image_t name = create_image((width), (height), _##name##__buffer);
+
+#define DESTROY_IMAGE(name) (void)(name);
+#else
+// malloc version
+#define CREATE_IMAGE(name, width, height) \
+	image_pixel_t *_##name##__buffer = new_image_buffer(width, height); \
+	image_t name = create_image((width), (height), _##name##__buffer);
+
+#define DESTROY_IMAGE(name) image_buffer_free(_##name##__buffer);
+#endif
+#define CREATE_IMAGE_BY_CLONE(name, src) \
+	CREATE_IMAGE(name, (src)->width, (src)->height); \
+	image_copy(&name, src);
+
 
 // image_point_t
 typedef struct {

@@ -302,49 +302,50 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	qrean_t *qrean = new_qrean(code);
-	if (!qrean) {
+	qrean_t qrean = create_qrean(code);
+	if (!qrean_is_valid(&qrean)) {
 		fprintf(stderr, "Unknown code or version; %d\n", code);
 		return -1;
 	}
 
-	qrean_set_bitmap_scale(qrean, scale);
-	if (padding) qrean_set_bitmap_padding(qrean, *padding);
-	if (QREAN_IS_TYPE_QRFAMILY(qrean)) {
-		qrean_set_qr_version(qrean, version);
-		qrean_set_qr_errorlevel(qrean, level);
-		qrean_set_qr_maskpattern(qrean, mask);
+	qrean_set_bitmap_scale(&qrean, scale);
+	if (padding) qrean_set_bitmap_padding(&qrean, *padding);
+	if (QREAN_IS_TYPE_QRFAMILY(&qrean)) {
+		qrean_set_qr_version(&qrean, version);
+		qrean_set_qr_errorlevel(&qrean, level);
+		qrean_set_qr_maskpattern(&qrean, mask);
 
-		if (!qrean_check_qr_combination(qrean)) {
+		if (!qrean_check_qr_combination(&qrean)) {
 			fprintf(stderr, "Invalid combination of VERSION/LEVEL/MASK\n");
 			return -1;
 		}
 
-		qrean_set_eci_code(qrean, eci_code);
+		qrean_set_eci_code(&qrean, eci_code);
 	}
 
 	if (save_as == SAVE_AS_DEFAULT) save_as = isatty(fileno(out)) ? SAVE_AS_TXT : SAVE_AS_PNG;
 
-	size_t wrote = qrean_write_buffer(qrean, data, len, data_type);
+	size_t wrote = qrean_write_buffer(&qrean, data, len, data_type);
 	if (!wrote) {
 		fprintf(stderr, "Size exceed or mismatch\n");
 		return -1;
 	}
 
-	size_t width = qrean_get_bitmap_width(qrean);
-	size_t height = qrean_get_bitmap_height(qrean);
+	size_t width = qrean_get_bitmap_width(&qrean);
+	size_t height = qrean_get_bitmap_height(&qrean);
 	size_t size = width * height * 4;
-	image_t *img = new_image(width, height);
 
-	qrean_read_bitmap(qrean, img->buffer, size, 32);
+	CREATE_IMAGE(img, width, height);
+
+	qrean_read_bitmap(&qrean, img.buffer, size, 32);
 
 	switch (save_as) {
 	case SAVE_AS_PNG:
-		image_save_as_png(img, out);
+		image_save_as_png(&img, out);
 		break;
 
 	case SAVE_AS_PPM:
-		image_save_as_ppm(img, out);
+		image_save_as_ppm(&img, out);
 		break;
 
 	default:
@@ -353,12 +354,14 @@ int main(int argc, char *argv[])
 		unsigned int cp = GetConsoleOutputCP();
 		SetConsoleOutputCP(65001);
 #endif
-		qrean_dump(qrean, out);
+		qrean_dump(&qrean, out);
 #ifdef __WIN32
 		SetConsoleOutputCP(cp);
 #endif
 		break;
 	}
+
+	DESTROY_IMAGE(img);
 
 	return 0;
 }

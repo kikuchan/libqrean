@@ -13,46 +13,78 @@
 // #define RINT(x) (x)
 #define RINT(x) round(x)
 
+void image_init(image_t *img, size_t width, size_t height, void *buffer)
+{
+	img->width = width;
+	img->height = height;
+	img->buffer = buffer;
+}
+
+image_pixel_t *new_image_buffer(size_t width, size_t height)
+{
+#ifndef NO_MALLOC
+	return (image_pixel_t *)calloc(width * height, sizeof(image_pixel_t));
+#else
+	return NULL;
+#endif
+}
+
+void image_buffer_free(image_pixel_t *buffer)
+{
+#ifndef NO_MALLOC
+	free(buffer);
+#endif
+}
+
 image_t *new_image(size_t width, size_t height)
 {
+#ifndef NO_MALLOC
 	image_t *img = (image_t *)malloc(sizeof(image_t));
 	if (!img) return NULL;
 
-	img->width = width;
-	img->height = height;
-	img->buffer = (image_pixel_t *)calloc(width * height, sizeof(image_pixel_t));
-	if (!img->buffer) {
+	void *buffer = new_image_buffer(width, height);
+	if (!buffer) {
 		free(img);
 		return NULL;
 	}
+	image_init(img, width, height, buffer);
 
 	return img;
+#else
+	return NULL;
+#endif
 }
 
 void image_free(image_t *img)
 {
-	free(img->buffer);
+#ifndef NO_MALLOC
+	image_buffer_free(img->buffer);
 	free(img);
+#endif
+}
+
+image_t create_image(size_t width, size_t height, void *buffer)
+{
+	image_t img = {};
+	image_init(&img, width, height, buffer);
+	return img;
+}
+
+image_t *image_copy(image_t *dst, image_t *src)
+{
+	memcpy(dst->buffer, src->buffer, src->width * src->height * sizeof(image_pixel_t));
+	return dst;
 }
 
 image_t *image_clone(image_t *img)
 {
+#ifndef NO_MALLOC
 	image_t *clone = new_image(img->width, img->height);
-	if (clone) {
-		memcpy(clone->buffer, img->buffer, img->width * img->height * sizeof(image_pixel_t));
-	}
+	if (clone) image_copy(clone, img);
 	return clone;
-}
-
-image_t *new_image_from_qrean(qrean_t *qrean)
-{
-	size_t width = qrean_get_bitmap_width(qrean);
-	size_t height = qrean_get_bitmap_height(qrean);
-	image_t *img = new_image(width, height);
-	if (img) {
-		qrean_read_bitmap(qrean, img->buffer, width * height * sizeof(img->buffer[0]), sizeof(img->buffer[0]) * 8);
-	}
-	return img;
+#else
+	return NULL;
+#endif
 }
 
 image_point_t create_image_point(float x, float y)
@@ -467,17 +499,17 @@ image_transform_matrix_t create_image_transform_matrix(image_point_t src[4], ima
 
 void image_morphology_erode(image_t *dst)
 {
-	image_t *src = image_clone(dst);
-	for (int y = 0; y < (int)src->height; y++) {
-		for (int x = 0; x < (int)src->width; x++) {
-			image_pixel_t pix = image_read_pixel(src, POINT(x, y));
+	CREATE_IMAGE_BY_CLONE(src, dst);
+	for (int y = 0; y < (int)src.height; y++) {
+		for (int x = 0; x < (int)src.width; x++) {
+			image_pixel_t pix = image_read_pixel(&src, POINT(x, y));
 			if (pix == 0) continue;
 
 			for (int dy = -1; dy <= 1; dy++) {
 				for (int dx = -1; dx <= 1; dx++) {
 					if (dx == 0 && dy == 0) continue;
-					if (x + dx < 0 || y + dy < 0 || x + dx >= (int)src->width || y + dy >= (int)src->height) continue;
-					if (image_read_pixel(src, POINT(x + dx, y + dy)) == 0) {
+					if (x + dx < 0 || y + dy < 0 || x + dx >= (int)src.width || y + dy >= (int)src.height) continue;
+					if (image_read_pixel(&src, POINT(x + dx, y + dy)) == 0) {
 						image_draw_pixel(dst, POINT(x, y), 0);
 						goto next;
 					}
@@ -486,22 +518,22 @@ void image_morphology_erode(image_t *dst)
 		next:;
 		}
 	}
-	image_free(src);
+	DESTROY_IMAGE(src);
 }
 
 void image_morphology_dilate(image_t *dst)
 {
-	image_t *src = image_clone(dst);
-	for (int y = 0; y < (int)src->height; y++) {
-		for (int x = 0; x < (int)src->width; x++) {
-			image_pixel_t pix = image_read_pixel(src, POINT(x, y));
+	CREATE_IMAGE_BY_CLONE(src, dst);
+	for (int y = 0; y < (int)src.height; y++) {
+		for (int x = 0; x < (int)src.width; x++) {
+			image_pixel_t pix = image_read_pixel(&src, POINT(x, y));
 			if (pix != 0) continue;
 
 			for (int dy = -1; dy <= 1; dy++) {
 				for (int dx = -1; dx <= 1; dx++) {
 					if (dx == 0 && dy == 0) continue;
-					if (x + dx < 0 || y + dy < 0 || x + dx >= (int)src->width || y + dy >= (int)src->height) continue;
-					if (image_read_pixel(src, POINT(x + dx, y + dy)) != 0) {
+					if (x + dx < 0 || y + dy < 0 || x + dx >= (int)src.width || y + dy >= (int)src.height) continue;
+					if (image_read_pixel(&src, POINT(x + dx, y + dy)) != 0) {
 						image_draw_pixel(dst, POINT(x, y), PIXEL(255, 255, 255));
 						goto next;
 					}
@@ -510,7 +542,7 @@ void image_morphology_dilate(image_t *dst)
 		next:;
 		}
 	}
-	image_free(src);
+	DESTROY_IMAGE(src);
 }
 
 void image_morphology_close(image_t *dst)

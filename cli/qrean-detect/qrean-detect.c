@@ -19,7 +19,7 @@
 
 #include "image.h"
 
-image_t *img;
+image_t image;
 
 image_t *detected;
 FILE *debug_out;
@@ -113,15 +113,11 @@ static void on_found(qrean_detector_perspective_t *warp, void *opaque)
 	fprintf(out, "%s\n", buffer);
 }
 
-void decode(image_t* img)
-{
-}
-
 void done(pngle_t *pngle)
 {
-	image_t *mono = image_clone(img);
+	CREATE_IMAGE_BY_CLONE(mono, &image);
 
-	image_digitize(mono, img, gamma_value);
+	image_digitize(&mono, &image, gamma_value);
 	// image_morphology_open(mono);
 	// image_morphology_close(mono);
 
@@ -132,23 +128,23 @@ void done(pngle_t *pngle)
 	gettimeofday(&tv, NULL);
 	for (int i = 0; i < n; i++) {
 		int num_candidates;
-		qrean_detector_qr_finder_candidate_t *candidates = qrean_detector_scan_qr_finder_pattern(mono, &num_candidates);
+		qrean_detector_qr_finder_candidate_t *candidates = qrean_detector_scan_qr_finder_pattern(&mono, &num_candidates);
 
 		if (flag_debug) {
-			// detected = image_clone(img);
-			detected = image_clone(mono);
+			// detected = image_clone(&image);
+			detected = image_clone(&mono);
 			for (int i = 0; i < num_candidates; i++) {
 				image_draw_filled_ellipse(detected, candidates[i].center, 5, 5, PIXEL(255, 0, 0));
 				image_draw_extent(detected, candidates[i].extent, PIXEL(255, 0, 0), 1);
 			}
 		}
 
-		found += qrean_detector_try_decode_qr(mono, candidates, num_candidates, on_found, NULL);
-		found += qrean_detector_try_decode_mqr(mono, candidates, num_candidates, on_found, NULL);
-		found += qrean_detector_try_decode_rmqr(mono, candidates, num_candidates, on_found, NULL);
-		found += qrean_detector_try_decode_tqr(mono, candidates, num_candidates, on_found, NULL);
+		found += qrean_detector_try_decode_qr(&mono, candidates, num_candidates, on_found, NULL);
+		found += qrean_detector_try_decode_mqr(&mono, candidates, num_candidates, on_found, NULL);
+		found += qrean_detector_try_decode_rmqr(&mono, candidates, num_candidates, on_found, NULL);
+		found += qrean_detector_try_decode_tqr(&mono, candidates, num_candidates, on_found, NULL);
 
-		found += qrean_detector_scan_barcodes(mono, on_found, NULL);
+		found += qrean_detector_scan_barcodes(&mono, on_found, NULL);
 	}
 	gettimeofday(&tv2, NULL);
 
@@ -160,6 +156,8 @@ void done(pngle_t *pngle)
 		fprintf(stderr, "Not found\n");
 	}
 	if (debug_out) image_save_as_png(detected, debug_out);
+
+	DESTROY_IMAGE(mono);
 }
 
 void draw_pixel(pngle_t *pngle, uint32_t x, uint32_t y, uint32_t w, uint32_t h, const uint8_t rgba[4])
@@ -168,14 +166,15 @@ void draw_pixel(pngle_t *pngle, uint32_t x, uint32_t y, uint32_t w, uint32_t h, 
 	uint8_t g = rgba[1];
 	uint8_t b = rgba[2];
 
-	image_draw_pixel(img, POINT(x, y), PIXEL(r, g, b));
+	image_draw_pixel(&image, POINT(x, y), PIXEL(r, g, b));
 }
 
 void init_screen(pngle_t *pngle, uint32_t w, uint32_t h)
 {
 	W = w;
 	H = h;
-	img = new_image(W, H);
+
+	image_init(&image, W, H, calloc(W * H, sizeof(image_pixel_t)));
 }
 
 const char *progname;
