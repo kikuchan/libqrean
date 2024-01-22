@@ -16,7 +16,7 @@
 </div>
 <canvas id="canvas" width=600 height=400></canvas><br />
 <div>
-<label><input id="digitize" type="checkbox" />Show digitized</label>
+<label><input id="digitize" type="checkbox" checked />Show digitized</label>
 / Gamma <input id="gamma" size="5" type="number" value="1.0" />
 </div>
 <select id="seleci"></select><br>
@@ -91,7 +91,9 @@ if (set && set.length == 4) {
   seleci.value = set[3];
 }
 
-const qrean = await Qrean.create(true);
+const qrean = await Qrean.create({
+  // debug: true,
+});
 
 seltype.oninput = seldatatype.oninput = intext.oninput = () => {
   divimg.innerHTML = "";
@@ -152,7 +154,7 @@ file.onchange = (e) => {
     try {
       decodeResult.value = '';
       const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      qrean.detect(img, (type, result) => {
+      const result = qrean.detect(img, (type, result) => {
         decodeResult.value += type + ": " + result + "\n";
       }, {
         gamma: gamma.value,
@@ -164,7 +166,7 @@ file.onchange = (e) => {
         ctx.putImageData(img, 0, 0);
       }
     } catch (e) {
-      // console.error(e);
+      console.error(e);
     }
   };
   img.src = url;
@@ -184,7 +186,7 @@ function tick() {
     try {
       decodeResult.value = '';
       const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      qrean.detect(img, (type, result) => {
+      const result = qrean.detect(img, (type, result) => {
         decodeResult.value += type + ": " + result + "\n";
       }, {
         gamma: gamma.value,
@@ -196,7 +198,7 @@ function tick() {
         ctx.putImageData(img, 0, 0);
       }
     } catch (e) {
-      // console.error(e);
+      console.error(e);
     }
   }
 

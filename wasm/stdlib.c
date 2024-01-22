@@ -1,15 +1,6 @@
 #include "stdint.h"
 #include "tinymm.h"
 
-#define MEM_SIZE (10 * 1024 * 1024)
-
-#define MEM_TOP (256 * 1024)
-#define N_ENTRIES 1000
-
-void memreset() {
-  tinymm_init((void*)MEM_TOP, MEM_SIZE - MEM_TOP, N_ENTRIES);
-}
-
 void* malloc(unsigned long len) {
   return tinymm_malloc(len);
 }
@@ -32,5 +23,7 @@ void* memcpy(void* p1, const void* p2, unsigned long len) {
 }
 
 void* calloc(unsigned long len, unsigned long size) {
-  return malloc(len * size);
+  void *ptr = malloc(len * size);
+  if (ptr) memset(ptr, 0, len * size);
+  return ptr;
 }

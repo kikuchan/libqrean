@@ -1,17 +1,22 @@
 import wasmbin from "../build/wasm/qrean.wasm.js";
 
-export const setText = (mem: Uint8ClampedArray, idx: number, s: string) => {
-  const sbin = new TextEncoder().encode(s + "\0");
-  mem.set(sbin, idx);
+const toCString = (s: string) => {
+  return new TextEncoder().encode(s + "\0");
 };
 
-export const getText = (mem: Uint8ClampedArray, idx: number) => {
+const fromCString = (memory: WebAssembly.Memory, idx: number) => {
+  const mem = new Uint8ClampedArray(memory.buffer);
   for (let i = 0;; i++) {
     if (mem[idx + i] == 0) {
       const s = new TextDecoder().decode(mem.slice(idx, idx + i));
       return s;
     }
   }
+};
+
+type CreateOptions = {
+  pageSize?: number;
+  debug?: boolean;
 };
 
 type EncodeOptions = {
@@ -21,22 +26,33 @@ type EncodeOptions = {
   qr_maskpattern?: keyof typeof Qrean.QR_MASKPATTERNS;
   qr_errorlevel?: keyof typeof Qrean.QR_ERRORLEVELS;
   scale?: number;
-  padding?: number;
+  padding?: number[];
 };
 
 type DetectOptions = {
   gamma?: number;
-  digitized?: Uint8ClampedArray;
   eci_code?: 'UTF-8' | 'ShiftJIS' | 'Latin1';
+  outbuf_size?: number;
+  digitized?: Uint8ClampedArray;
 };
+
+type Image = {
+  width: number;
+  height: number;
+  data: Uint8ClampedArray;
+}
 
 export class Qrean {
   wasm: WebAssembly.WebAssemblyInstantiatedSource;
   on_found?: (type: string, str: string) => void;
+  heap: number;
 
-  static async create(debug?: boolean) {
-    let memory: WebAssembly.ExportValue;
+  memory: WebAssembly.Memory;
+
+  static async create(opts: CreateOptions = {}) {
+    let memory: WebAssembly.Memory;
     let obj: Qrean;
+
     const importObject = {
       env: {
         atan2: (y: number, x: number) => Math.atan2(y, x),
@@ -48,29 +64,41 @@ export class Qrean {
         roundf: (f: number) => Math.round(f),
 
         on_found: function (type: number, ptr: number) {
-          const result = getText(new Uint8ClampedArray((memory as WebAssembly.Memory).buffer), ptr);
+          const result = fromCString(memory, ptr);
           const typestr = Object.entries(Qrean.CODE_TYPES).find(([_, v]) => v == type)?.[0] ?? 'Unknown';
           if (obj.on_found) obj.on_found.call(obj, typestr, result);
         },
 
         debug: function (ptr: number) {
-          const result = getText(new Uint8ClampedArray((memory as WebAssembly.Memory).buffer), ptr);
+          const result = fromCString(memory, ptr);
           console.log("DEBUG:", result);
         },
       },
     };
-    const wasm = await WebAssembly.instantiate(wasmbin, importObject);
-    memory = wasm.instance.exports.memory;
 
-    if (debug) {
+    const wasm = await WebAssembly.instantiate(wasmbin, importObject);
+
+    memory = wasm.instance.exports.memory as WebAssembly.Memory;
+
+    if (opts.debug) {
       (wasm.instance.exports as any).enable_debug();
     }
 
-    return obj = new Qrean(wasm);
+    return (obj = new Qrean(wasm, memory, opts.pageSize ?? 100));
   }
 
-  private constructor(wasm: WebAssembly.WebAssemblyInstantiatedSource) {
+  private constructor(wasm: WebAssembly.WebAssemblyInstantiatedSource, memory: WebAssembly.Memory, pageSize: number) {
     this.wasm = wasm;
+    this.memory = memory;
+    this.heap = (wasm.instance.exports.__heap_base as WebAssembly.Global).value;
+    this.memory.grow(pageSize);
+  }
+
+  memreset() {
+    const exp: any = this.wasm.instance.exports;
+
+    new Uint8ClampedArray(this.memory.buffer).fill(0, this.heap);
+    exp.tinymm_init(this.heap, this.memory.buffer.byteLength - this.heap, 100);
   }
 
   // type
@@ -317,77 +345,118 @@ export class Qrean {
   };
 
   encode(text: string, opts: EncodeOptions | keyof typeof Qrean.CODE_TYPES = {}) {
+    this.memreset();
+
     if (typeof opts == 'string') {
       opts = { code_type: opts };
     }
 
     const exp: any = this.wasm.instance.exports;
-    exp.memreset();
-    const view = new DataView((exp.memory as WebAssembly.Memory).buffer);
-    const mem = new Uint8ClampedArray((exp.memory as WebAssembly.Memory).buffer);
+    const view = new DataView(this.memory.buffer);
+    const mem = new Uint8ClampedArray(this.memory.buffer);
 
-    setText(mem, exp.inputbuf.value, text);
+    const cstr = toCString(text);
+    const text_ptr = exp.malloc(cstr.byteLength);
+    mem.set(cstr, text_ptr);
 
-    const pimage = exp.encode(
+    const opts_ptr = exp.malloc(16 * 4);
+
+    const optsbuf = [
       Qrean.CODE_TYPES[opts.code_type ?? Qrean.CODE_TYPE_QR],
       Qrean.DATA_TYPES[opts.data_type ?? Qrean.DATA_TYPE_AUTO],
       Qrean.QR_ERRORLEVELS[opts.qr_errorlevel ?? Qrean.QR_ERRORLEVEL_M],
       Qrean.QR_VERSIONS[opts.qr_version ?? Qrean.QR_VERSION_AUTO],
       Qrean.QR_MASKPATTERNS[opts.qr_maskpattern ?? Qrean.QR_MASKPATTERN_AUTO],
-      opts.padding || 0,
+      opts.padding?.[0] ?? -1,
+      opts.padding?.[1] ?? -1,
+      opts.padding?.[2] ?? -1,
+      opts.padding?.[3] ?? -1,
       opts.scale || 4,
+    ];
+    for (let i = 0; i < optsbuf.length; i++) {
+      view.setUint32(opts_ptr + i * 4, optsbuf[i], true);
+    }
+
+    const result = exp.encode(
+      text_ptr,
+      opts_ptr,
     );
 
-    if (!pimage) {
+    if (!result) {
       return null;
     }
 
-    const pbuf = view.getUint32(pimage + 0, true);
-    const width = view.getUint32(pimage + 4, true);
-    const height = view.getUint32(pimage + 8, true);
-    const plen = width * height * 4;
+    const imgdata = this.readImage(result);
 
-    const imgdata: ImageData = {
-      width,
-      height,
-      colorSpace: 'srgb',
-      data: mem.slice(pbuf, pbuf + plen),
-    };
+    exp.free(result);
+
     return imgdata;
   }
 
-  detect(imgdata: ImageData, callback: (type: string, str: string) => void, opts: DetectOptions = {}) {
+  private allocImage(img: Image): number {
+    const exp: any = this.wasm.instance.exports;
+    const view = new DataView(this.memory.buffer);
+    const mem = new Uint8Array(this.memory.buffer);
+
+    const ptr = exp.malloc(12 + img.width * img.height * 4);
+    const imgbuf = ptr + 12;
+    view.setUint32(ptr + 0, img.width, true);
+    view.setUint32(ptr + 4, img.height, true);
+    view.setUint32(ptr + 8, imgbuf, true);
+    mem.set(img.data, imgbuf);
+
+    return ptr;
+  }
+
+  private readImage(ptr: number): Image {
+    const view = new DataView(this.memory.buffer);
+    const mem = new Uint8ClampedArray(this.memory.buffer);
+
+    const width = view.getUint32(ptr + 0, true);
+    const height = view.getUint32(ptr + 4, true);
+    const imgbuf = view.getUint32(ptr + 8, true);
+
+    return {
+      width,
+      height,
+      data: mem.slice(imgbuf, imgbuf + width * height * 4),
+    };
+  }
+
+  detect(imgdata: Image, callback: (type: string, str: string) => void, opts: DetectOptions = {}) {
+    this.memreset();
+
     const gamma_value = opts.gamma ?? 1.0;
     const exp: any = this.wasm.instance.exports;
-    exp.memreset();
-    const view = new DataView((exp.memory as WebAssembly.Memory).buffer);
-    const mem = new Uint8Array((exp.memory as WebAssembly.Memory).buffer);
 
-    const pimage = exp.imagebuf.value as number;
-    const pbuf = pimage + 12;
-    const width = imgdata.width;
-    const height = imgdata.height;
+    const outbuf_size = opts.outbuf_size ?? 1024;
+    const outbuf_ptr = exp.malloc(outbuf_size);
 
-    view.setUint32(pimage + 0, pbuf, true);
-    view.setUint32(pimage + 4, width, true);
-    view.setUint32(pimage + 8, height, true);
-    mem.set(imgdata.data, pbuf);
+    const image_ptr = this.allocImage(imgdata);
 
     this.on_found = callback;
-    const r = exp.detect(
+    const detected: number = exp.detect(
+      outbuf_ptr,
+      outbuf_size,
+      image_ptr,
       gamma_value,
       Qrean.QR_ECI_CODES[opts.eci_code ?? Qrean.QR_ECI_CODE_LATIN1],
     );
     this.on_found = undefined;
 
-    // write back
+    const digitized = this.readImage(image_ptr);
     if (opts.digitized) {
-      const mono = mem.slice(pbuf, pbuf + width * height * 4);
-      for (let i = 0; i < width * height * 4; i++) {
-          opts.digitized[i] = i % 4 == 3 ? 0xff : mono[i];
+      for (let i = 0; i < digitized.width * digitized.height * 4; i++) {
+        opts.digitized[i] = i % 4 == 3 ? 0xff : digitized.data[i];
       }
     }
 
-    return r;
+    exp.free(image_ptr);
+    exp.free(outbuf_ptr);
+
+    return {
+      detected,
+      digitized,
+    }
   }
 }

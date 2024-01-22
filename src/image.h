@@ -56,7 +56,8 @@ void image_init(image_t *img, size_t width, size_t height, void *buffer);
 #ifdef NO_MALLOC
 // stack version
 #define CREATE_IMAGE(name, width, height) \
-	image_pixel_t _##name##__buffer[(width) * (height)] = {}; \
+	image_pixel_t _##name##__buffer[(width) * (height)]; \
+	memset(_##name##__buffer, 0, sizeof(_##name##__buffer)); \
 	image_t name = create_image((width), (height), _##name##__buffer);
 
 #define DESTROY_IMAGE(name) (void)(name);

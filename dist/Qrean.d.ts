@@ -1,5 +1,7 @@
-export declare const setText: (mem: Uint8ClampedArray, idx: number, s: string) => void;
-export declare const getText: (mem: Uint8ClampedArray, idx: number) => string;
+type CreateOptions = {
+    pageSize?: number;
+    debug?: boolean;
+};
 type EncodeOptions = {
     code_type?: keyof typeof Qrean.CODE_TYPES;
     data_type?: keyof typeof Qrean.DATA_TYPES;
@@ -7,18 +9,27 @@ type EncodeOptions = {
     qr_maskpattern?: keyof typeof Qrean.QR_MASKPATTERNS;
     qr_errorlevel?: keyof typeof Qrean.QR_ERRORLEVELS;
     scale?: number;
-    padding?: number;
+    padding?: number[];
 };
 type DetectOptions = {
     gamma?: number;
-    digitized?: Uint8ClampedArray;
     eci_code?: 'UTF-8' | 'ShiftJIS' | 'Latin1';
+    outbuf_size?: number;
+    digitized?: Uint8ClampedArray;
+};
+type Image = {
+    width: number;
+    height: number;
+    data: Uint8ClampedArray;
 };
 export declare class Qrean {
     wasm: WebAssembly.WebAssemblyInstantiatedSource;
     on_found?: (type: string, str: string) => void;
-    static create(debug?: boolean): Promise<Qrean>;
+    heap: number;
+    memory: WebAssembly.Memory;
+    static create(opts?: CreateOptions): Promise<Qrean>;
     private constructor();
+    memreset(): void;
     static CODE_TYPE_QR: "QR";
     static CODE_TYPE_MQR: "mQR";
     static CODE_TYPE_RMQR: "rMQR";
@@ -251,7 +262,12 @@ export declare class Qrean {
         ShiftJIS: 20;
         "UTF-8": 26;
     };
-    encode(text: string, opts?: EncodeOptions | keyof typeof Qrean.CODE_TYPES): ImageData;
-    detect(imgdata: ImageData, callback: (type: string, str: string) => void, opts?: DetectOptions): any;
+    encode(text: string, opts?: EncodeOptions | keyof typeof Qrean.CODE_TYPES): Image;
+    private allocImage;
+    private readImage;
+    detect(imgdata: Image, callback: (type: string, str: string) => void, opts?: DetectOptions): {
+        detected: number;
+        digitized: Image;
+    };
 }
 export {};
