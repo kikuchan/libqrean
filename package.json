@@ -1,7 +1,7 @@
 {
   "name": "qrean",
   "type": "module",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A portable QR and Barcode generation / manipulation library written in C",
   "module": "./dist/Qrean.js",
   "types": "./dist/Qrean.d.ts",
