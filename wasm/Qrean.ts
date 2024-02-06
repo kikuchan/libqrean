@@ -20,11 +20,11 @@ type CreateOptions = {
 };
 
 type EncodeOptions = {
-  code_type?: keyof typeof Qrean.CODE_TYPES;
-  data_type?: keyof typeof Qrean.DATA_TYPES;
-  qr_version?: keyof typeof Qrean.QR_VERSIONS;
-  qr_maskpattern?: keyof typeof Qrean.QR_MASKPATTERNS;
-  qr_errorlevel?: keyof typeof Qrean.QR_ERRORLEVELS;
+  codeType?: keyof typeof Qrean.CODE_TYPES;
+  dataType?: keyof typeof Qrean.DATA_TYPES;
+  qrVersion?: keyof typeof Qrean.QR_VERSIONS;
+  qrMaskPattern?: keyof typeof Qrean.QR_MASKPATTERNS;
+  qrErrorLevel?: keyof typeof Qrean.QR_ERRORLEVELS;
   scale?: number;
   padding?: number[];
 };
@@ -36,23 +36,25 @@ type DetectOptions = {
   digitized?: Uint8ClampedArray;
 };
 
-type Image = {
+export type Image = {
   width: number;
   height: number;
   data: Uint8ClampedArray;
 }
 
 export class Qrean {
-  wasm: WebAssembly.WebAssemblyInstantiatedSource;
-  on_found?: (type: string, str: string) => void;
-  heap: number;
+  private wasm: Promise<WebAssembly.WebAssemblyInstantiatedSource>;
+  private on_found?: (type: string, str: string) => void;
 
-  memory: WebAssembly.Memory;
+  private instance!: WebAssembly.Instance;
+  private heap!: number;
+  private memory!: WebAssembly.Memory;
 
   static async create(opts: CreateOptions = {}) {
-    let memory: WebAssembly.Memory;
-    let obj: Qrean;
+    return new Qrean(opts);
+  }
 
+  constructor(opts: CreateOptions = {}) {
     const importObject = {
       env: {
         atan2: (y: number, x: number) => Math.atan2(y, x),
@@ -63,39 +65,36 @@ export class Qrean {
         round: (f: number) => Math.round(f),
         roundf: (f: number) => Math.round(f),
 
-        on_found: function (type: number, ptr: number) {
-          const result = fromCString(memory, ptr);
+        on_found: (type: number, ptr: number) => {
+          const result = fromCString(this.memory, ptr);
           const typestr = Object.entries(Qrean.CODE_TYPES).find(([_, v]) => v == type)?.[0] ?? 'Unknown';
-          if (obj.on_found) obj.on_found.call(obj, typestr, result);
+          if (this.on_found) this.on_found.call(this, typestr, result);
         },
 
-        debug: function (ptr: number) {
-          const result = fromCString(memory, ptr);
+        debug: (ptr: number) => {
+          const result = fromCString(this.memory, ptr);
           console.log("DEBUG:", result);
         },
       },
     };
 
-    const wasm = await WebAssembly.instantiate(wasmbin, importObject);
+    this.wasm = WebAssembly.instantiate(wasmbin, importObject).then(wasm => {
+      this.instance = wasm.instance;
+      this.memory = wasm.instance.exports.memory as WebAssembly.Memory;
+      this.memory.grow(opts.pageSize ?? 100);
+      this.heap = (wasm.instance.exports.__heap_base as WebAssembly.Global).value;
 
-    memory = wasm.instance.exports.memory as WebAssembly.Memory;
-
-    if (opts.debug) {
-      (wasm.instance.exports as any).enable_debug();
-    }
-
-    return (obj = new Qrean(wasm, memory, opts.pageSize ?? 100));
+      if (opts.debug) {
+        (wasm.instance.exports as any).enable_debug();
+      }
+      return wasm;
+    });
   }
 
-  private constructor(wasm: WebAssembly.WebAssemblyInstantiatedSource, memory: WebAssembly.Memory, pageSize: number) {
-    this.wasm = wasm;
-    this.memory = memory;
-    this.heap = (wasm.instance.exports.__heap_base as WebAssembly.Global).value;
-    this.memory.grow(pageSize);
-  }
+  private async init() {
+    await this.wasm;
 
-  memreset() {
-    const exp: any = this.wasm.instance.exports;
+    const exp: any = this.instance.exports;
 
     new Uint8ClampedArray(this.memory.buffer).fill(0, this.heap);
     exp.tinymm_init(this.heap, this.memory.buffer.byteLength - this.heap, 100);
@@ -344,14 +343,14 @@ export class Qrean {
     [Qrean.QR_ECI_CODE_UTF8]: 26 as const,
   };
 
-  encode(text: string, opts: EncodeOptions | keyof typeof Qrean.CODE_TYPES = {}) {
-    this.memreset();
+  async encode(text: string, opts: EncodeOptions | keyof typeof Qrean.CODE_TYPES = {}) {
+    await this.init();
 
     if (typeof opts == 'string') {
-      opts = { code_type: opts };
+      opts = { codeType: opts };
     }
 
-    const exp: any = this.wasm.instance.exports;
+    const exp: any = this.instance.exports;
     const view = new DataView(this.memory.buffer);
     const mem = new Uint8ClampedArray(this.memory.buffer);
 
@@ -362,11 +361,11 @@ export class Qrean {
     const opts_ptr = exp.malloc(16 * 4);
 
     const optsbuf = [
-      Qrean.CODE_TYPES[opts.code_type ?? Qrean.CODE_TYPE_QR],
-      Qrean.DATA_TYPES[opts.data_type ?? Qrean.DATA_TYPE_AUTO],
-      Qrean.QR_ERRORLEVELS[opts.qr_errorlevel ?? Qrean.QR_ERRORLEVEL_M],
-      Qrean.QR_VERSIONS[opts.qr_version ?? Qrean.QR_VERSION_AUTO],
-      Qrean.QR_MASKPATTERNS[opts.qr_maskpattern ?? Qrean.QR_MASKPATTERN_AUTO],
+      Qrean.CODE_TYPES[opts.codeType ?? Qrean.CODE_TYPE_QR],
+      Qrean.DATA_TYPES[opts.dataType ?? Qrean.DATA_TYPE_AUTO],
+      Qrean.QR_ERRORLEVELS[opts.qrErrorLevel ?? Qrean.QR_ERRORLEVEL_M],
+      Qrean.QR_VERSIONS[opts.qrVersion ?? Qrean.QR_VERSION_AUTO],
+      Qrean.QR_MASKPATTERNS[opts.qrMaskPattern ?? Qrean.QR_MASKPATTERN_AUTO],
       opts.padding?.[0] ?? -1,
       opts.padding?.[1] ?? -1,
       opts.padding?.[2] ?? -1,
@@ -383,7 +382,7 @@ export class Qrean {
     );
 
     if (!result) {
-      return null;
+      return false;
     }
 
     const imgdata = this.readImage(result);
@@ -394,7 +393,7 @@ export class Qrean {
   }
 
   private allocImage(img: Image): number {
-    const exp: any = this.wasm.instance.exports;
+    const exp: any = this.instance.exports;
     const view = new DataView(this.memory.buffer);
     const mem = new Uint8Array(this.memory.buffer);
 
@@ -423,11 +422,11 @@ export class Qrean {
     };
   }
 
-  detect(imgdata: Image, callback: (type: string, str: string) => void, opts: DetectOptions = {}) {
-    this.memreset();
+  async detect(imgdata: Image, callback: (type: string, str: string) => void, opts: DetectOptions = {}) {
+    await this.init();
 
     const gamma_value = opts.gamma ?? 1.0;
-    const exp: any = this.wasm.instance.exports;
+    const exp: any = this.instance.exports;
 
     const outbuf_size = opts.outbuf_size ?? 1024;
     const outbuf_ptr = exp.malloc(outbuf_size);

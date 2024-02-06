@@ -91,13 +91,13 @@ if (set && set.length == 4) {
   seleci.value = set[3];
 }
 
-const qrean = await Qrean.create({
+const qrean = new Qrean({
   // debug: true,
 });
 
-seltype.oninput = seldatatype.oninput = intext.oninput = () => {
+seltype.oninput = seldatatype.oninput = intext.oninput = async () => {
   divimg.innerHTML = "";
-  const imgd = qrean.encode(intext.value, {
+  const imgd = await qrean.encode(intext.value, {
     code_type: seltype.value,
     data_type: seldatatype.value
   });
@@ -141,7 +141,7 @@ file.onchange = (e) => {
   const url = URL.createObjectURL(f);
   const img = new Image();
 
-  img.onload = function() {
+  img.onload = async function() {
     URL.revokeObjectURL(img.src);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -154,7 +154,7 @@ file.onchange = (e) => {
     try {
       decodeResult.value = '';
       const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const result = qrean.detect(img, (type, result) => {
+      const result = await qrean.detect(img, (type, result) => {
         decodeResult.value += type + ": " + result + "\n";
       }, {
         gamma: gamma.value,
@@ -173,7 +173,7 @@ file.onchange = (e) => {
   file.value = '';
 };
 
-function tick() {
+async function tick() {
   if (!recording) return;
 
   if (video.readyState === video.HAVE_ENOUGH_DATA) {
@@ -186,7 +186,7 @@ function tick() {
     try {
       decodeResult.value = '';
       const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const result = qrean.detect(img, (type, result) => {
+      const result = await qrean.detect(img, (type, result) => {
         decodeResult.value += type + ": " + result + "\n";
       }, {
         gamma: gamma.value,

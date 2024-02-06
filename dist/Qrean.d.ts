@@ -3,11 +3,11 @@ type CreateOptions = {
     debug?: boolean;
 };
 type EncodeOptions = {
-    code_type?: keyof typeof Qrean.CODE_TYPES;
-    data_type?: keyof typeof Qrean.DATA_TYPES;
-    qr_version?: keyof typeof Qrean.QR_VERSIONS;
-    qr_maskpattern?: keyof typeof Qrean.QR_MASKPATTERNS;
-    qr_errorlevel?: keyof typeof Qrean.QR_ERRORLEVELS;
+    codeType?: keyof typeof Qrean.CODE_TYPES;
+    dataType?: keyof typeof Qrean.DATA_TYPES;
+    qrVersion?: keyof typeof Qrean.QR_VERSIONS;
+    qrMaskPattern?: keyof typeof Qrean.QR_MASKPATTERNS;
+    qrErrorLevel?: keyof typeof Qrean.QR_ERRORLEVELS;
     scale?: number;
     padding?: number[];
 };
@@ -17,19 +17,20 @@ type DetectOptions = {
     outbuf_size?: number;
     digitized?: Uint8ClampedArray;
 };
-type Image = {
+export type Image = {
     width: number;
     height: number;
     data: Uint8ClampedArray;
 };
 export declare class Qrean {
-    wasm: WebAssembly.WebAssemblyInstantiatedSource;
-    on_found?: (type: string, str: string) => void;
-    heap: number;
-    memory: WebAssembly.Memory;
+    private wasm;
+    private on_found?;
+    private instance;
+    private heap;
+    private memory;
     static create(opts?: CreateOptions): Promise<Qrean>;
-    private constructor();
-    memreset(): void;
+    constructor(opts?: CreateOptions);
+    private init;
     static CODE_TYPE_QR: "QR";
     static CODE_TYPE_MQR: "mQR";
     static CODE_TYPE_RMQR: "rMQR";
@@ -262,12 +263,12 @@ export declare class Qrean {
         ShiftJIS: 20;
         "UTF-8": 26;
     };
-    encode(text: string, opts?: EncodeOptions | keyof typeof Qrean.CODE_TYPES): Image;
+    encode(text: string, opts?: EncodeOptions | keyof typeof Qrean.CODE_TYPES): Promise<false | Image>;
     private allocImage;
     private readImage;
-    detect(imgdata: Image, callback: (type: string, str: string) => void, opts?: DetectOptions): {
+    detect(imgdata: Image, callback: (type: string, str: string) => void, opts?: DetectOptions): Promise<{
         detected: number;
         digitized: Image;
-    };
+    }>;
 }
 export {};
