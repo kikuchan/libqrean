@@ -66,9 +66,6 @@ label {
 
 <script type="module">
 import { Qrean } from "../dist/Qrean.js";
-import { PNG } from "https://code4fukui.github.io/PNG/PNG.js";
-import { encodeData } from "https://code4fukui.github.io/dataencoder/encodeData.js";
-import { removeHash } from "https://js.sabae.cc/removeHash.js";
 
 const setsel = (sel, types) => {
   for (const name in types) {
@@ -91,6 +88,20 @@ if (set && set.length == 4) {
   seleci.value = set[3];
 }
 
+function imageToDataURI(img) {
+  if (!img) return '';
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  const imageData = ctx.createImageData(img.width, img.height);
+  imageData.data.set(img.data);
+  canvas.width = img.width;
+  canvas.height = img.height;
+  ctx.putImageData(imageData, 0, 0);
+
+  return canvas.toDataURL();
+}
+
+
 const qrean = new Qrean({
   // debug: true,
 });
@@ -100,20 +111,19 @@ seltype.oninput = seldatatype.oninput = intext.oninput = async () => {
   const imgd = await qrean.encode(intext.value, {
     codeType: seltype.value,
     dataType: seldatatype.value
-  });
+  }).then(imageToDataURI);
   if (!imgd) {
     console.log("ERROR");
     return;
   }
 
-  const png = PNG.encode(imgd);
   const img = new Image();
-  img.src = encodeData("image/png", png);
+  img.src = imgd;
   divimg.appendChild(img);
 
   const set = `${encodeURIComponent(intext.value)},${seltype.value},${seldatatype.value},${seleci.value}`;
   if (set == defaultset) {
-    removeHash();
+    location.hash = '';
   } else {
     location.hash = set;
   }
@@ -121,7 +131,7 @@ seltype.oninput = seldatatype.oninput = intext.oninput = async () => {
 seleci.oninput = () => {
   const set = `${encodeURIComponent(intext.value)},${seltype.value},${seldatatype.value},${seleci.value}`;
   if (set == defaultset) {
-    removeHash();
+    location.hash = '';
   } else {
     location.hash = set;
   }
