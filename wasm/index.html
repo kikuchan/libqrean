@@ -98,8 +98,8 @@ const qrean = new Qrean({
 seltype.oninput = seldatatype.oninput = intext.oninput = async () => {
   divimg.innerHTML = "";
   const imgd = await qrean.encode(intext.value, {
-    code_type: seltype.value,
-    data_type: seldatatype.value
+    codeType: seltype.value,
+    dataType: seldatatype.value
   });
   if (!imgd) {
     console.log("ERROR");
@@ -154,15 +154,15 @@ file.onchange = (e) => {
     try {
       decodeResult.value = '';
       const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const result = await qrean.detect(img, (type, result) => {
+      const { digitized } = await qrean.detect(img, (type, result) => {
         decodeResult.value += type + ": " + result + "\n";
       }, {
         gamma: gamma.value,
-        digitized: img.data,
-        eci_code: seleci.value,
+        eciCode: seleci.value,
       });
 
       if (digitize.checked) {
+        img.data.set(digitized.data);
         ctx.putImageData(img, 0, 0);
       }
     } catch (e) {
@@ -186,15 +186,15 @@ async function tick() {
     try {
       decodeResult.value = '';
       const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const result = await qrean.detect(img, (type, result) => {
+      const { digitized } = await qrean.detect(img, (type, result) => {
         decodeResult.value += type + ": " + result + "\n";
       }, {
         gamma: gamma.value,
-        digitized: img.data,
-        eci_code: seleci.value,
+        eciCode: seleci.value,
       });
 
       if (digitize.checked) {
+        img.data.set(digitized.data);
         ctx.putImageData(img, 0, 0);
       }
     } catch (e) {

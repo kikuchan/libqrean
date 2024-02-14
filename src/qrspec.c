@@ -324,7 +324,7 @@ uint_fast8_t qrspec_get_data_bitlength_for(qr_version_t version, int mode)
 
 uint_fast8_t qrspec_get_symbol_width(qr_version_t version)
 {
-	if (version == QR_VERSION_AUTO) version = QR_VERSION_40;
+	if (IS_AUTO(version)) version = QR_VERSION_40; 
 	if (IS_QR(version)) {
 		return 21 + (version - QR_VERSION_1) * 4;
 #ifndef NO_MQR
@@ -347,7 +347,7 @@ uint_fast8_t qrspec_get_symbol_width(qr_version_t version)
 
 uint_fast8_t qrspec_get_symbol_height(qr_version_t version)
 {
-	if (version == QR_VERSION_AUTO) version = QR_VERSION_40;
+	if (IS_AUTO(version)) version = QR_VERSION_40; 
 	if (IS_QR(version)) {
 		return 21 + (version - QR_VERSION_1) * 4;
 #ifndef NO_MQR
@@ -370,13 +370,13 @@ uint_fast8_t qrspec_get_symbol_height(qr_version_t version)
 
 uint_fast8_t qrspec_get_alignment_num(qr_version_t version)
 {
-	if (version <= QR_VERSION_AUTO) {
+	if (IS_AUTO(version) || version < 0) {
 		qrean_error("Invalid version is specified");
 		return 0;
 	}
 
 	if (QR_VERSION_2 <= version && version <= QR_VERSION_40) {
-		int N = version / 7 + 2;
+		int N = (version - QR_VERSION_1 + 1) / 7 + 2;
 		return N * N - 3;
 	}
 
@@ -399,9 +399,10 @@ uint_fast8_t qrspec_get_alignment_steps(qr_version_t version, uint_fast8_t step)
 	}
 #endif
 
-	uint_fast8_t N = version / 7 + 2;
-	uint_fast8_t r = ((((version + 1) * 8 / (N - 1)) + 3) / 4) * 2 * (N - step - 1);
-	uint_fast8_t v4 = version * 4;
+	// QR
+	uint_fast8_t N = (version - QR_VERSION_1 + 1) / 7 + 2;
+	uint_fast8_t r = (((((version - QR_VERSION_1 + 1) + 1) * 8 / (N - 1)) + 3) / 4) * 2 * (N - step - 1);
+	uint_fast8_t v4 = (version - QR_VERSION_1 + 1) * 4;
 
 	if (step >= N) return 0;
 
@@ -411,7 +412,7 @@ uint_fast8_t qrspec_get_alignment_steps(qr_version_t version, uint_fast8_t step)
 uint_fast8_t qrspec_get_alignment_position_x(qr_version_t version, uint_fast8_t idx)
 {
 	if (IS_QR(version)) {
-		int N = version / 7 + 2;
+		int N = (version - QR_VERSION_1 + 1) / 7 + 2;
 		int xidx = (idx + 1) < (N - 1) * 1 ? (idx + 1) % N : (idx + 2) < (N - 1) * N ? (idx + 2) % N : (idx + 3) % N;
 		return qrspec_get_alignment_steps(version, xidx);
 	}
@@ -426,7 +427,7 @@ uint_fast8_t qrspec_get_alignment_position_x(qr_version_t version, uint_fast8_t 
 uint_fast8_t qrspec_get_alignment_position_y(qr_version_t version, uint_fast8_t idx)
 {
 	if (IS_QR(version)) {
-		int N = version / 7 + 2;
+		int N = (version - QR_VERSION_1 + 1) / 7 + 2;
 		int yidx = (idx + 1) < (N - 1) * 1 ? (idx + 1) / N : (idx + 2) < (N - 1) * N ? (idx + 2) / N : (idx + 3) / N;
 		return qrspec_get_alignment_steps(version, yidx);
 	}
@@ -445,10 +446,10 @@ size_t qrspec_get_available_bits(qr_version_t version)
 
 	if (IS_QR(version)) {
 		size_t finder_pattern = 8 * 8 * 3;
-		size_t N = version > 1 ? (version / 7) + 2 : 0; // alignment_pattern_addr[version - 1][0];
-		size_t alignment_pattern = version > 1 ? 5 * 5 * (N * N - 3) : 0;
-		size_t timing_pattern = (symbol_width - 8 * 2 - (version > 1 ? 5 * (N - 2) : 0)) * 2;
-		size_t version_info = version >= 7 ? 6 * 3 * 2 : 0;
+		size_t N = version > QR_VERSION_1 ? ((version - QR_VERSION_1 + 1) / 7) + 2 : 0; // alignment_pattern_addr[version - 1][0];
+		size_t alignment_pattern = version > QR_VERSION_1 ? 5 * 5 * (N * N - 3) : 0;
+		size_t timing_pattern = (symbol_width - 8 * 2 - (version > QR_VERSION_1 ? 5 * (N - 2) : 0)) * 2;
+		size_t version_info = version >= QR_VERSION_7 ? 6 * 3 * 2 : 0;
 		size_t format_info = 15 * 2 + 1;
 
 		size_t function_bits = finder_pattern + alignment_pattern + timing_pattern + version_info + format_info;
@@ -508,6 +509,8 @@ uint_fast8_t qrspec_get_error_words_in_block(qr_version_t version, qr_errorlevel
 // XXX: must be the same order of the enum
 static const char *qr_version_string[] = {
 	"AUTO",
+	"AUTO-W",
+	"AUTO-H",
 
 	// QR
 	"1",

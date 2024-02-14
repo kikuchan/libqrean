@@ -602,12 +602,128 @@ static size_t qrean_try_write_qr_data(qrean_t *qrean, const void *buffer, size_t
 	return retval;
 }
 
+static qr_version_t rmqr_version_map_n[] = {
+	QR_VERSION_R11x27,  // 297
+	QR_VERSION_R7x43,   // 301
+	QR_VERSION_R13x27,  // 351
+	QR_VERSION_R9x43,   // 387
+	QR_VERSION_R7x59,   // 413
+	QR_VERSION_R11x43,  // 473
+	QR_VERSION_R9x59,   // 531
+	QR_VERSION_R7x77,   // 539
+	QR_VERSION_R13x43,  // 559
+	QR_VERSION_R15x43,  // 645
+	QR_VERSION_R11x59,  // 649
+	QR_VERSION_R7x99,   // 693
+	QR_VERSION_R9x77,   // 693
+	QR_VERSION_R17x43,  // 731
+	QR_VERSION_R13x59,  // 767
+	QR_VERSION_R11x77,  // 847
+	QR_VERSION_R15x59,  // 885
+	QR_VERSION_R9x99,   // 891
+	QR_VERSION_R7x139,  // 973
+	QR_VERSION_R13x77,  // 1001
+	QR_VERSION_R17x59,  // 1003
+	QR_VERSION_R11x99,  // 1089
+	QR_VERSION_R15x77,  // 1155
+	QR_VERSION_R9x139,  // 1251
+	QR_VERSION_R13x99,  // 1287
+	QR_VERSION_R17x77,  // 1309
+	QR_VERSION_R15x99,  // 1485
+	QR_VERSION_R11x139, // 1529
+	QR_VERSION_R17x99,  // 1683
+	QR_VERSION_R13x139, // 1807
+	QR_VERSION_R15x139, // 2085
+	QR_VERSION_R17x139, // 2363
+};
+
+static qr_version_t rmqr_version_map_w[] = {
+	QR_VERSION_R7x43,
+	QR_VERSION_R7x59,
+	QR_VERSION_R7x77,
+	QR_VERSION_R7x99,
+	QR_VERSION_R7x139,
+
+	QR_VERSION_R9x43,
+	QR_VERSION_R9x59,
+	QR_VERSION_R9x77,
+	QR_VERSION_R9x99,
+	QR_VERSION_R9x139,
+
+	QR_VERSION_R11x27,
+	QR_VERSION_R11x43,
+	QR_VERSION_R11x59,
+	QR_VERSION_R11x77,
+	QR_VERSION_R11x99,
+	QR_VERSION_R11x139,
+
+	QR_VERSION_R13x27,
+	QR_VERSION_R13x43,
+	QR_VERSION_R13x59,
+	QR_VERSION_R13x77,
+	QR_VERSION_R13x99,
+	QR_VERSION_R13x139,
+
+	QR_VERSION_R15x43,
+	QR_VERSION_R15x59,
+	QR_VERSION_R15x77,
+	QR_VERSION_R15x99,
+	QR_VERSION_R15x139,
+
+	QR_VERSION_R17x43,
+	QR_VERSION_R17x59,
+	QR_VERSION_R17x77,
+	QR_VERSION_R17x99,
+	QR_VERSION_R17x139,
+};
+
+static qr_version_t rmqr_version_map_h[] = {
+	QR_VERSION_R11x27,
+	QR_VERSION_R13x27,
+
+	QR_VERSION_R7x43,
+	QR_VERSION_R9x43,
+	QR_VERSION_R11x43,
+	QR_VERSION_R13x43,
+	QR_VERSION_R15x43,
+	QR_VERSION_R17x43,
+
+	QR_VERSION_R7x59,
+	QR_VERSION_R9x59,
+	QR_VERSION_R11x59,
+	QR_VERSION_R13x59,
+	QR_VERSION_R15x59,
+	QR_VERSION_R17x59,
+
+	QR_VERSION_R7x77,
+	QR_VERSION_R9x77,
+	QR_VERSION_R11x77,
+	QR_VERSION_R13x77,
+	QR_VERSION_R15x77,
+	QR_VERSION_R17x77,
+
+	QR_VERSION_R7x99,
+	QR_VERSION_R9x99,
+	QR_VERSION_R11x99,
+	QR_VERSION_R13x99,
+	QR_VERSION_R15x99,
+	QR_VERSION_R17x99,
+
+	QR_VERSION_R7x139,
+	QR_VERSION_R9x139,
+	QR_VERSION_R11x139,
+	QR_VERSION_R13x139,
+	QR_VERSION_R15x139,
+	QR_VERSION_R17x139,
+};
+
 // Write actual data and finalize.
 // This function may alter QR version and/or QR mask pattern settings in qrean
 size_t qrean_write_qr_data(qrean_t *qrean, const void *buffer, size_t len, qrean_data_type_t data_type)
 {
 	int min_v, max_v;
-	if (qrean->qr.version == QR_VERSION_AUTO) {
+	qr_version_t *version_map = NULL;
+	if (IS_AUTO(qrean->qr.version)) {
 		min_v = QREAN_IS_TYPE_QR(qrean) ? QR_VERSION_1
 			: QREAN_IS_TYPE_MQR(qrean)  ? QR_VERSION_M1
 			: QREAN_IS_TYPE_TQR(qrean)  ? QR_VERSION_TQR
@@ -616,15 +732,26 @@ size_t qrean_write_qr_data(qrean_t *qrean, const void *buffer, size_t len, qrean
 			: QREAN_IS_TYPE_MQR(qrean)  ? QR_VERSION_M4
 			: QREAN_IS_TYPE_TQR(qrean)  ? QR_VERSION_TQR
 										: QR_VERSION_R17x139;
+
+		if (QREAN_IS_TYPE_RMQR(qrean)) {
+			if (qrean->qr.version == QR_VERSION_AUTO_W) {
+				version_map = rmqr_version_map_w;
+			} else if (qrean->qr.version == QR_VERSION_AUTO_H) {
+				version_map = rmqr_version_map_h;
+			} else {
+				version_map = rmqr_version_map_n;
+			}
+		}
 	} else {
 		min_v = max_v = qrean->qr.version;
 	}
 
 	qr_maskpattern_t mask = qrean->qr.mask;
 	for (int v = min_v; v <= max_v; v++) {
-		if (!qrspec_is_valid_combination((qr_version_t)v, qrean->qr.level, mask)) continue;
+		qr_version_t version = version_map ? version_map[v - QR_VERSION_R7x43] : (qr_version_t)v;
+		if (!qrspec_is_valid_combination(version, qrean->qr.level, mask)) continue;
 
-		qrean_set_qr_version(qrean, (qr_version_t)v);
+		qrean_set_qr_version(qrean, version);
 		qrean_set_qr_maskpattern(qrean, mask);
 		bitpos_t retval = qrean_try_write_qr_data(qrean, buffer, len, data_type);
 		if (retval > 0) return retval / 8;
@@ -669,7 +796,7 @@ size_t qrean_read_buffer(qrean_t *qrean, char *buffer, size_t size)
 int qrean_check_qr_combination(qrean_t *qrean)
 {
 	int min_v, max_v;
-	if (qrean->qr.version == QR_VERSION_AUTO) {
+	if (IS_AUTO(qrean->qr.version)) {
 		min_v = QREAN_IS_TYPE_QR(qrean) ? QR_VERSION_1 : QREAN_IS_TYPE_MQR(qrean) ? QR_VERSION_M1 : QR_VERSION_R7x43;
 		max_v = QREAN_IS_TYPE_QR(qrean) ? QR_VERSION_40 : QREAN_IS_TYPE_MQR(qrean) ? QR_VERSION_M4 : QR_VERSION_R17x139;
 	} else {

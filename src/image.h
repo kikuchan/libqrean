@@ -11,6 +11,7 @@ typedef uint32_t image_pixel_t;
 #define PIXEL_GET_R(pix) (((pix) >> 0) & 0xFF)
 #define PIXEL_GET_G(pix) (((pix) >> 8) & 0xFF)
 #define PIXEL_GET_B(pix) (((pix) >> 16) & 0xFF)
+#define PIXEL_MASK (0x00FFFFFFUL)
 
 typedef struct {
 	size_t width;

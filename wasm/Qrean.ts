@@ -31,9 +31,8 @@ type EncodeOptions = {
 
 type DetectOptions = {
   gamma?: number;
-  eci_code?: 'UTF-8' | 'ShiftJIS' | 'Latin1';
-  outbuf_size?: number;
-  digitized?: Uint8ClampedArray;
+  eciCode?: 'UTF-8' | 'ShiftJIS' | 'Latin1';
+  outbufSize?: number;
 };
 
 export type Image = {
@@ -142,6 +141,8 @@ export class Qrean {
 
   // qr version
   static QR_VERSION_AUTO = 'AUTO' as const;
+  static QR_VERSION_AUTO_W = 'AUTO-W' as const;
+  static QR_VERSION_AUTO_H = 'AUTO-H' as const;
   static QR_VERSION_1 = '1' as const;
   static QR_VERSION_2 = '2' as const;
   static QR_VERSION_3 = '3' as const;
@@ -221,83 +222,85 @@ export class Qrean {
   static QR_VERSION_TQR = 'TQR' as const;
   static QR_VERSIONS = {
     [Qrean.QR_VERSION_AUTO]:     0 as const,
-    [Qrean.QR_VERSION_1]:        1 as const,
-    [Qrean.QR_VERSION_2]:        2 as const,
-    [Qrean.QR_VERSION_3]:        3 as const,
-    [Qrean.QR_VERSION_4]:        4 as const,
-    [Qrean.QR_VERSION_5]:        5 as const,
-    [Qrean.QR_VERSION_6]:        6 as const,
-    [Qrean.QR_VERSION_7]:        7 as const,
-    [Qrean.QR_VERSION_8]:        8 as const,
-    [Qrean.QR_VERSION_9]:        9 as const,
-    [Qrean.QR_VERSION_10]:      10 as const,
-    [Qrean.QR_VERSION_11]:      11 as const,
-    [Qrean.QR_VERSION_12]:      12 as const,
-    [Qrean.QR_VERSION_13]:      13 as const,
-    [Qrean.QR_VERSION_14]:      14 as const,
-    [Qrean.QR_VERSION_15]:      15 as const,
-    [Qrean.QR_VERSION_16]:      16 as const,
-    [Qrean.QR_VERSION_17]:      17 as const,
-    [Qrean.QR_VERSION_18]:      18 as const,
-    [Qrean.QR_VERSION_19]:      19 as const,
-    [Qrean.QR_VERSION_20]:      20 as const,
-    [Qrean.QR_VERSION_21]:      21 as const,
-    [Qrean.QR_VERSION_22]:      22 as const,
-    [Qrean.QR_VERSION_23]:      23 as const,
-    [Qrean.QR_VERSION_24]:      24 as const,
-    [Qrean.QR_VERSION_25]:      25 as const,
-    [Qrean.QR_VERSION_26]:      26 as const,
-    [Qrean.QR_VERSION_27]:      27 as const,
-    [Qrean.QR_VERSION_28]:      28 as const,
-    [Qrean.QR_VERSION_29]:      29 as const,
-    [Qrean.QR_VERSION_30]:      30 as const,
-    [Qrean.QR_VERSION_31]:      31 as const,
-    [Qrean.QR_VERSION_32]:      32 as const,
-    [Qrean.QR_VERSION_33]:      33 as const,
-    [Qrean.QR_VERSION_34]:      34 as const,
-    [Qrean.QR_VERSION_35]:      35 as const,
-    [Qrean.QR_VERSION_36]:      36 as const,
-    [Qrean.QR_VERSION_37]:      37 as const,
-    [Qrean.QR_VERSION_38]:      38 as const,
-    [Qrean.QR_VERSION_39]:      39 as const,
-    [Qrean.QR_VERSION_40]:      40 as const,
-    [Qrean.QR_VERSION_M1]:      41 as const,
-    [Qrean.QR_VERSION_M2]:      42 as const,
-    [Qrean.QR_VERSION_M3]:      43 as const,
-    [Qrean.QR_VERSION_M4]:      44 as const,
-    [Qrean.QR_VERSION_R7x43]:   45 as const,
-    [Qrean.QR_VERSION_R7x59]:   46 as const,
-    [Qrean.QR_VERSION_R7x77]:   47 as const,
-    [Qrean.QR_VERSION_R7x99]:   48 as const,
-    [Qrean.QR_VERSION_R7x139]:  49 as const,
-    [Qrean.QR_VERSION_R9x43]:   50 as const,
-    [Qrean.QR_VERSION_R9x59]:   51 as const,
-    [Qrean.QR_VERSION_R9x77]:   52 as const,
-    [Qrean.QR_VERSION_R9x99]:   53 as const,
-    [Qrean.QR_VERSION_R9x139]:  54 as const,
-    [Qrean.QR_VERSION_R11x27]:  55 as const,
-    [Qrean.QR_VERSION_R11x43]:  56 as const,
-    [Qrean.QR_VERSION_R11x59]:  57 as const,
-    [Qrean.QR_VERSION_R11x77]:  58 as const,
-    [Qrean.QR_VERSION_R11x99]:  59 as const,
-    [Qrean.QR_VERSION_R11x139]: 60 as const,
-    [Qrean.QR_VERSION_R13x27]:  61 as const,
-    [Qrean.QR_VERSION_R13x43]:  62 as const,
-    [Qrean.QR_VERSION_R13x59]:  63 as const,
-    [Qrean.QR_VERSION_R13x77]:  64 as const,
-    [Qrean.QR_VERSION_R13x99]:  65 as const,
-    [Qrean.QR_VERSION_R13x139]: 66 as const,
-    [Qrean.QR_VERSION_R15x43]:  67 as const,
-    [Qrean.QR_VERSION_R15x59]:  68 as const,
-    [Qrean.QR_VERSION_R15x77]:  69 as const,
-    [Qrean.QR_VERSION_R15x99]:  70 as const,
-    [Qrean.QR_VERSION_R15x139]: 71 as const,
-    [Qrean.QR_VERSION_R17x43]:  72 as const,
-    [Qrean.QR_VERSION_R17x59]:  73 as const,
-    [Qrean.QR_VERSION_R17x77]:  74 as const,
-    [Qrean.QR_VERSION_R17x99]:  75 as const,
-    [Qrean.QR_VERSION_R17x139]: 76 as const,
-    [Qrean.QR_VERSION_TQR]:     77 as const,
+    [Qrean.QR_VERSION_AUTO_W]:   1 as const,
+    [Qrean.QR_VERSION_AUTO_H]:   2 as const,
+    [Qrean.QR_VERSION_1]:        3 as const,
+    [Qrean.QR_VERSION_2]:        4 as const,
+    [Qrean.QR_VERSION_3]:        5 as const,
+    [Qrean.QR_VERSION_4]:        6 as const,
+    [Qrean.QR_VERSION_5]:        7 as const,
+    [Qrean.QR_VERSION_6]:        8 as const,
+    [Qrean.QR_VERSION_7]:        9 as const,
+    [Qrean.QR_VERSION_8]:       10 as const,
+    [Qrean.QR_VERSION_9]:       11 as const,
+    [Qrean.QR_VERSION_10]:      12 as const,
+    [Qrean.QR_VERSION_11]:      13 as const,
+    [Qrean.QR_VERSION_12]:      14 as const,
+    [Qrean.QR_VERSION_13]:      15 as const,
+    [Qrean.QR_VERSION_14]:      16 as const,
+    [Qrean.QR_VERSION_15]:      17 as const,
+    [Qrean.QR_VERSION_16]:      18 as const,
+    [Qrean.QR_VERSION_17]:      19 as const,
+    [Qrean.QR_VERSION_18]:      20 as const,
+    [Qrean.QR_VERSION_19]:      21 as const,
+    [Qrean.QR_VERSION_20]:      22 as const,
+    [Qrean.QR_VERSION_21]:      23 as const,
+    [Qrean.QR_VERSION_22]:      24 as const,
+    [Qrean.QR_VERSION_23]:      25 as const,
+    [Qrean.QR_VERSION_24]:      26 as const,
+    [Qrean.QR_VERSION_25]:      27 as const,
+    [Qrean.QR_VERSION_26]:      28 as const,
+    [Qrean.QR_VERSION_27]:      29 as const,
+    [Qrean.QR_VERSION_28]:      30 as const,
+    [Qrean.QR_VERSION_29]:      31 as const,
+    [Qrean.QR_VERSION_30]:      32 as const,
+    [Qrean.QR_VERSION_31]:      33 as const,
+    [Qrean.QR_VERSION_32]:      34 as const,
+    [Qrean.QR_VERSION_33]:      35 as const,
+    [Qrean.QR_VERSION_34]:      36 as const,
+    [Qrean.QR_VERSION_35]:      37 as const,
+    [Qrean.QR_VERSION_36]:      38 as const,
+    [Qrean.QR_VERSION_37]:      39 as const,
+    [Qrean.QR_VERSION_38]:      40 as const,
+    [Qrean.QR_VERSION_39]:      41 as const,
+    [Qrean.QR_VERSION_40]:      42 as const,
+    [Qrean.QR_VERSION_M1]:      43 as const,
+    [Qrean.QR_VERSION_M2]:      44 as const,
+    [Qrean.QR_VERSION_M3]:      45 as const,
+    [Qrean.QR_VERSION_M4]:      46 as const,
+    [Qrean.QR_VERSION_R7x43]:   47 as const,
+    [Qrean.QR_VERSION_R7x59]:   48 as const,
+    [Qrean.QR_VERSION_R7x77]:   49 as const,
+    [Qrean.QR_VERSION_R7x99]:   50 as const,
+    [Qrean.QR_VERSION_R7x139]:  51 as const,
+    [Qrean.QR_VERSION_R9x43]:   52 as const,
+    [Qrean.QR_VERSION_R9x59]:   53 as const,
+    [Qrean.QR_VERSION_R9x77]:   54 as const,
+    [Qrean.QR_VERSION_R9x99]:   55 as const,
+    [Qrean.QR_VERSION_R9x139]:  56 as const,
+    [Qrean.QR_VERSION_R11x27]:  57 as const,
+    [Qrean.QR_VERSION_R11x43]:  58 as const,
+    [Qrean.QR_VERSION_R11x59]:  59 as const,
+    [Qrean.QR_VERSION_R11x77]:  60 as const,
+    [Qrean.QR_VERSION_R11x99]:  61 as const,
+    [Qrean.QR_VERSION_R11x139]: 62 as const,
+    [Qrean.QR_VERSION_R13x27]:  63 as const,
+    [Qrean.QR_VERSION_R13x43]:  64 as const,
+    [Qrean.QR_VERSION_R13x59]:  65 as const,
+    [Qrean.QR_VERSION_R13x77]:  66 as const,
+    [Qrean.QR_VERSION_R13x99]:  67 as const,
+    [Qrean.QR_VERSION_R13x139]: 68 as const,
+    [Qrean.QR_VERSION_R15x43]:  69 as const,
+    [Qrean.QR_VERSION_R15x59]:  70 as const,
+    [Qrean.QR_VERSION_R15x77]:  71 as const,
+    [Qrean.QR_VERSION_R15x99]:  72 as const,
+    [Qrean.QR_VERSION_R15x139]: 73 as const,
+    [Qrean.QR_VERSION_R17x43]:  74 as const,
+    [Qrean.QR_VERSION_R17x59]:  75 as const,
+    [Qrean.QR_VERSION_R17x77]:  76 as const,
+    [Qrean.QR_VERSION_R17x99]:  77 as const,
+    [Qrean.QR_VERSION_R17x139]: 78 as const,
+    [Qrean.QR_VERSION_TQR]:     79 as const,
   };
 
   // qr errorlevel
@@ -428,7 +431,7 @@ export class Qrean {
     const gamma_value = opts.gamma ?? 1.0;
     const exp: any = this.instance.exports;
 
-    const outbuf_size = opts.outbuf_size ?? 1024;
+    const outbuf_size = opts.outbufSize ?? 1024;
     const outbuf_ptr = exp.malloc(outbuf_size);
 
     const image_ptr = this.allocImage(imgdata);
@@ -439,16 +442,11 @@ export class Qrean {
       outbuf_size,
       image_ptr,
       gamma_value,
-      Qrean.QR_ECI_CODES[opts.eci_code ?? Qrean.QR_ECI_CODE_LATIN1],
+      Qrean.QR_ECI_CODES[opts.eciCode ?? Qrean.QR_ECI_CODE_LATIN1],
     );
     this.on_found = undefined;
 
     const digitized = this.readImage(image_ptr);
-    if (opts.digitized) {
-      for (let i = 0; i < digitized.width * digitized.height * 4; i++) {
-        opts.digitized[i] = i % 4 == 3 ? 0xff : digitized.data[i];
-      }
-    }
 
     exp.free(image_ptr);
     exp.free(outbuf_ptr);

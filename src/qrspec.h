@@ -8,6 +8,8 @@
 typedef enum {
 	QR_VERSION_INVALID = -1,
 	QR_VERSION_AUTO = 0,
+	QR_VERSION_AUTO_W,
+	QR_VERSION_AUTO_H,
 
 	QR_VERSION_1,
 	QR_VERSION_2,
@@ -125,6 +127,7 @@ typedef enum {
 	QR_MASKPATTERN_AUTO,
 } qr_maskpattern_t;
 
+#define IS_AUTO(version) ((version) == QR_VERSION_AUTO || (version) == QR_VERSION_AUTO_W || (version) == QR_VERSION_AUTO_H)
 #define IS_MQR(version)  (QR_VERSION_M1 <= (version) && (version) <= QR_VERSION_M4)
 #define IS_QR(version)   (QR_VERSION_1 <= (version) && (version) <= QR_VERSION_40)
 #define IS_RMQR(version) (QR_VERSION_R7x43 <= (version) && (version) <= QR_VERSION_R17x139)

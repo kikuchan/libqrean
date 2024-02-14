@@ -12,7 +12,7 @@ qrversion_t qrversion_for(qr_version_t version)
 
 	qrversion_t vi;
 	vi.version = version;
-	vi.value = QR_VERSION_7 <= version && version <= QR_VERSION_40 ? qrbch_18_6_value(version) : 0xffffffff;
+	vi.value = QR_VERSION_7 <= version && version <= QR_VERSION_40 ? qrbch_18_6_value(version - QR_VERSION_1 + 1) : 0xffffffff;
 	return vi;
 }
 
@@ -23,10 +23,10 @@ qrversion_t qrversion_from(uint32_t value)
 		.value = value,
 	};
 
-	int i = qrbch_18_6_index_of(value);
+	int i = qrbch_18_6_index_of(value) + QR_VERSION_1 - 1;
 	if (QR_VERSION_7 <= i && i <= QR_VERSION_40) {
 		vi.version = (qr_version_t)i;
-		vi.value = qrbch_18_6_value(i);
+		vi.value = qrbch_18_6_value(i - QR_VERSION_1 + 1);
 		return vi;
 	}
 

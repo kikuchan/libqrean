@@ -10,20 +10,21 @@ A portable QR and Barcode generation / manipulation library written in **C**.
 
 # DEMO
 
-[WASM](https://kikuchan.github.io/libqrean/wasm/) (thanks @taisukef)
+[Wasm](https://kikuchan.github.io/libqrean/wasm/) (thanks @taisukef)
+
 
 # CLI Usage
 ## Generation
 ```
 % qrean -t rmqr Hello
-███████████████████████████████████████████████████████████████████
-███████████████████████████████████████████████████████████████████
-████ ▄▄▄▄▄ █ █ ▀ █ ▀▄▀ ▄ █▄▀ █▄█ █▄▀ █▄█▄█ ▄ █▄█ ▀ █ ▀ █▄▀▄█ ▄ ████
-████ █   █ █ ▀█▄███▄ █▄▄   ▄▄▄▄ █▄▀█▀▄▄ ▀ ▄▄  ▀█▄ ▄▀█▄  ▄▀ ▄▄▄ ████
-████ █▄▄▄█ █▀▄ ██▀ ██▀ ▄  ▄▀▀██ ▀▀▀█▄ ▀█   ▄  ▄█▀  ██ ▄ ▄█ █▄█ ████
-████▄▄▄▄▄▄▄█▄█▄█▄█▄█▄█▄▄▄█▄█▄█▄█▄█▄█▄█▄█▄█▄▄▄█▄█▄█▄█▄█▄█▄█▄▄▄▄▄████
-███████████████████████████████████████████████████████████████████
-▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+███████████████████████████████
+██ ▄▄▄▄▄ █ ▀ █ █ █▄█ █▄█▄█▄▄ ██
+██ █   █ ██▄ ▄█▀▄▄  ▄▄   ▀█ ▄██
+██ █▄▄▄█ ██▀▀▀▄█▄▄█▀█▄   █▀▀▄██
+██▄▄▄▄▄▄▄█▄██ ▄ ▀▄█▀▀█▀▄ ▄▄▄ ██
+██ ▄▀▀ ▀▄ ▄█▄███▀▀▄▄▀▄▀▄ █▄█ ██
+██▄▄▄█▄█▄█▄█▄█▄█▄█▄█▄█▄█▄▄▄▄▄██
+▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
 % qrean -t mQR Hello > mqr.png     # CAVEAT: Outputs PNG stream for not a tty
 % qrean -o qr.png Hello            # You can also specify output filename
 % qrean -h
@@ -100,6 +101,41 @@ qrean_write_qr_version_info(qrean);
 ```
 
 See [examples/](examples/) directory for working examples.
+
+
+# JavaScript / TypeScript Usage (Powered by Wasm)
+
+```js
+import { Qrean } from 'qrean';
+
+const qrean = new Qrean();
+const img = await qrean.encode('Hello, world');
+console.log(img);
+// {
+//   width: 116,
+//   height: 116,
+//   data: Uint8ClampedArray(53824) [
+//    :
+```
+
+It requires Wasm to run, but don't worry, most engines support it; Node, Deno, Bun and browsers.
+
+# Install
+
+## As a CLI
+
+* Windows binaries are directly placed on [dist/](dist/) (for now)
+* Just `make install` for UNIX-like systems (Linux / macOS / *BSD)
+
+## As a JavaScript / TypeScript library
+
+```sh
+% npm install qrean
+```
+
+## As a C library for embedded systems
+
+Take a look at [src/](src/) and include (or copy) them!
 
 # Why?
 

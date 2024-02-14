@@ -107,7 +107,7 @@ void image_draw_pixel(image_t *img, image_point_t p, image_pixel_t pixel)
 	int x = RINT(POINT_X(p));
 	int y = RINT(POINT_Y(p));
 	if (x < 0 || y < 0 || x >= (int)img->width || y >= (int)img->height) return;
-	img->buffer[y * img->width + x] = pixel;
+	img->buffer[y * img->width + x] = pixel | ~PIXEL_MASK;
 }
 
 image_pixel_t image_read_pixel(image_t *img, image_point_t p)
@@ -115,7 +115,7 @@ image_pixel_t image_read_pixel(image_t *img, image_point_t p)
 	int x = RINT(POINT_X(p));
 	int y = RINT(POINT_Y(p));
 	if (x < 0 || y < 0 || x >= (int)img->width || y >= (int)img->height) return 0;
-	return img->buffer[y * img->width + x];
+	return img->buffer[y * img->width + x] & PIXEL_MASK;
 }
 
 void image_save_as_ppm(image_t *img, FILE *out)
