@@ -68,7 +68,7 @@ void image_save_as_png(image_t *img, FILE *out)
 
 static void on_found(qrean_detector_perspective_t *warp, void *opaque)
 {
-	char buffer[1024];
+	char buffer[8192];
 
 	if (detected) {
 		if (QREAN_IS_TYPE_QRFAMILY(warp->qrean)) {

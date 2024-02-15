@@ -51,6 +51,7 @@ int usage(FILE *out)
 	fprintf(out, "                          CODE39, CODE93\n");
 	fprintf(out, "                          ITF, NW7\n");
 	fprintf(out, "    -p PADDING        Comma-separated PADDING for the code\n");
+	fprintf(out, "    -s SCALE          Bitmap SCALE (default: 4)\n");
 	fprintf(out, "\n");
 	fprintf(out, "  QR family specific options:\n");
 	fprintf(out, "    -v VERSION        Use VERSION, one of the following:\n");
