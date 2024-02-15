@@ -43,7 +43,7 @@ $(BUILDDIR)/qrean.wasm.js: $(SRCS) $(BUILDDIR)/libqrean.a Makefile
 $(BUILDDIR)/Qrean.js: $(BUILDDIR)/qrean.wasm.js Qrean.ts Makefile
 	deno bundle Qrean.ts $(BUILDDIR)/Qrean.js
 	npx tsc --declaration --emitDeclarationOnly --declarationDir $(BUILDDIR) Qrean.ts
-	cp $(BUILDDIR)/Qrean.js $(BUILDDIR)/Qrean.d.ts ../dist/
+	mkdir -p ../dist/ && cp $(BUILDDIR)/Qrean.js $(BUILDDIR)/Qrean.d.ts ../dist/
 
 clean:
 	-rm -f $(BUILDDIR)/qrean.wasm $(BUILDDIR)/*.[do] $(BUILDDIR)/libqrean.a

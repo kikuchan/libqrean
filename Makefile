@@ -34,12 +34,5 @@ wasm:
 win32:
 	@BUILDDIR=$(abspath ./build/win32) CC=i686-w64-mingw32-gcc AR=i686-w64-mingw32-ar NO_SHLIB=1 DLL=1 CFLAGS="$(CFLAGS)" $(MAKE) clean cli
 
-mac: cli
-	cp build/system/qrean build/system/qrean-detect ./dist/
-
-dist: wasm win32
-	mkdir -p dist
-	cp build/wasm/Qrean.* build/win32/*exe ./dist/
-
 test: cli
 	@LD_LIBRARY_PATH=$(BUILDDIR) BUILDDIR=$(BUILDDIR) CFLAGS="$(CFLAGS)" $(MAKE) -C tests

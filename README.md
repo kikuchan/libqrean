@@ -128,8 +128,10 @@ It requires Wasm to run, but don't worry, most engines support it; Node, Deno, B
 
 ## As a CLI
 
-* Windows binaries are directly placed on [dist/](dist/) (for now)
-* Just `make install` for UNIX-like systems (Linux / macOS / *BSD)
+* Windows
+  - Download from [Release Page](https://github.com/kikuchan/libqrean/releases)
+* UNIX-like systems (Linux / macOS / *BSD)
+  - Just `make install`
 
 ## As a JavaScript / TypeScript library
 
