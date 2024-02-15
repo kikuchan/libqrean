@@ -35,7 +35,7 @@ dist: wasm
 	git show :library.json | jq '.version="$(shell jq -r .version package.json)"' > library.json
 
 win32:
-	@BUILDDIR=$(abspath ./build/win32) CC=i686-w64-mingw32-gcc AR=i686-w64-mingw32-ar NO_SHLIB=1 DLL=1 CFLAGS="$(CFLAGS)" $(MAKE) clean cli
+	@BUILDDIR=$(abspath ./build/win32) CC=i686-w64-mingw32-gcc AR=i686-w64-mingw32-ar NO_SHLIB=1 DLL=1 CFLAGS="$(CFLAGS)" $(MAKE) clean cli && (cd build/win32; zip qrean.zip qrean*.exe)
 
 test: cli
 	@LD_LIBRARY_PATH=$(BUILDDIR) BUILDDIR=$(BUILDDIR) CFLAGS="$(CFLAGS)" $(MAKE) -C tests

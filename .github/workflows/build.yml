@@ -23,9 +23,6 @@ jobs:
     - name: Build for Windows
       run: make win32
 
-    #- name: Build for Wasm
-    #  run: make wasm
-
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
@@ -44,21 +41,15 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./build/win32/*.exe
-        # asset_name: *
-        asset_content_type: application/octet-stream
+        asset_path: ./build/win32/qrean.zip
+        asset_name: qrean-win32-${{ steps.set_tag.outputs.tag_name }}.zip
 
-    - name: Publish package to NPM
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 20
-          registry-url: https://registry.npmjs.org/
-      #- uses: pnpm/action-setup@v2
-      #  with:
-      #    version: 8
-      #- run: pnpm i --frozen-lockfile --strict-peer-dependencies
-      #- run: pnpm run build
-      #- run: pnpm run test
-      - run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+    - name: Setup node
+      uses: actions/setup-node@v3
+      with:
+        node-version: 20
+        registry-url: https://registry.npmjs.org/
+
+    - run: npm publish
+      env:
+        NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
