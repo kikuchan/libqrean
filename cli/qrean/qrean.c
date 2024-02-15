@@ -351,12 +351,14 @@ int main(int argc, char *argv[])
 	default:
 	case SAVE_AS_TXT:
 #ifdef __WIN32
+	{
 		unsigned int cp = GetConsoleOutputCP();
 		SetConsoleOutputCP(65001);
 #endif
 		qrean_dump(&qrean, out);
 #ifdef __WIN32
 		SetConsoleOutputCP(cp);
+	}
 #endif
 		break;
 	}
