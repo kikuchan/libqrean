@@ -31,6 +31,9 @@ clean:
 wasm:
 	@BUILDDIR=$(abspath ./build/wasm) NO_SHLIB=1 CFLAGS="$(CFLAGS)" $(MAKE) -C wasm clean all
 
+dist: wasm
+	git show :library.json | jq '.version="$(shell jq -r .version package.json)"' > library.json
+
 win32:
 	@BUILDDIR=$(abspath ./build/win32) CC=i686-w64-mingw32-gcc AR=i686-w64-mingw32-ar NO_SHLIB=1 DLL=1 CFLAGS="$(CFLAGS)" $(MAKE) clean cli
 

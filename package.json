@@ -13,6 +13,9 @@
   "author": "kikuchan98@gmail.com",
   "homepage": "https://github.com/kikuchan/libqrean#readme",
   "license": "MIT",
+  "scripts": {
+    "version": "make dist && git add library.json dist/"
+  },
   "devDependencies": {
     "@types/node": "^20.11.17",
     "typescript": "^5.3.3"

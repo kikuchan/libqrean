@@ -52,7 +52,7 @@ endif
 OBJS = $(addprefix $(BUILDDIR)/,$(SRCS:.c=.o))
 DEPS = $(OBJS:.o=.d)
 
-VERSION := $(shell grep version $(abspath ../package.json) | awk '{print $$2}' | tr -d ',"')
+VERSION := $(shell grep version $(abspath ../package.json) | head -1 | awk '{print $$2}' | tr -d ',"')
 MAJORVERSION := $(word 1,$(subst ., ,$(VERSION)))
 LIBRARY = libqrean
 TARGET = $(BUILDDIR)/$(LIBRARY)
