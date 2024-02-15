@@ -462,16 +462,22 @@ class Qrean {
         const text_ptr = exp.malloc(cstr.byteLength);
         mem.set(cstr, text_ptr);
         const opts_ptr = exp.malloc(16 * 4);
+        const padding = typeof opts.padding === 'number' ? [
+            opts.padding,
+            opts.padding,
+            opts.padding,
+            opts.padding
+        ] : opts.padding;
         const optsbuf = [
             Qrean.CODE_TYPES[opts.codeType ?? Qrean.CODE_TYPE_QR],
             Qrean.DATA_TYPES[opts.dataType ?? Qrean.DATA_TYPE_AUTO],
             Qrean.QR_ERRORLEVELS[opts.qrErrorLevel ?? Qrean.QR_ERRORLEVEL_M],
             Qrean.QR_VERSIONS[opts.qrVersion ?? Qrean.QR_VERSION_AUTO],
             Qrean.QR_MASKPATTERNS[opts.qrMaskPattern ?? Qrean.QR_MASKPATTERN_AUTO],
-            opts.padding?.[0] ?? -1,
-            opts.padding?.[1] ?? -1,
-            opts.padding?.[2] ?? -1,
-            opts.padding?.[3] ?? -1,
+            padding?.[0] ?? -1,
+            padding?.[1] ?? -1,
+            padding?.[2] ?? -1,
+            padding?.[3] ?? -1,
             opts.scale || 4
         ];
         for(let i = 0; i < optsbuf.length; i++){

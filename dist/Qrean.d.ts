@@ -9,7 +9,7 @@ type EncodeOptions = {
     qrMaskPattern?: keyof typeof Qrean.QR_MASKPATTERNS;
     qrErrorLevel?: keyof typeof Qrean.QR_ERRORLEVELS;
     scale?: number;
-    padding?: number[];
+    padding?: number[] | number;
 };
 type DetectOptions = {
     gamma?: number;
