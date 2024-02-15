@@ -3,7 +3,7 @@ BUILDDIR?=$(abspath ../../build/system)
 QREAN?=$(abspath ../../src)
 
 CFLAGS+=-I$(QREAN)
-LDFLAGS += -L$(BUILDDIR) -lqrean -lm
+LDFLAGS += -L$(BUILDDIR) -Wl,-rpath,$(BUILDDIR) -lqrean -lm
 
 NAME=libqrean
 
@@ -29,3 +29,4 @@ clean:
 
 install: $(BUILDDIR)/$(MAIN)
 	install -m 0755 $(BUILDDIR)/$(MAIN) $(PREFIX)
+	patchelf --remove-rpath $(PREFIX)/$(MAIN)
