@@ -219,7 +219,7 @@ size_t qrdata_write_8bit_string(qrdata_t *data, const char *src, size_t len)
 
 size_t qrdata_write_kanji_string(qrdata_t *data, const char *src, size_t srclen)
 {
-	size_t bytelen;
+	size_t bytelen = 0;
 	size_t kanjilen = measure_kanji(src, &bytelen, data->eci_code);
 	if (bytelen < srclen) return 0;
 

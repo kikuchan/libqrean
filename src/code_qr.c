@@ -125,17 +125,27 @@ static bitpos_t timing_pattern_iter(bitstream_t *bs, bitpos_t i, void *opaque)
 	return QREAN_XYV_TO_BITPOS(qrean, n == 0 ? 7 + u : 6, n != 0 ? 7 + u : 6, 1);
 }
 
+static int is_alignment_position(qr_version_t version, int_fast16_t xy)
+{
+	int N = (version - QR_VERSION_1 + 1) / 7 + 2;
+	int delta = (((((version - QR_VERSION_1 + 1) + 1) * 8 / (N - 1)) + 3) / 4) * 2;
+	int p = (((xy < 12) ? (xy - 4) : ((version - QR_VERSION_1 + 1) * 4 + 12 - xy))) % delta;
+	return 0 <= p && p < 5 ? 1 : 0;
+}
+
 static bit_t is_alignment_pattern(qrean_t *qrean, int_fast16_t x, int_fast16_t y)
 {
-	int w = 2;
+	if (qrean->qr.version == QR_VERSION_1) return 0;
 
-	uint_fast8_t N = qrspec_get_alignment_num(qrean->qr.version);
-	for (uint_fast8_t n = 0; n < N; n++) {
-		uint_fast8_t cx = qrspec_get_alignment_position_x(qrean->qr.version, n);
-		uint_fast8_t cy = qrspec_get_alignment_position_y(qrean->qr.version, n);
-		if (cx - w <= x && x <= cx + w && cy - w <= y && y <= cy + w) return 1;
-	}
-	return 0;
+	// near the finder pattern
+	if (x < 10 && y < 10) return 0;
+	if (x < 10 && y >= qrean->canvas.symbol_height - 10) return 0;
+	if (x >= qrean->canvas.symbol_width - 10 && y < 10) return 0;
+
+	if (!is_alignment_position(qrean->qr.version, x)) return 0;
+	if (!is_alignment_position(qrean->qr.version, y)) return 0;
+
+	return 1;
 }
 
 static bitpos_t alignment_pattern_iter(bitstream_t *bs, bitpos_t i, void *opaque)
