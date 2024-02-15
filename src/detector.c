@@ -30,7 +30,7 @@ bit_t qrean_detector_perspective_write_image_pixel(qrean_t *qrean, bitpos_t x, b
 static int scan_barcode(runlength_t *rl, image_t *img, image_t *src, int x, int y, int dx, int dy,
 	void (*on_found)(qrean_detector_perspective_t *warp, void *opaque), void *opaque)
 {
-	uint32_t v = image_read_pixel(img, POINT(x, y)) & 0xFFFFFF; // drop alpha channel
+	uint32_t v = image_read_pixel(img, POINT(x, y));
 	if (v != 0 && v != PIXEL(255, 255, 255)) {
 		runlength_init(rl);
 		return 0;
@@ -96,7 +96,7 @@ static int scan_barcode(runlength_t *rl, image_t *img, image_t *src, int x, int 
 	runlength_t rl2 = create_runlength();
 	int bars = 0;
 	for (int yy = sy, xx = sx; 0 <= xx && xx < (int)img->width && 0 <= yy && yy < (int)img->height; xx += dx, yy += dy) {
-		uint32_t v = image_read_pixel(img, POINT(xx, yy)) & 0xFFFFFF; // drop alpha channel
+		uint32_t v = image_read_pixel(img, POINT(xx, yy));
 		if (runlength_push_value(&rl2, v)) {
 			runlength_count_t last_count = runlength_get_count(&rl2, 1);
 			int c = round(last_count / barsize);
@@ -153,7 +153,7 @@ static int scan_barcode(runlength_t *rl, image_t *img, image_t *src, int x, int 
 
 			// paint dark bar to prevent the bar to be detected twice
 			for (int yy = sy, xx = sx; xx != ex || yy != ey; xx += dx, yy += dy) {
-				uint32_t v = image_read_pixel(img, POINT(xx, yy)) & 0xFFFFFF; // drop alpha channel
+				uint32_t v = image_read_pixel(img, POINT(xx, yy));
 				if (!v) image_paint(img, POINT(xx, yy), PIXEL(255, 0, 0));
 			}
 		}

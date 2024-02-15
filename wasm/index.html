@@ -143,6 +143,37 @@ let recording = false;
 const video = document.createElement("video");
 const ctx = canvas.getContext("2d");
 
+async function detectOnCanvas() {
+  try {
+    const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const { digitized, detected } = await qrean.detect(img, {
+      gamma: gamma.value,
+      eciCode: seleci.value,
+    });
+    decodeResult.value = detected.map(({ type, text, qr }) => `${type}${qr ? JSON.stringify(qr) : ''}: ${text}`).join('\n');
+
+    if (digitize.checked) {
+      img.data.set(digitized.data);
+      ctx.putImageData(img, 0, 0);
+    }
+
+    // draw found rectangle
+    detected.forEach(({ points }) => {
+      ctx.beginPath();
+      ctx.strokeStyle = 'red';
+      ctx.moveTo(... points[0]);
+      ctx.lineTo(... points[1]);
+      ctx.lineTo(... points[2]);
+      ctx.lineTo(... points[3]);
+      ctx.lineTo(... points[0]);
+      ctx.stroke();
+    });
+
+  } catch (e) {
+    console.error(e);
+  }
+}
+
 file.onchange = (e) => {
   if (recording) return;
 
@@ -153,31 +184,15 @@ file.onchange = (e) => {
 
   img.onload = async function() {
     URL.revokeObjectURL(img.src);
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
     const w = img.width * scale;
     const h = img.height * scale;
-
     ctx.drawImage(img, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
 
-    try {
-      decodeResult.value = '';
-      const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const { digitized } = await qrean.detect(img, (type, result) => {
-        decodeResult.value += type + ": " + result + "\n";
-      }, {
-        gamma: gamma.value,
-        eciCode: seleci.value,
-      });
-
-      if (digitize.checked) {
-        img.data.set(digitized.data);
-        ctx.putImageData(img, 0, 0);
-      }
-    } catch (e) {
-      console.error(e);
-    }
+    await detectOnCanvas();
   };
   img.src = url;
   file.value = '';
@@ -193,23 +208,7 @@ async function tick() {
 
     ctx.drawImage(video, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
 
-    try {
-      decodeResult.value = '';
-      const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const { digitized } = await qrean.detect(img, (type, result) => {
-        decodeResult.value += type + ": " + result + "\n";
-      }, {
-        gamma: gamma.value,
-        eciCode: seleci.value,
-      });
-
-      if (digitize.checked) {
-        img.data.set(digitized.data);
-        ctx.putImageData(img, 0, 0);
-      }
-    } catch (e) {
-      console.error(e);
-    }
+    await detectOnCanvas();
   }
 
   requestAnimationFrame(tick);

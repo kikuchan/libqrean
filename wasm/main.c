@@ -73,7 +73,7 @@ image_t* encode(const char *inputbuf, encode_options_t *opts) {
 }
 
 __attribute__((import_module("env"), import_name("on_found")))
-extern void on_found_js(int type, const char *str);
+extern void on_found_js(int type, const char *str, int version, int level, int mask, image_point_t *points);
 
 typedef struct {
 	char *outputbuf;
@@ -86,7 +86,22 @@ static void on_found(qrean_detector_perspective_t *warp, void *opaque) {
 
 	qrean_set_eci_code(warp->qrean, params->eci_code);
 	qrean_read_string(warp->qrean, params->outputbuf, params->size);
-	on_found_js(warp->qrean->code->type, params->outputbuf);
+
+	image_point_t points[] = {
+		image_point_transform(POINT(-0.5, -0.5), warp->h),
+		image_point_transform(POINT(warp->qrean->canvas.symbol_width - 0.5, -0.5), warp->h),
+		image_point_transform(POINT(warp->qrean->canvas.symbol_width - 0.5, warp->qrean->canvas.symbol_height - 0.5), warp->h),
+		image_point_transform(POINT(- 0.5, warp->qrean->canvas.symbol_height - 0.5), warp->h),
+	};
+
+	on_found_js(
+		  warp->qrean->code->type
+		, params->outputbuf
+		, warp->qrean->qr.version
+		, warp->qrean->qr.level
+		, warp->qrean->qr.mask
+		, points
+	);
 }
 
 int detect(char *outputbuf, unsigned int size, image_t *img, double gamma_value, int eci_code) {

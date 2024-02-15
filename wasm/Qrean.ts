@@ -41,13 +41,27 @@ export type Image = {
   data: Uint8ClampedArray;
 }
 
+export type Detected = {
+  type: keyof typeof Qrean.CODE_TYPES;
+  text: string;
+
+  points: number[][];
+
+  qr?: {
+    version: keyof typeof Qrean.QR_VERSIONS;
+    mask: keyof typeof Qrean.QR_MASKPATTERNS;
+    level: keyof typeof Qrean.QR_ERRORLEVELS;
+  };
+}
 export class Qrean {
   private wasm: Promise<WebAssembly.WebAssemblyInstantiatedSource>;
-  private on_found?: (type: string, str: string) => void;
+  private on_found?: (obj: Detected) => void;
 
   private instance!: WebAssembly.Instance;
   private heap!: number;
   private memory!: WebAssembly.Memory;
+
+  private detected: Detected[] = [];
 
   static async create(opts: CreateOptions = {}) {
     return new Qrean(opts);
@@ -64,10 +78,29 @@ export class Qrean {
         round: (f: number) => Math.round(f),
         roundf: (f: number) => Math.round(f),
 
-        on_found: (type: number, ptr: number) => {
-          const result = fromCString(this.memory, ptr);
-          const typestr = Object.entries(Qrean.CODE_TYPES).find(([_, v]) => v == type)?.[0] ?? 'Unknown';
-          if (this.on_found) this.on_found.call(this, typestr, result);
+        on_found: (type: number, ptr: number, version: number, level: number, mask: number, points: number) => {
+          const text = fromCString(this.memory, ptr);
+          const typestr = (Object.entries(Qrean.CODE_TYPES).find(([_, v]) => v == type)?.[0] ?? 'Unknown') as keyof typeof Qrean.CODE_TYPES;
+          const qrVersion = (Object.entries(Qrean.QR_VERSIONS).find(([_, v]) => v == version)?.[0]) as keyof typeof Qrean.QR_VERSIONS | undefined;
+          const qrLevel = (Object.entries(Qrean.QR_ERRORLEVELS).find(([_, v]) => v == level)?.[0]) as keyof typeof Qrean.QR_ERRORLEVELS | undefined;
+          const qrMask = (Object.entries(Qrean.QR_MASKPATTERNS).find(([_, v]) => v == mask)?.[0]) as keyof typeof Qrean.QR_MASKPATTERNS | undefined;
+
+          const pointsView = new Float32Array(this.memory.buffer, points, 4 * 2);
+
+          const detected: Detected = {
+            type: typestr,
+            text,
+            qr: version >= Qrean.QR_VERSIONS[Qrean.QR_VERSION_1] && qrVersion && qrLevel && qrMask
+              ? { version: qrVersion, level: qrLevel, mask: qrMask } : undefined,
+            points: [
+              [pointsView[0], pointsView[1]],
+              [pointsView[2], pointsView[3]],
+              [pointsView[4], pointsView[5]],
+              [pointsView[6], pointsView[7]],
+            ]
+          };
+          this.detected.push(detected);
+          if (this.on_found) this.on_found.call(this, detected);
         },
 
         debug: (ptr: number) => {
@@ -425,7 +458,7 @@ export class Qrean {
     };
   }
 
-  async detect(imgdata: Image, callback: (type: string, str: string) => void, opts: DetectOptions = {}) {
+  async detect(imgdata: Image, opts: DetectOptions = {}, callback?: (obj: Detected) => void) {
     await this.init();
 
     const gamma_value = opts.gamma ?? 1.0;
@@ -437,13 +470,16 @@ export class Qrean {
     const image_ptr = this.allocImage(imgdata);
 
     this.on_found = callback;
-    const detected: number = exp.detect(
+    this.detected = [];
+
+    exp.detect(
       outbuf_ptr,
       outbuf_size,
       image_ptr,
       gamma_value,
       Qrean.QR_ECI_CODES[opts.eciCode ?? Qrean.QR_ECI_CODE_LATIN1],
     );
+
     this.on_found = undefined;
 
     const digitized = this.readImage(image_ptr);
@@ -452,7 +488,7 @@ export class Qrean {
     exp.free(outbuf_ptr);
 
     return {
-      detected,
+      detected: this.detected,
       digitized,
     }
   }

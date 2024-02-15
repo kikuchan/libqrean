@@ -21,12 +21,23 @@ export type Image = {
     height: number;
     data: Uint8ClampedArray;
 };
+export type Detected = {
+    type: keyof typeof Qrean.CODE_TYPES;
+    text: string;
+    points: number[][];
+    qr?: {
+        version: keyof typeof Qrean.QR_VERSIONS;
+        mask: keyof typeof Qrean.QR_MASKPATTERNS;
+        level: keyof typeof Qrean.QR_ERRORLEVELS;
+    };
+};
 export declare class Qrean {
     private wasm;
     private on_found?;
     private instance;
     private heap;
     private memory;
+    private detected;
     static create(opts?: CreateOptions): Promise<Qrean>;
     constructor(opts?: CreateOptions);
     private init;
@@ -269,8 +280,8 @@ export declare class Qrean {
     encode(text: string, opts?: EncodeOptions | keyof typeof Qrean.CODE_TYPES): Promise<false | Image>;
     private allocImage;
     private readImage;
-    detect(imgdata: Image, callback: (type: string, str: string) => void, opts?: DetectOptions): Promise<{
-        detected: number;
+    detect(imgdata: Image, opts?: DetectOptions, callback?: (obj: Detected) => void): Promise<{
+        detected: Detected[];
         digitized: Image;
     }>;
 }

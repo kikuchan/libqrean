@@ -116,6 +116,10 @@ console.log(img);
 //   height: 116,
 //   data: Uint8ClampedArray(53824) [
 //    :
+
+const { detected } = await qrean.detect(img);
+console.log(detected[0].text);
+// Hello, world
 ```
 
 It requires Wasm to run, but don't worry, most engines support it; Node, Deno, Bun and browsers.
