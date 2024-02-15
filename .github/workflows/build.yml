@@ -9,6 +9,9 @@ jobs:
   build_and_release:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -18,7 +21,7 @@ jobs:
 
     - name: Set Tag Name
       id: set_tag
-      run: echo "::set-output name=tag_name::${GITHUB_REF#refs/tags/}"
+      run: echo "tag_name=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
     - name: Build for Windows
       run: make win32
@@ -43,6 +46,7 @@ jobs:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./build/win32/qrean.zip
         asset_name: qrean-win32-${{ steps.set_tag.outputs.tag_name }}.zip
+        asset_content_type: application/octet-stream
 
     - name: Setup node
       uses: actions/setup-node@v3
