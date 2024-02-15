@@ -1,0 +1,64 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - v**
+
+jobs:
+  build_and_release:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Install packages
+      run: sudo apt-get install build-essential mingw-w64 clang
+
+    - name: Set Tag Name
+      id: set_tag
+      run: echo "::set-output name=tag_name::${GITHUB_REF#refs/tags/}"
+
+    - name: Build for Windows
+      run: make win32
+
+    #- name: Build for Wasm
+    #  run: make wasm
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.set_tag.outputs.tag_name }}
+        release_name: ${{ steps.set_tag.outputs.tag_name }}
+        draft: false
+        prerelease: false
+
+    - name: Upload Release Assets
+      id: upload-release-assets
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./build/win32/*.exe
+        # asset_name: *
+        asset_content_type: application/octet-stream
+
+    - name: Publish package to NPM
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org/
+      #- uses: pnpm/action-setup@v2
+      #  with:
+      #    version: 8
+      #- run: pnpm i --frozen-lockfile --strict-peer-dependencies
+      #- run: pnpm run build
+      #- run: pnpm run test
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
