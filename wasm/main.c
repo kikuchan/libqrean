@@ -30,6 +30,7 @@ typedef struct {
 	int qr_errorlevel;
 	int qr_version;
 	int qr_maskpattern;
+	int eci_code;
 	int padding[4];
 	int scale;
 } encode_options_t;
@@ -43,7 +44,7 @@ image_t* encode(const char *inputbuf, encode_options_t *opts) {
 	qrean_set_qr_version(&qrean, opts->qr_version);
 	qrean_set_qr_maskpattern(&qrean, opts->qr_maskpattern);
 	qrean_set_qr_errorlevel(&qrean, opts->qr_errorlevel);
-	qrean_set_eci_code(&qrean, QR_ECI_CODE_UTF8);
+	qrean_set_eci_code(&qrean, opts->eci_code);
 
 	padding_t p = qrean_get_bitmap_padding(&qrean);
 	for (int i = 0; i < 4; i++) {

@@ -1,4 +1,5 @@
 import * as t from "https://deno.land/std/testing/asserts.ts";
+import QRCode from 'npm:qrcode';
 import { Qrean } from "./Qrean.ts";
 
 const imgdata2s = (imgd, step = 1) => {

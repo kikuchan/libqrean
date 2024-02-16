@@ -8,6 +8,7 @@ type EncodeOptions = {
     qrVersion?: keyof typeof Qrean.QR_VERSIONS;
     qrMaskPattern?: keyof typeof Qrean.QR_MASKPATTERNS;
     qrErrorLevel?: keyof typeof Qrean.QR_ERRORLEVELS;
+    eciCode?: 'UTF-8' | 'ShiftJIS' | 'Latin1';
     scale?: number;
     padding?: number[] | number;
 };
@@ -277,9 +278,14 @@ export declare class Qrean {
         ShiftJIS: 20;
         "UTF-8": 26;
     };
+    static encode(text: string, opts?: EncodeOptions | keyof typeof Qrean.CODE_TYPES): Promise<false | Image>;
     encode(text: string, opts?: EncodeOptions | keyof typeof Qrean.CODE_TYPES): Promise<false | Image>;
     private allocImage;
     private readImage;
+    static detect(imgdata: Image, opts?: DetectOptions, callback?: (obj: Detected) => void): Promise<{
+        detected: Detected[];
+        digitized: Image;
+    }>;
     detect(imgdata: Image, opts?: DetectOptions, callback?: (obj: Detected) => void): Promise<{
         detected: Detected[];
         digitized: Image;

@@ -25,6 +25,7 @@ type EncodeOptions = {
   qrVersion?: keyof typeof Qrean.QR_VERSIONS;
   qrMaskPattern?: keyof typeof Qrean.QR_MASKPATTERNS;
   qrErrorLevel?: keyof typeof Qrean.QR_ERRORLEVELS;
+  eciCode?: 'UTF-8' | 'ShiftJIS' | 'Latin1';
   scale?: number;
   padding?: number[] | number;
 };
@@ -379,6 +380,10 @@ export class Qrean {
     [Qrean.QR_ECI_CODE_UTF8]: 26 as const,
   };
 
+  static async encode(text: string, opts: EncodeOptions | keyof typeof Qrean.CODE_TYPES = {}) {
+    return await new Qrean().encode(text, opts);
+  }
+
   async encode(text: string, opts: EncodeOptions | keyof typeof Qrean.CODE_TYPES = {}) {
     await this.init();
 
@@ -403,6 +408,7 @@ export class Qrean {
       Qrean.QR_ERRORLEVELS[opts.qrErrorLevel ?? Qrean.QR_ERRORLEVEL_M],
       Qrean.QR_VERSIONS[opts.qrVersion ?? Qrean.QR_VERSION_AUTO],
       Qrean.QR_MASKPATTERNS[opts.qrMaskPattern ?? Qrean.QR_MASKPATTERN_AUTO],
+      Qrean.QR_ECI_CODES[opts.eciCode ?? Qrean.QR_ECI_CODE_UTF8],
       padding?.[0] ?? -1,
       padding?.[1] ?? -1,
       padding?.[2] ?? -1,
@@ -457,6 +463,10 @@ export class Qrean {
       height,
       data: mem.slice(imgbuf, imgbuf + width * height * 4),
     };
+  }
+
+  static async detect(imgdata: Image, opts: DetectOptions = {}, callback?: (obj: Detected) => void) {
+    return await new Qrean().detect(imgdata, opts, callback);
   }
 
   async detect(imgdata: Image, opts: DetectOptions = {}, callback?: (obj: Detected) => void) {
