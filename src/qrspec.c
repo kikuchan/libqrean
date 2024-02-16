@@ -308,9 +308,9 @@ static const uint8_t DATA_LENGTH_TABLE[][4] = {
 
 uint_fast8_t qrspec_get_data_bitlength_for(qr_version_t version, int mode)
 {
-	if (version < QR_VERSION_10) return DATA_LENGTH_TABLE[0][mode];
-	if (version < QR_VERSION_27) return DATA_LENGTH_TABLE[1][mode];
-	if (version < QR_VERSION_40) return DATA_LENGTH_TABLE[2][mode];
+	if (version <= QR_VERSION_9) return DATA_LENGTH_TABLE[0][mode];
+	if (version <= QR_VERSION_26) return DATA_LENGTH_TABLE[1][mode];
+	if (version <= QR_VERSION_40) return DATA_LENGTH_TABLE[2][mode];
 
 #ifndef NO_MQR
 	if (IS_MQR(version)) return DATA_LENGTH_TABLE[3 + version - QR_VERSION_M1][mode];
