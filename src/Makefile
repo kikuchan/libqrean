@@ -41,7 +41,7 @@ SIZE = size
 #CFLAGS += -std=c2x
 CFLAGS += -Wall # -Werror
 
-#CFLAGS += -O3
+CFLAGS += -O3
 
 CFLAGS += -Wno-misleading-indentation
 CFLAGS += -fPIC

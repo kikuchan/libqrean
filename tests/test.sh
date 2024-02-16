@@ -30,6 +30,7 @@ ${QREAN} -t qr   -f txt -l L -8 -p 4 -p 4 "Hello" | check - qr-1.txt
 ${QREAN} -t mqr  -f txt -l L -8 -m 1 -p 2 "test"  | check - mqr-1.txt
 ${QREAN} -t rmqr -f txt -v AUTO-W -p 4 "Hello" | check - rmqr-1.txt
 ${QREAN} -t tqr  -f txt -p 4 "000000000000" | check - tqr-000000000000.txt
+${QREAN} -t qr   -f txt -l L -8 `cat qr-8bit-max.src` | check - qr-8bit-max.txt
 
 echo "Detection:"
 ${QREAN_DETECT} github-libqrean-qr.png | check_contains - github-libqrean-qr.txt
@@ -38,5 +39,6 @@ ${QREAN_DETECT} PXL_20240109_050512422_lr.png | check_contains - PXL_20240109_05
 ${QREAN_DETECT} PXL_20240109_050512422_r90.png | check_contains - PXL_20240109_050512422_r90.txt
 
 echo "Kanji:"
-${QREAN} -UK 漢字の文章 | ${QREAN_DETECT} | check - kanji.txt
+${QREAN} -UK $(cat kanji.txt) | ${QREAN_DETECT} | check - kanji.txt
+
 exit ${error}
