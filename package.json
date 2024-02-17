@@ -3,6 +3,7 @@
   "type": "module",
   "version": "0.1.0-alpha.3",
   "description": "A portable QR and Barcode generation / manipulation library written in C",
+  "keywords": ["qr","qrcode","mqr","microqr","rmqr","tqr","barcode","ean","jan","nw7","code39","code93","itf"],
   "main": "./dist/Qrean.js",
   "module": "./dist/Qrean.js",
   "types": "./dist/Qrean.d.ts",
@@ -12,6 +13,7 @@
   ],
   "author": "kikuchan98@gmail.com",
   "homepage": "https://github.com/kikuchan/libqrean#readme",
+  "repository": "https://github.com/kikuchan/libqrean",
   "license": "MIT",
   "scripts": {
     "version": "make dist && git add library.json dist/"
